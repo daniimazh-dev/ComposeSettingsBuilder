@@ -1,0 +1,55 @@
+package com.daniil.csb
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.daniil.csb.classes.Redirect
+import com.daniil.csb.classes.Switch
+import kotlinx.coroutines.delay
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ComposeSettingUI(
+    modifier: Modifier = Modifier,
+    navigationModel: SettingsNavigationModel
+) {
+
+    val slider = SettingsProvider.getValue<Float>("slider").collectAsState().value
+    val switch1 = SettingsProvider.getValue<Boolean>("switch").collectAsState().value
+    val switch2 = SettingsProvider.getValue<Boolean>("switch2").collectAsState().value
+    LaunchedEffect(switch1, switch2) {
+
+        if (!switch1) {
+            SettingsProvider.setValue("switch2", false)
+            SettingsProvider.setValue("slider", 0f)
+        }
+        SettingsProvider.enable("switch2", switch1)
+        SettingsProvider.enable("slider", switch2)
+    }
+
+
+    Box(
+        modifier = modifier
+            .then(
+                Modifier
+                    .padding(16.dp)
+                    .fillMaxSize()
+            )
+    ) {
+        Column() {
+//            Text(setting2.value.toString())
+            SettingsScreenContainer(navigationModel)
+        }
+    }
+
+}

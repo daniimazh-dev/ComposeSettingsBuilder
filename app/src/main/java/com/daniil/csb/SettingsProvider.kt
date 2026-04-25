@@ -1,7 +1,14 @@
 package com.daniil.csb
 
+import android.content.Context
+import android.util.Log
 import com.daniil.csb.classes.SettingsSealed
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.File
 
 object SettingsProvider {
     lateinit var navigationModel: SettingsNavigationModel
@@ -38,4 +45,39 @@ object SettingsProvider {
         val setting = findById(id)
         setting.enabled(state)
     }
+
+    suspend fun loadData(context: Context) = withContext(Dispatchers.IO) {
+        navigationModel.screenHeap.value.forEach { screenInstance ->
+
+            val file = File(context.filesDir, "csb_${screenInstance.id}")
+            if (!file.exists()) return@forEach
+            val json = file.bufferedReader().use { it.readText() }
+            val packages = Json.decodeFromString<List<SaveSettingPackage>>(json)
+            packages.forEach { pack ->
+                try {
+                    val setting = findById(pack.id)
+                    setting.loadLogic(pack)
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
+    suspend fun saveData(context: Context) = withContext(Dispatchers.IO) {
+        navigationModel.screenHeap.value.forEach { screenInstance ->
+            val file = File(context.filesDir, "csb_${screenInstance.id}")
+            if (!file.exists()) {
+                file.createNewFile()
+            }
+
+            val jsonPackageList: List<SaveSettingPackage> = screenInstance.settings.values
+                .flatten()
+                .mapNotNull { it.saveLogic() }
+
+            if (jsonPackageList.isNotEmpty()) {
+                val json = Json.encodeToString(jsonPackageList)
+                file.writeText(json)
+            }
+        }
+    }
+
 }

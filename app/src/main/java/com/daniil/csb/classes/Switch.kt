@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,8 @@ class Switch(
     innitValue: Boolean,
     override val title: String,
     override val description: String,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    override var isSaveSetting: Boolean = true
 ) : SettingsSealed<Boolean>() {
     private var _value = MutableStateFlow(innitValue)
     override val value = _value.asStateFlow()
@@ -36,11 +38,21 @@ class Switch(
 
     override fun fetchValue(): StateFlow<Boolean> = value
 
+    override fun saveLogic(): SaveSettingPackage? {
+        if (!isSaveSetting) return null
+        return SaveSettingPackage.BooleanPackage(
+            id = id,
+            enable = enabled.value,
+            value = value.value
+        )
+    }
+
     class SwitchBuilderScope() {
         var innitValue = false
         var title = "Switch"
         var description = ""
         var enabled = true
+        var isSaveSetting = true
     }
 
     class Builder(
@@ -49,7 +61,7 @@ class Switch(
     ) {
         val scope = SwitchBuilderScope().apply(builderScope)
         fun create(): Switch = with(scope) {
-            return Switch(id, innitValue, title, description, enabled)
+            return Switch(id, innitValue, title, description, enabled, isSaveSetting)
         }
     }
 

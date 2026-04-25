@@ -1,11 +1,13 @@
 package com.daniil.csb
 
+import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.json.Json
 
 class SettingsNavigationModel : ViewModel() {
 
@@ -19,8 +21,17 @@ class SettingsNavigationModel : ViewModel() {
         _screenStack.value.add(screen[0])
         _currentScreen.value = screen[0]
     }
+    suspend fun load(context: Context) {
+        SettingsProvider.loadData(context)
+    }
+    lateinit var config: CSBConfig
 
-
+    fun initialize(context: Context) {
+        SettingsProvider.innit(this)
+        val json = context.assets.open("csb/csb_config.json").bufferedReader().use { it.readText() }
+        val config = Json.decodeFromString<CSBConfig>(json)
+        this.config = config
+    }
 
     private val _screenStack = MutableStateFlow(mutableStateListOf<ScreenInstance>())
     val screenStack = _screenStack.asStateFlow()

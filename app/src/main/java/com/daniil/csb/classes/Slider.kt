@@ -7,13 +7,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,9 +19,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.ScreenInstance
 import com.daniil.csb.settingui.DefaultContainer
-import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +36,8 @@ class Slider(
     val endPointRange: String? = range.endInclusive.toString(),
     override val title: String,
     override val description: String,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    override var isSaveSetting: Boolean = true
 ) : SettingsSealed<Float>() {
 
     private var _value = MutableStateFlow(innitValue)
@@ -70,6 +69,14 @@ class Slider(
             onValueChangeFinished = { _value.value = sliderState.value.value }
         )
     }
+    override fun saveLogic(): SaveSettingPackage? {
+        if (!isSaveSetting) return null
+        return SaveSettingPackage.FloatPackage(
+            id = id,
+            enable = enabled.value,
+            value = value.value
+        )
+    }
 
 
     override fun fetchValue(): StateFlow<Float> = value
@@ -84,6 +91,7 @@ class Slider(
         var startPointRange: String? = range.start.toString()
         var endPointRange: String? = range.endInclusive.toString()
         var enabled = true
+        var isSaveSetting = true
     }
 
     class Builder(
@@ -92,7 +100,7 @@ class Slider(
     ) {
         val scope = SliderBuilderScope().apply(builderScope)
         fun create(): Slider = with(scope) {
-            return Slider(id, innitValue, range, steps, startPointRange, endPointRange,  title, description, enabled)
+            return Slider(id, innitValue, range, steps, startPointRange, endPointRange,  title, description, enabled, isSaveSetting)
         }
     }
 

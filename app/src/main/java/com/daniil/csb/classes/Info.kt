@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
+import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,8 @@ class Info(
     id: String,
     override val title: String,
     override val description: String,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    override var isSaveSetting: Boolean = false
 ) : SettingsSealed<Unit>() {
     private var _value = MutableStateFlow<Unit>(Unit)
     override val value = _value.asStateFlow()
@@ -36,6 +38,11 @@ class Info(
     }
 
     override fun fetchValue(): StateFlow<Unit> = value
+    override fun saveLogic(): SaveSettingPackage = SaveSettingPackage.UnitPackage(id, enabled.value)
+    override fun loadLogic(pack: SaveSettingPackage?) {
+        if (pack == null) return
+        enabled(pack.enable)
+    }
 
     override var id: String = id
 
@@ -43,6 +50,7 @@ class Info(
         var title = "Info"
         var description = ""
         var enabled = true
+        var isSaveSetting = false
     }
 
     class Builder(
@@ -51,7 +59,7 @@ class Info(
     ) {
         val scope = InfoBuilderScope().apply(builderScope)
         fun create(): Info = with(scope) {
-            return Info(id, title, description, enabled)
+            return Info(id, title, description, enabled, isSaveSetting)
         }
     }
 

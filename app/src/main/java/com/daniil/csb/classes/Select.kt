@@ -28,11 +28,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
+import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.Serializable
 
 class Select(
     override var id: String,
@@ -42,6 +44,7 @@ class Select(
     val alertTitle: String,
     override val description: String,
     enabled: Boolean = true,
+    override var isSaveSetting: Boolean
 ) : SettingsSealed<Select.Option>() {
     private var _value = MutableStateFlow(innitValue)
     override val value = _value.asStateFlow()
@@ -62,10 +65,23 @@ class Select(
         val option = options.find { it.id == optionId }
         _value.value = option ?: return
     }
-
+    override fun saveLogic(): SaveSettingPackage? {
+        if (!isSaveSetting) return null
+        return SaveSettingPackage.StringPackage(
+            id = id,
+            enable = enabled.value,
+            value = value.value.id
+        )
+    }
+    override fun loadLogic(pack: SaveSettingPackage?) {
+        if (pack == null) return
+        changeValue(pack.value as String)
+        enabled(pack.enable)
+    }
 
     override fun fetchValue(): StateFlow<Option> = value
 
+    @Serializable
     data class Option(
         val id: String,
         val title: String,
@@ -73,13 +89,12 @@ class Select(
 
     class SelectBuilderScope() {
         lateinit var innitValue: Select.Option
+        var options = listOf<Select.Option>()
         var title = "Select"
         var alertTitle = "Select item"
         var description = ""
         var enabled = true
-        var options = listOf<Select.Option>()
-
-
+        var isSaveSetting = true
     }
 
     class Builder(
@@ -88,7 +103,7 @@ class Select(
     ) {
         val scope = SelectBuilderScope().apply(builderScope)
         fun create(): Select = with(scope) {
-            return Select(id, options, innitValue, title, alertTitle, description, enabled)
+            return Select(id, options, innitValue, title, alertTitle, description, enabled, isSaveSetting)
         }
     }
 

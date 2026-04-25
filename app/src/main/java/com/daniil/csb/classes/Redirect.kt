@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
+import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.ScreenInstance
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.settingui.DefaultSettingUI
@@ -25,6 +26,7 @@ class Redirect(
     override val description: String,
     enabled: Boolean = true,
     val navigationModel: SettingsNavigationModel,
+    override var isSaveSetting: Boolean
 ): SettingsSealed<ScreenInstance>() {
 
     private var _value = MutableStateFlow(redirectTo)
@@ -38,12 +40,20 @@ class Redirect(
 
     override fun fetchValue(): StateFlow<ScreenInstance> = value
 
+    override fun saveLogic(): SaveSettingPackage? = null
+    override fun loadLogic(pack: SaveSettingPackage?) {
+        if (pack == null) return
+        enabled(pack.enable)
+    }
+
+
     class RedirectBuilderScope() {
         lateinit var redirectTo: ScreenInstance
         lateinit var navigationModel: SettingsNavigationModel
         var title = "Redirect"
         var description = ""
         var enabled = true
+        var isSaveSetting = true
     }
     class Builder(
         val id: String,
@@ -51,7 +61,7 @@ class Redirect(
     ) {
         val scope = RedirectBuilderScope().apply(builderScope)
         fun create(): Redirect = with(scope) {
-            return Redirect(id, redirectTo, title, description, enabled, navigationModel)
+            return Redirect(id, redirectTo, title, description, enabled, navigationModel, isSaveSetting)
         }
     }
 

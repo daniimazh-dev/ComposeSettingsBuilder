@@ -30,6 +30,7 @@ import com.daniil.csb.classes.Select
 import com.daniil.csb.classes.Slider
 import com.daniil.csb.classes.Switch
 import com.daniil.csb.ui.theme.ComposeSettingsBuilderTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -41,7 +42,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         innitSettings()
-        SettingsProvider.innit(settingsNavigationModel)
+        settingsNavigationModel.initialize(this)
+
         setContent {
             ComposeSettingsBuilderTheme {
                 Scaffold(
@@ -62,6 +64,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onPause() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            SettingsProvider.saveData(this@MainActivity)
+        }
+        super.onPause()
     }
 
     fun innitSettings() {
@@ -115,11 +124,18 @@ class MainActivity : ComponentActivity() {
                 title = "Switch"
                 description = "This is test switch ui"
             }.create(),
+            Custom.Builder("custom", Boolean::class) {
+                innitValue = true
+                content = {}
+            }.create()
 
         ).build()
         settingsNavigationModel.setScreensHeap(
             mainScreen, secondScreen
         )
+        lifecycleScope.launch(Dispatchers.IO) {
+            settingsNavigationModel.load(this@MainActivity)
+        }
     }
 }
 

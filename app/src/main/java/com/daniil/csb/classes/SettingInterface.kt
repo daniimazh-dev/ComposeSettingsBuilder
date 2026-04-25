@@ -1,6 +1,7 @@
 package com.daniil.csb.classes
 
 import androidx.compose.runtime.Composable
+import com.daniil.csb.ScreenInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -16,6 +17,5 @@ interface SettingInterface <T> {
     fun changeValue(newValue: T)
     fun fetchValue(): StateFlow<T>
 
-    @Composable
-    fun UI()
+    @Composable fun UI(group: ScreenInstance.Group, position: ItemGroupPosition)
 }

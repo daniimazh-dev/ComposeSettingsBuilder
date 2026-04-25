@@ -11,7 +11,7 @@ object SettingsProvider {
 
     fun findById(id: String): SettingsSealed<*> {
         val setting = navigationModel.screenHeap.value
-            .flatMap { it.settings }
+            .flatMap { it.settings.values }.flatten()
             .find { it.id == id } ?: error("Setting $id not found")
         return setting
     }

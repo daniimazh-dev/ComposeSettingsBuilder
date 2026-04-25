@@ -1,46 +1,51 @@
 package com.daniil.csb.classes
 
-import androidx.annotation.IntRange
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.daniil.csb.ScreenInstance
 import com.daniil.csb.settingui.DefaultContainer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 class Slider(
-    id: String,
+    override var id: String,
     innitValue: Float,
     val range: ClosedFloatingPointRange<Float>,
     val steps: Int,
+    val startPointRange: String? = range.start.toString(),
+    val endPointRange: String? = range.endInclusive.toString(),
     override val title: String,
     override val description: String,
     enabled: Boolean = true
 ) : SettingsSealed<Float>() {
-    override var id: String = id
 
     private var _value = MutableStateFlow(innitValue)
     override val value = _value.asStateFlow()
 
 
-    var sliderState: MutableState<SliderState> =  mutableStateOf(
+    var sliderState: MutableState<SliderState> = mutableStateOf(
         SliderState(
             value = innitValue,
             steps = steps,
@@ -76,6 +81,8 @@ class Slider(
         var steps = 0
         var title = "Slider"
         var description = ""
+        var startPointRange: String? = range.start.toString()
+        var endPointRange: String? = range.endInclusive.toString()
         var enabled = true
     }
 
@@ -85,32 +92,67 @@ class Slider(
     ) {
         val scope = SliderBuilderScope().apply(builderScope)
         fun create(): Slider = with(scope) {
-            return Slider(id, innitValue, range, steps, title, description, enabled)
+            return Slider(id, innitValue, range, steps, startPointRange, endPointRange,  title, description, enabled)
         }
     }
 
 
-
     @Composable
-    override fun UI() {
-        val enabled by this.enabled.collectAsState()
+    override fun UI(group: ScreenInstance.Group, position: ItemGroupPosition) {
         val value by this.value.collectAsState()
+        val enabled by this.enabled.collectAsState()
         DefaultContainer(
             modifier = Modifier,
-            columnMode = true,
             enabled = enabled,
-            title = { Text(title) },
-            description = {
-                Text(description)
-            },
-            display = {
+            itemGroupPosition = position,
+            onClick = {}
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+
+                ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val titleStyle = MaterialTheme.typography.titleMedium
+                        if (!title.isBlank()) Text(text = title, style = titleStyle)
+                        val descriptionStyle = MaterialTheme.typography.labelSmall
+                            .copy(color = MaterialTheme.colorScheme.outline)
+                        if (!description.isBlank()) Text(
+                            text = description,
+                            style = descriptionStyle
+                        )
+                    }
+                }
+
                 Slider(
+                    modifier = Modifier.fillMaxWidth(),
                     state = sliderState.value,
                     enabled = enabled,
                 )
-            },
-            onClick = { }
-        )
+                if (startPointRange != null && endPointRange != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        val descriptionStyle = MaterialTheme.typography.labelSmall
+                            .copy(color = MaterialTheme.colorScheme.outline)
+                        Text(text = startPointRange.orEmpty(), style = descriptionStyle)
+                        Text(text = endPointRange.orEmpty(), style = descriptionStyle)
+                    }
+                }
+
+            }
+        }
+
     }
 
 }

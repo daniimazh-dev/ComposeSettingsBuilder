@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.daniil.csb.classes.ItemGroupPosition
 import com.daniil.csb.classes.Redirect
 import com.daniil.csb.classes.Switch
 
@@ -100,10 +103,34 @@ fun SettingsScreenContainer(
             Spacer(Modifier.height(8.dp))
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(items = settings) { item ->
-                    item.UI()
+                settings.keys.forEach { key ->
+                    item {
+                        if (!key.hide) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = key.name,
+                                    maxLines = 1,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+
+                        }
+                    }
+                    val group = settings[key] ?: return@forEach
+                    itemsIndexed(group) { index, setting ->
+                        val groupPosition = when {
+                            group.size == 1 -> ItemGroupPosition.None
+                            index == group.size - 1 -> ItemGroupPosition.Last
+                            index == 0 -> ItemGroupPosition.First
+                            else -> ItemGroupPosition.Default
+                        }
+                        setting.UI(key, groupPosition)
+                    }
                 }
             }
         }

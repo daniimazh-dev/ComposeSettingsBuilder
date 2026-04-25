@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 class SettingsNavigationModel : ViewModel() {
 
     private var _screenHeap = MutableStateFlow(listOf<ScreenInstance>())
+    val screenHeap = _screenHeap.asStateFlow()
 
     fun setScreensHeap(
         vararg screen: ScreenInstance
@@ -19,7 +20,7 @@ class SettingsNavigationModel : ViewModel() {
         _currentScreen.value = screen[0]
     }
 
-    val screenHeap = _screenHeap.asStateFlow()
+
 
     private val _screenStack = MutableStateFlow(mutableStateListOf<ScreenInstance>())
     val screenStack = _screenStack.asStateFlow()

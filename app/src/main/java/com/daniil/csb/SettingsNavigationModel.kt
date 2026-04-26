@@ -1,10 +1,14 @@
 package com.daniil.csb
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
+import com.daniil.csb.screens.AbstractScreen
+import com.daniil.csb.screens.ScreenInstance
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
@@ -27,19 +31,19 @@ class SettingsNavigationModel : ViewModel() {
     lateinit var config: CSBConfig
 
     fun initialize(context: Context) {
-        SettingsProvider.innit(this)
         val json = context.assets.open("csb/csb_config.json").bufferedReader().use { it.readText() }
         val config = Json.decodeFromString<CSBConfig>(json)
         this.config = config
+        SettingsProvider.innit(this)
     }
 
     private val _screenStack = MutableStateFlow(mutableStateListOf<ScreenInstance>())
     val screenStack = _screenStack.asStateFlow()
 
 
+
     private var _currentScreen = MutableStateFlow<ScreenInstance?>(null)
     val currentScreen = _currentScreen.asStateFlow()
-
     var lastNavigateAction = MutableStateFlow(LastNavigateAction.Go)
         private set
     enum class LastNavigateAction {
@@ -52,6 +56,7 @@ class SettingsNavigationModel : ViewModel() {
     }
 
     fun goToScreen(screenInstance: ScreenInstance) {
+        if (screenInstance is AbstractScreen) error("Cannot go to abstract screen")
         if (screenStack.value.find { it.id == screenInstance.id } != null) return
         _currentScreen.update { screenInstance }
         _screenStack.value.add(screenInstance)

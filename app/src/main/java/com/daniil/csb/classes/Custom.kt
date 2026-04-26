@@ -6,7 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.ScreenInstance
+import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +22,7 @@ class Custom<T : Any>(
     override var isSaveSetting: Boolean,
     val ignoreGroupClip: Boolean = false,
     val onClick: () -> Unit,
-    val content: @Composable () -> Unit,
+    val content: (@Composable () -> Unit)?,
     val clazz: KClass<T>
 ) : SettingsSealed<T>() {
     private var _value = MutableStateFlow(innitValue)
@@ -57,7 +57,7 @@ class Custom<T : Any>(
 
     class CustomBuilderScope<T>() {
         var innitValue: T? = null
-        lateinit var content: @Composable () -> Unit
+        var content: (@Composable () -> Unit)? = null
         var ignoreGroupClip: Boolean = false
         var onClick: () -> Unit = {}
         var title = "Custom"
@@ -69,7 +69,7 @@ class Custom<T : Any>(
     class Builder<T : Any>(
         val id: String,
         val clazz: KClass<T>,
-        builderScope: CustomBuilderScope<T>.() -> Unit
+        builderScope: CustomBuilderScope<T>.() -> Unit = {}
     ) {
         val scope = CustomBuilderScope<T>().apply(builderScope)
         fun create(): Custom<T> = with(scope) {
@@ -79,9 +79,9 @@ class Custom<T : Any>(
 
 
     @Composable
-    override fun UI(group: ScreenInstance.Group, position: ItemGroupPosition) {
+    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+        if (content == null) return
         val enabled by this.enabled.collectAsState()
-
         DefaultContainer(
             modifier = Modifier.fillMaxWidth(),
             enabled = enabled,

@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.ScreenInstance
+import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -96,7 +96,7 @@ class Slider(
 
     class Builder(
         val id: String,
-        builderScope: SliderBuilderScope.() -> Unit
+        builderScope: SliderBuilderScope.() -> Unit = {}
     ) {
         val scope = SliderBuilderScope().apply(builderScope)
         fun create(): Slider = with(scope) {
@@ -106,7 +106,7 @@ class Slider(
 
 
     @Composable
-    override fun UI(group: ScreenInstance.Group, position: ItemGroupPosition) {
+    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
         val value by this.value.collectAsState()
         val enabled by this.enabled.collectAsState()
         DefaultContainer(

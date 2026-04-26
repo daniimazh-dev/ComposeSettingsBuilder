@@ -7,7 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.ScreenInstance
+import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,7 +57,7 @@ class Switch(
 
     class Builder(
         val id: String,
-        builderScope: SwitchBuilderScope.() -> Unit
+        builderScope: SwitchBuilderScope.() -> Unit = {}
     ) {
         val scope = SwitchBuilderScope().apply(builderScope)
         fun create(): Switch = with(scope) {
@@ -66,7 +66,7 @@ class Switch(
     }
 
     @Composable
-    override fun UI(group: ScreenInstance.Group, position: ItemGroupPosition) {
+    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
 

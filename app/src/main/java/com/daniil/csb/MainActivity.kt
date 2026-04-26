@@ -1,6 +1,7 @@
 package com.daniil.csb
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,21 +15,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.daniil.csb.classes.ColorPicker
 import com.daniil.csb.classes.Custom
 import com.daniil.csb.classes.Info
 import com.daniil.csb.classes.Redirect
 import com.daniil.csb.classes.Select
 import com.daniil.csb.classes.Slider
 import com.daniil.csb.classes.Switch
+import com.daniil.csb.screens.AbstractScreen
+import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.ui.theme.ComposeSettingsBuilderTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,8 +47,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        innitSettings()
         settingsNavigationModel.initialize(this)
+        innitSettings()
+
 
         setContent {
             ComposeSettingsBuilderTheme {
@@ -105,7 +112,7 @@ class MainActivity : ComponentActivity() {
             Redirect.Builder("redirect") {
                 title = "Redirect"
                 description = "This is text redirect"
-                redirectTo = secondScreen
+                redirectToId = "RedirectTest"
                 navigationModel = settingsNavigationModel
             }.create(),
             Select.Builder("select") {
@@ -124,14 +131,18 @@ class MainActivity : ComponentActivity() {
                 title = "Switch"
                 description = "This is test switch ui"
             }.create(),
-            Custom.Builder("custom", Boolean::class) {
-                innitValue = true
-                content = {}
+            ColorPicker.Builder("color") {
+                initValue = Color.Blue
             }.create()
-
         ).build()
+        val abstract = AbstractScreen.Builder("Abstract")
+            .setContent(
+                Switch.Builder("switch3") { innitValue = true }.create()
+            )
+            .build()
+
         settingsNavigationModel.setScreensHeap(
-            mainScreen, secondScreen
+            mainScreen, secondScreen, abstract
         )
         lifecycleScope.launch(Dispatchers.IO) {
             settingsNavigationModel.load(this@MainActivity)

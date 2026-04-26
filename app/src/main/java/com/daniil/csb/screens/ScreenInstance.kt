@@ -1,7 +1,6 @@
-package com.daniil.csb
+package com.daniil.csb.screens
 
 import com.daniil.csb.classes.SettingsSealed
-
 
 open class ScreenInstance() {
     lateinit var id: String
@@ -36,8 +35,7 @@ open class ScreenInstance() {
         val name: String,
         val hide: Boolean = false
     )
-
-
+    
     class Builder(
         val id: String
     ) {

@@ -29,7 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.ScreenInstance
+import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +65,7 @@ class Select(
         val option = options.find { it.id == optionId }
         _value.value = option ?: return
     }
+
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.StringPackage(
@@ -73,6 +74,7 @@ class Select(
             value = value.value.id
         )
     }
+
     override fun loadLogic(pack: SaveSettingPackage?) {
         if (pack == null) return
         changeValue(pack.value as String)
@@ -89,7 +91,7 @@ class Select(
 
     class SelectBuilderScope() {
         lateinit var innitValue: Select.Option
-        var options = listOf<Select.Option>()
+        lateinit var options: List<Select.Option>
         var title = "Select"
         var alertTitle = "Select item"
         var description = ""
@@ -103,12 +105,21 @@ class Select(
     ) {
         val scope = SelectBuilderScope().apply(builderScope)
         fun create(): Select = with(scope) {
-            return Select(id, options, innitValue, title, alertTitle, description, enabled, isSaveSetting)
+            return Select(
+                id,
+                options,
+                innitValue,
+                title,
+                alertTitle,
+                description,
+                enabled,
+                isSaveSetting
+            )
         }
     }
 
     @Composable
-    override fun UI(group: ScreenInstance.Group, position: ItemGroupPosition) {
+    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
@@ -120,31 +131,26 @@ class Select(
             title = { if (!title.isBlank()) Text(title) },
             description = { if (!description.isBlank()) Text(description) },
             display = {
-                Box(
-                    modifier = Modifier
+                Row(
+                    modifier = Modifier,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(value.title)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        FilledIconButton(
-                            enabled = enabled,
-                            colors = IconButtonDefaults.iconButtonColors().copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                            onClick = {
-                                alertOpen = true
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.dropdown_arrow),
-                                contentDescription = "dropdown arrow"
-                            )
+                    Text(value.title)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    FilledIconButton(
+                        enabled = enabled,
+                        colors = IconButtonDefaults.iconButtonColors()
+                            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        onClick = {
+                            alertOpen = true
                         }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.dropdown_arrow),
+                            contentDescription = "dropdown arrow"
+                        )
                     }
-
                 }
-
             },
             onClick = { alertOpen = true }
         )

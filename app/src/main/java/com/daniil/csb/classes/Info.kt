@@ -10,7 +10,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.ScreenInstance
+import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,7 +55,7 @@ class Info(
 
     class Builder(
         val id: String,
-        builderScope: InfoBuilderScope.() -> Unit
+        builderScope: InfoBuilderScope.() -> Unit = {}
     ) {
         val scope = InfoBuilderScope().apply(builderScope)
         fun create(): Info = with(scope) {
@@ -64,7 +64,7 @@ class Info(
     }
 
     @Composable
-    override fun UI(group: ScreenInstance.Group, position: ItemGroupPosition) {
+    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
         val enabled by this.enabled.collectAsState()
 
         DefaultSettingUI(

@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.ScreenInstance
+import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,26 +21,31 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class Redirect(
     override var id: String,
-    redirectTo: ScreenInstance,
+    val redirectToId: String,
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
     val navigationModel: SettingsNavigationModel,
     override var isSaveSetting: Boolean
 ): SettingsSealed<ScreenInstance>() {
-
-    private var _value = MutableStateFlow(redirectTo)
-    override val value = _value.asStateFlow()
+    constructor(
+        id: String,
+        redirectTo: ScreenInstance,
+        title: String,
+        description: String,
+        enabled: Boolean = true,
+        navigationModel: SettingsNavigationModel,
+        isSaveSetting: Boolean
+    ): this(id, redirectTo.id, title, description, enabled, navigationModel, isSaveSetting)
+    override val value = MutableStateFlow(ScreenInstance())
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
 
     override fun enabled(state: Boolean) { _enable.value = state }
-    override fun changeValue(newValue: ScreenInstance) { _value.value = newValue }
+    override fun changeValue(newValue: ScreenInstance) { error("Cannot change redirect value") }
+    override fun fetchValue(): StateFlow<ScreenInstance> { error("Cannot get redirect value") }
 
-    override fun fetchValue(): StateFlow<ScreenInstance> = value
-
-    override fun saveLogic(): SaveSettingPackage? = null
     override fun loadLogic(pack: SaveSettingPackage?) {
         if (pack == null) return
         enabled(pack.enable)
@@ -48,7 +53,8 @@ class Redirect(
 
 
     class RedirectBuilderScope() {
-        lateinit var redirectTo: ScreenInstance
+        var redirectTo: ScreenInstance? = null
+        var redirectToId: String? = null
         lateinit var navigationModel: SettingsNavigationModel
         var title = "Redirect"
         var description = ""
@@ -61,16 +67,20 @@ class Redirect(
     ) {
         val scope = RedirectBuilderScope().apply(builderScope)
         fun create(): Redirect = with(scope) {
-            return Redirect(id, redirectTo, title, description, enabled, navigationModel, isSaveSetting)
+            val res = when {
+                redirectToId != null -> Redirect(id, redirectToId!! , title, description, enabled, navigationModel, isSaveSetting)
+                redirectTo != null -> Redirect(id, redirectTo!!, title, description, enabled, navigationModel, isSaveSetting)
+                else -> error("Not found redirect parameter")
+            }
+            return res
         }
     }
 
 
 
     @Composable
-    override fun UI(group: ScreenInstance.Group, position: ItemGroupPosition) {
+    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
         val enabled by this.enabled.collectAsState()
-        val value by this.value.collectAsState()
         DefaultSettingUI(
             modifier = Modifier,
             itemGroupPosition = position,
@@ -82,18 +92,24 @@ class Redirect(
                     enabled = enabled,
                     colors = IconButtonDefaults.iconButtonColors().copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                     onClick = {
-                        navigationModel.goToScreen(value)
+                        navigationModel.goToScreen(
+                            navigationModel.findScreenById(redirectToId)
+                                ?: error("Not found redirect screen")
+                        )
                     }
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.arrow_right),
-                        contentDescription = "Go to $value"
+                        contentDescription = "Go to $redirectToId"
                     )
                 }
 
             },
             onClick = {
-                navigationModel.goToScreen(value)
+                navigationModel.goToScreen(
+                    navigationModel.findScreenById(redirectToId)
+                        ?: error("Not found redirect screen")
+                )
             }
         )
     }

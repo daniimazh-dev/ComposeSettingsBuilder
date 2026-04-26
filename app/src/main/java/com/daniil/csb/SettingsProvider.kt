@@ -1,7 +1,6 @@
 package com.daniil.csb
 
 import android.content.Context
-import android.util.Log
 import com.daniil.csb.classes.SettingsSealed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -11,9 +10,11 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 object SettingsProvider {
+    private var PATH_DIRECTION = "csb"
     lateinit var navigationModel: SettingsNavigationModel
     fun innit(model: SettingsNavigationModel) {
         navigationModel = model
+        PATH_DIRECTION = model.config.storageDirection
     }
 
     fun findById(id: String): SettingsSealed<*> {
@@ -24,7 +25,6 @@ object SettingsProvider {
     }
 
     inline fun <reified T> getValue(id: String): StateFlow<T> {
-
         val setting = findById(id)
         if (setting.value.value is T) {
             @Suppress("UNCHECKED_CAST")
@@ -47,9 +47,14 @@ object SettingsProvider {
     }
 
     suspend fun loadData(context: Context) = withContext(Dispatchers.IO) {
+        val patch = File(context.filesDir, PATH_DIRECTION)
+        if (!patch.exists()) {
+            patch.mkdir()
+        }
+
         navigationModel.screenHeap.value.forEach { screenInstance ->
 
-            val file = File(context.filesDir, "csb_${screenInstance.id}")
+            val file = File(patch, "csb_${screenInstance.id}")
             if (!file.exists()) return@forEach
             val json = file.bufferedReader().use { it.readText() }
             val packages = Json.decodeFromString<List<SaveSettingPackage>>(json)
@@ -63,8 +68,13 @@ object SettingsProvider {
     }
 
     suspend fun saveData(context: Context) = withContext(Dispatchers.IO) {
+        val patch = File(context.filesDir, PATH_DIRECTION)
+        if (!patch.exists()) {
+            patch.mkdir()
+        }
+
         navigationModel.screenHeap.value.forEach { screenInstance ->
-            val file = File(context.filesDir, "csb_${screenInstance.id}")
+            val file = File(patch, "csb_${screenInstance.id}")
             if (!file.exists()) {
                 file.createNewFile()
             }

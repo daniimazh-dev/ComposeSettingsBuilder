@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.util.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,13 +17,13 @@ import kotlin.apply
 
 class Switch(
     override var id: String,
-    innitValue: Boolean,
+    val defaultValue: Boolean,
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean = true
 ) : SettingsSealed<Boolean>() {
-    private var _value = MutableStateFlow(innitValue)
+    private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
     private var _enable = MutableStateFlow(enabled)
@@ -36,8 +37,7 @@ class Switch(
         _value.value = newValue
     }
 
-    override fun fetchValue(): StateFlow<Boolean> = value
-
+    override fun resetToDefault() { changeValue(defaultValue) }
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.BooleanPackage(
@@ -46,6 +46,8 @@ class Switch(
             value = value.value
         )
     }
+
+
 
     class SwitchBuilderScope() {
         var innitValue = false
@@ -65,13 +67,16 @@ class Switch(
         }
     }
 
+    override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
         val enabled by this.enabled.collectAsState()
+        val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()
 
         DefaultSettingUI(
             modifier = Modifier,
+            focusState = focusState,
             itemGroupPosition = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },

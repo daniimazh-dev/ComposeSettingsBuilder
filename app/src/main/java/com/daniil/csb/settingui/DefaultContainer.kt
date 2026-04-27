@@ -9,16 +9,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.classes.ItemGroupPosition
+import com.daniil.csb.classes.util.ItemGroupPosition
+import kotlinx.coroutines.delay
 
 @Composable
 fun DefaultContainer(
     modifier: Modifier = Modifier,
+    focusState: Boolean = false,
     itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -47,45 +54,16 @@ fun DefaultContainer(
         )
         ItemGroupPosition.None -> shape
     }
+    val defaultColor = MaterialTheme.colorScheme.surfaceContainer
+    val focusColor = MaterialTheme.colorScheme.surfaceContainerHighest
+
     Box(
         modifier = Modifier
             .clip(groupClip)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .background(if (focusState) focusColor else defaultColor)
             .then(if (enabled) modifier.clickable { onClick() }
             else modifier.alpha(0.5f))
     ) {
         content()
-    }
-}
-
-
-@Composable
-fun RowOrColumn(
-    modifier: Modifier = Modifier,
-    columnMode: Boolean,
-    // Row
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    verticalAlignment: Alignment.Vertical = Alignment.Top,
-    // Column
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
-    content: @Composable () -> Unit
-) {
-    if (columnMode) {
-        Column(
-            modifier = modifier,
-            verticalArrangement = verticalArrangement,
-            horizontalAlignment = horizontalAlignment
-        ) {
-            content()
-        }
-    } else {
-        Row(
-            modifier = modifier,
-            horizontalArrangement = horizontalArrangement,
-            verticalAlignment = verticalAlignment
-        ) {
-            content()
-        }
     }
 }

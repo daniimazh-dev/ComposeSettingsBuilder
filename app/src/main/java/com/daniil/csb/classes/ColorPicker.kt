@@ -1,6 +1,7 @@
 package com.daniil.csb.classes
 
 
+import android.content.ClipData
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -38,23 +40,22 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -63,17 +64,19 @@ import com.daniil.csb.FancyTabBar
 import com.daniil.csb.FancyTabBarData
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.util.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import android.graphics.Color as AndroidColor
 
 class ColorPicker(
     override var id: String,
-    innitValue: Color,
+    val defaultValue: Color,
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
@@ -81,15 +84,15 @@ class ColorPicker(
 ) : SettingsSealed<Color>() {
     constructor(
         id: String,
-        innitValueInt: Int,
+        defaultValueInt: Int,
         title: String,
         description: String,
         enabled: Boolean = true,
         isSaveSetting: Boolean = true
-    ) : this(id, innitValue = Color(innitValueInt), title, description, enabled, isSaveSetting)
+    ) : this(id, defaultValue = Color(defaultValueInt), title, description, enabled, isSaveSetting)
 
 
-    private var _value = MutableStateFlow(innitValue)
+    private var _value = MutableStateFlow(this@ColorPicker.defaultValue)
     override val value = _value.asStateFlow()
 
     private var _enable = MutableStateFlow(enabled)
@@ -103,7 +106,7 @@ class ColorPicker(
         _value.value = newValue
     }
 
-    override fun fetchValue(): StateFlow<Color> = value
+    override fun resetToDefault() { changeValue(this@ColorPicker.defaultValue) }
 
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
@@ -121,8 +124,8 @@ class ColorPicker(
     }
 
     class ColorPickerBuilderScope() {
-        var initValue: Color? = null
-        var initValueInt: Int? = null
+        var defaultValue: Color? = null
+        var defaultValueInt: Int? = null
         var title = "Color picker"
         var description = ""
         var enabled = true
@@ -136,18 +139,18 @@ class ColorPicker(
         val scope = ColorPickerBuilderScope().apply(builderScope)
         fun create(): ColorPicker = with(scope) {
             val res = when {
-                initValueInt != null -> ColorPicker(
+                defaultValueInt != null -> ColorPicker(
                     id,
-                    initValueInt!!,
+                    defaultValueInt!!,
                     title,
                     description,
                     enabled,
                     isSaveSetting
                 )
 
-                initValue != null -> ColorPicker(
+                defaultValue != null -> ColorPicker(
                     id,
-                    initValue!!,
+                    defaultValue!!,
                     title,
                     description,
                     enabled,
@@ -160,14 +163,17 @@ class ColorPicker(
         }
     }
 
+    override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+        val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
 
         DefaultSettingUI(
             modifier = Modifier,
+            focusState = focusState,
             itemGroupPosition = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
@@ -182,8 +188,8 @@ class ColorPicker(
                     }
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.dropdown_arrow),
-                        contentDescription = "dropdown arrow"
+                        painter = painterResource(R.drawable.palette),
+                        contentDescription = "Open picker"
                     )
                 }
             },
@@ -226,6 +232,7 @@ private fun ColorPickerDialog(
     onDismissRequest: () -> Unit,
     onColorSelected: (Color) -> Unit,
 ) {
+    val coroutine = rememberCoroutineScope()
     var pickerMode by remember {
         mutableStateOf(PickerMode.Choice)
     }
@@ -326,7 +333,11 @@ private fun ColorPickerDialog(
             Text("Select color")
         },
         text = {
-            Column {
+            Column(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .verticalScroll(rememberScrollState()),
+            ) {
 
                 FancyTabBar(
                     modifier = Modifier.fillMaxWidth(),
@@ -363,6 +374,7 @@ private fun ColorPickerDialog(
                 Spacer(Modifier.height(16.dp))
 
                 AnimatedContent(
+                    modifier = Modifier.padding(bottom = 4.dp),
                     targetState = pickerMode,
                     transitionSpec = {
                         if (pickerMode == PickerMode.Choice) {
@@ -380,7 +392,7 @@ private fun ColorPickerDialog(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            val clipboardManager = LocalClipboardManager.current
+                            val clipboardManager = LocalClipboard.current
 
                             val hex by remember(color) {
                                 mutableStateOf(
@@ -390,58 +402,63 @@ private fun ColorPickerDialog(
                             }
                             Text(
                                 modifier = Modifier.clickable {
-                                    clipboardManager.setText(AnnotatedString("#$hex"))
+                                    coroutine.launch {
+                                        val data = ClipData.newPlainText("color", "#$hex")
+                                        clipboardManager.setClipEntry(ClipEntry(data))
+                                    }
                                 },
                                 text = "HEX: #$hex",
                                 style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.Center
                             )
 
-
-                            CustomGradientSlider(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(24.dp),
-                                value = hue / 360f,
-                                onValueChange = {
-                                    updateFromHSV(
-                                        newHue = it * 360f,
-                                        newSatLight = satLight
-                                    )
-                                },
-                                gradient = Brush.horizontalGradient(
-                                    listOf(
-                                        Color.Red,
-                                        Color.Yellow,
-                                        Color.Green,
-                                        Color.Cyan,
-                                        Color.Blue,
-                                        Color.Magenta,
-                                        Color.Red
-                                    )
-                                )
-                            )
-                            Spacer(modifier = Modifier)
-
-                            CustomGradientSlider(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(24.dp),
-                                value = satLight,
-                                onValueChange = {
-                                    updateFromHSV(
-                                        newHue = hue,
-                                        newSatLight = it
-                                    )
-                                },
-                                gradient = Brush.horizontalGradient(
-                                    listOf(
-                                        Color.White,
-                                        hsvToColor(hue, 1f, 1f),
-                                        Color.Black
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                CustomGradientSlider(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(24.dp),
+                                    value = hue / 360f,
+                                    onValueChange = {
+                                        updateFromHSV(
+                                            newHue = it * 360f,
+                                            newSatLight = satLight
+                                        )
+                                    },
+                                    gradient = Brush.horizontalGradient(
+                                        listOf(
+                                            Color.Red,
+                                            Color.Yellow,
+                                            Color.Green,
+                                            Color.Cyan,
+                                            Color.Blue,
+                                            Color.Magenta,
+                                            Color.Red
+                                        )
                                     )
                                 )
-                            )
+                                CustomGradientSlider(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(24.dp),
+                                    value = satLight,
+                                    onValueChange = {
+                                        updateFromHSV(
+                                            newHue = hue,
+                                            newSatLight = it
+                                        )
+                                    },
+                                    gradient = Brush.horizontalGradient(
+                                        listOf(
+                                            Color.White,
+                                            hsvToColor(hue, 1f, 1f),
+                                            Color.Black
+                                        )
+                                    )
+                                )
+                            }
+
                         }
                     } else {
 
@@ -511,6 +528,7 @@ private fun ColorPickerDialog(
                                     bText
                                 )
                             }
+
                         }
                     }
                 }
@@ -567,8 +585,8 @@ private fun CustomGradientSlider(
             modifier = Modifier
                 .offset {
                     IntOffset(
-                        (thumbX - thumbRadius.toPx()).roundToInt(),
-                        (constraints.maxHeight / 2 - thumbRadius.toPx()).roundToInt()
+                        (thumbX - thumbRadius.toPx()).roundToInt(), 0
+//                        (constraints.maxHeight / 2 - thumbRadius.toPx()).roundToInt()
                     )
                 }
                 .size(thumbRadius * 1.8f)

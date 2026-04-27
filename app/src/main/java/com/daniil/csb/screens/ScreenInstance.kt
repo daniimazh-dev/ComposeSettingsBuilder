@@ -5,7 +5,7 @@ import com.daniil.csb.classes.SettingsSealed
 open class ScreenInstance() {
     lateinit var id: String
     lateinit var title: String
-    lateinit var settings: Map<Group, List<SettingsSealed<*>>>
+    open lateinit var settings: Map<Group, List<SettingsSealed<*>>>
     constructor(
         id: String,
         title: String = "Example screen",

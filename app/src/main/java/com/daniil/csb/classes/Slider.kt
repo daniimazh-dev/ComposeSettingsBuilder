@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.util.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 @OptIn(ExperimentalMaterial3Api::class)
 class Slider(
     override var id: String,
-    innitValue: Float,
+    val defaultValue: Float,
     val range: ClosedFloatingPointRange<Float>,
     val steps: Int,
     val startPointRange: String? = range.start.toString(),
@@ -40,13 +41,13 @@ class Slider(
     override var isSaveSetting: Boolean = true
 ) : SettingsSealed<Float>() {
 
-    private var _value = MutableStateFlow(innitValue)
+    private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
 
     var sliderState: MutableState<SliderState> = mutableStateOf(
         SliderState(
-            value = innitValue,
+            value = defaultValue,
             steps = steps,
             valueRange = range,
             onValueChangeFinished = { _value.value = sliderState.value.value }
@@ -69,6 +70,8 @@ class Slider(
             onValueChangeFinished = { _value.value = sliderState.value.value }
         )
     }
+    override fun resetToDefault() { changeValue(defaultValue) }
+
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.FloatPackage(
@@ -79,11 +82,9 @@ class Slider(
     }
 
 
-    override fun fetchValue(): StateFlow<Float> = value
-
 
     class SliderBuilderScope() {
-        var innitValue = 0f
+        var defaultValue = 0f
         var range: ClosedFloatingPointRange<Float> = 0f..1f
         var steps = 0
         var title = "Slider"
@@ -100,17 +101,19 @@ class Slider(
     ) {
         val scope = SliderBuilderScope().apply(builderScope)
         fun create(): Slider = with(scope) {
-            return Slider(id, innitValue, range, steps, startPointRange, endPointRange,  title, description, enabled, isSaveSetting)
+            return Slider(id, defaultValue, range, steps, startPointRange, endPointRange,  title, description, enabled, isSaveSetting)
         }
     }
 
-
+    override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
-        val value by this.value.collectAsState()
+        val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
+
         DefaultContainer(
             modifier = Modifier,
+            focusState = focusState,
             enabled = enabled,
             itemGroupPosition = position,
             onClick = {}

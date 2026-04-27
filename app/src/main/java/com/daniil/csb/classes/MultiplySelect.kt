@@ -15,9 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
@@ -32,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,17 +48,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 
-class Select(
+
+class MultiplySelect(
     override var id: String,
     val options: List<Option>,
-    val defaultValue: Option,
+    val defaultValue: List<Option>,
     override val title: String,
     val alertTitle: String,
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean
-) : SettingsSealed<Select.Option>() {
-    private var _value = MutableStateFlow(this@Select.defaultValue)
+) : SettingsSealed<List<MultiplySelect.Option>>() {
+    private var _value = MutableStateFlow(this@MultiplySelect.defaultValue)
     override val value = _value.asStateFlow()
 
     private var _enable = MutableStateFlow(enabled)
@@ -68,30 +69,36 @@ class Select(
         _enable.value = state
     }
 
-    override fun changeValue(newValue: Option) {
-        if (!options.contains(newValue)) return
+    override fun changeValue(newValue: List<Option>) {
+        if (!newValue.all { options.contains(it) }) return
         _value.value = newValue
+    }
+    @JvmName(name = "ChangeValueWitchId")
+    fun changeValue(optionIds: List<String>) {
+        val option = options.filter { it.id in optionIds }
+        _value.value = option
     }
 
     fun changeValue(optionId: String) {
-        val option = options.find { it.id == optionId }
-        _value.value = option ?: return
+        val option = options.find { it.id == optionId } ?: return
+        _value.value = value.value + listOf(option)
     }
 
-    override fun resetToDefault() { changeValue(this@Select.defaultValue) }
+
+    override fun resetToDefault() { changeValue(this@MultiplySelect.defaultValue) }
 
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
-        return SaveSettingPackage.StringPackage(
+        return SaveSettingPackage.StringListPackage(
             id = id,
             enable = enabled.value,
-            value = value.value.id
+            value = value.value.map { it.id }
         )
     }
 
     override fun loadLogic(pack: SaveSettingPackage?) {
         if (pack == null) return
-        changeValue(pack.value as String)
+        changeValue(options.filter { it.id in pack.value as List<*> })
         enabled(pack.enable)
     }
 
@@ -103,11 +110,11 @@ class Select(
         val title: String,
     )
 
-    class SelectBuilderScope() {
-        lateinit var defaultValue: Select.Option
-        lateinit var options: List<Select.Option>
-        var title = "Select"
-        var alertTitle = "Select item"
+    class MultiplySelectBuilderScope() {
+        lateinit var defaultValue: List<MultiplySelect.Option>
+        lateinit var options: List<MultiplySelect.Option>
+        var title = "Multiply Select"
+        var alertTitle = "Select multiple"
         var description = ""
         var enabled = true
         var isSaveSetting = true
@@ -115,11 +122,11 @@ class Select(
 
     class Builder(
         val id: String,
-        builderScope: SelectBuilderScope.() -> Unit
+        builderScope: MultiplySelectBuilderScope.() -> Unit
     ) {
-        val scope = SelectBuilderScope().apply(builderScope)
-        fun create(): Select = with(scope) {
-            return Select(
+        val scope = MultiplySelectBuilderScope().apply(builderScope)
+        fun create(): MultiplySelect = with(scope) {
+            return MultiplySelect(
                 id,
                 options,
                 defaultValue,
@@ -138,8 +145,7 @@ class Select(
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
-        val value by this.value.collectAsState()
-        var selectId by retain(alertOpen) { mutableStateOf<String>(value.id) }
+        val selectList = retain { value.value.toMutableStateList() }
 
         DefaultSettingUI(
             modifier = Modifier,
@@ -153,14 +159,6 @@ class Select(
                     modifier = Modifier,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        modifier = Modifier
-                            .widthIn(max = 112.dp),
-                        text = value.title,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
                     FilledIconButton(
                         enabled = enabled,
                         colors = IconButtonDefaults.iconButtonColors()
@@ -187,46 +185,58 @@ class Select(
 
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(rememberScrollState()),
+                            .verticalScroll(rememberScrollState())
+                            .fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        options.forEach {
+                        options.forEach { option ->
 
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(MaterialTheme.shapes.medium)
                                     .clickable {
-                                        selectId = it.id
+                                        if (option in selectList) {
+                                            selectList.remove(option)
+                                        } else {
+                                            selectList.add(option)
+                                        }
+
                                     },
                                 verticalAlignment = Alignment.CenterVertically,
 
-                            ) {
+                                ) {
                                 Box(
                                     modifier = Modifier
                                         .padding(8.dp)
                                         .size(22.dp)
-                                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                                        .border(
+                                            2.dp,
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.shapes.small
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Row() {
                                         AnimatedVisibility(
-                                            visible = it.id == selectId,
+                                            visible = option.id in selectList.map { it.id },
                                             exit = scaleOut(),
                                             enter = scaleIn()
                                         ) {
                                             Box(
                                                 modifier = Modifier
                                                     .size(12.dp)
-                                                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.primary,
+                                                        RoundedCornerShape(3.dp)
+                                                    )
                                             )
                                         }
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = it.title,
+                                    text = option.title,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -240,7 +250,7 @@ class Select(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            changeValue(selectId)
+                            changeValue(selectList)
                             alertOpen = false
                         }
                     ) {

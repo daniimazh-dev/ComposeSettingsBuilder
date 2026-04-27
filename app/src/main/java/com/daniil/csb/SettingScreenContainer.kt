@@ -33,7 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.daniil.csb.classes.ItemGroupPosition
+import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.screens.CustomScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +63,7 @@ fun SettingsScreen(
 
         },
     ) { currentScreen ->
+
         val settingsScreenModel: SettingsScreenModel =
             viewModel(key = currentScreen.id) { SettingsScreenModel(currentScreen) }
         val title by settingsScreenModel.title.collectAsState()
@@ -97,6 +99,10 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(8.dp))
+            if (currentScreen is CustomScreen) {
+                currentScreen.content()
+                return@AnimatedContent
+            }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)

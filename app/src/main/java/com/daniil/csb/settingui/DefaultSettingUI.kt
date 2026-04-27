@@ -16,11 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.classes.ItemGroupPosition
+import com.daniil.csb.classes.util.ItemGroupPosition
 
 @Composable
 fun DefaultSettingUI(
     modifier: Modifier = Modifier,
+    focusState: Boolean = false,
     itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None,
     enabled: Boolean = true,
     title: @Composable () -> Unit,
@@ -30,6 +31,7 @@ fun DefaultSettingUI(
 ) {
     DefaultContainer(
         modifier = modifier,
+        focusState = focusState,
         itemGroupPosition = itemGroupPosition,
         enabled = enabled,
         onClick = { onClick() }

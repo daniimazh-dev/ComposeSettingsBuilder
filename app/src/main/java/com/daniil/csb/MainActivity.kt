@@ -1,39 +1,29 @@
 package com.daniil.csb
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.animation.Animatable
-import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.AndroidUiDispatcher
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.daniil.csb.classes.ColorPicker
-import com.daniil.csb.classes.Custom
 import com.daniil.csb.classes.Info
+import com.daniil.csb.classes.MultiplySelect
 import com.daniil.csb.classes.Redirect
 import com.daniil.csb.classes.Select
 import com.daniil.csb.classes.Slider
+import com.daniil.csb.classes.StringData
 import com.daniil.csb.classes.Switch
 import com.daniil.csb.screens.AbstractScreen
+import com.daniil.csb.screens.CustomScreen
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.ui.theme.ComposeSettingsBuilderTheme
 import kotlinx.coroutines.Dispatchers
@@ -96,7 +86,7 @@ class MainActivity : ComponentActivity() {
                         startPointRange = "Slow"
                         endPointRange = "Fast"
                         steps = 0
-                        innitValue = 3f
+                        defaultValue = 3f
                         range = 0f..1f
                     }.create(),
                     Info.Builder("info") {
@@ -112,8 +102,26 @@ class MainActivity : ComponentActivity() {
             Redirect.Builder("redirect") {
                 title = "Redirect"
                 description = "This is text redirect"
+                redirectToId = "customScreen"
+                navigationModel = settingsNavigationModel
+            }.create(),
+            Redirect.Builder("redirect") {
+                title = "Redirect 2"
+                description = "This is text redirect"
+                focus = "info"
                 redirectToId = "RedirectTest"
                 navigationModel = settingsNavigationModel
+            }.create(),
+            MultiplySelect.Builder("multiply select") {
+                val options = listOf(
+                    MultiplySelect.Option(id = "1", title = "Item 1"),
+                    MultiplySelect.Option(id = "2", title = "Item 2"),
+                    MultiplySelect.Option(id = "3", title = "Item 3"),
+                    MultiplySelect.Option(id = "4", title = "Item 4"),
+                )
+                defaultValue = options
+                this.options = options
+
             }.create(),
             Select.Builder("select") {
                 val options = listOf(
@@ -122,9 +130,8 @@ class MainActivity : ComponentActivity() {
                     Select.Option(id = "3", title = "Item 3"),
                     Select.Option(id = "4", title = "Item 4"),
                 )
-                innitValue = options[0]
+                defaultValue = options[0]
                 this.options = options
-
             }.create(),
             Switch.Builder("switch") {
                 innitValue = true
@@ -132,7 +139,10 @@ class MainActivity : ComponentActivity() {
                 description = "This is test switch ui"
             }.create(),
             ColorPicker.Builder("color") {
-                initValue = Color.Blue
+                defaultValue = Color.Blue
+            }.create(),
+            StringData.Builder("stringData") {
+                label = { Text("Test") }
             }.create()
         ).build()
         val abstract = AbstractScreen.Builder("Abstract")
@@ -140,9 +150,15 @@ class MainActivity : ComponentActivity() {
                 Switch.Builder("switch3") { innitValue = true }.create()
             )
             .build()
+        val customScreen = CustomScreen
+            .Builder("customScreen")
+            .setTitle("Custom screen")
+            .setContent {
+            Text("This is custom screen")
+        }.build()
 
         settingsNavigationModel.setScreensHeap(
-            mainScreen, secondScreen, abstract
+            mainScreen, secondScreen, abstract, customScreen
         )
         lifecycleScope.launch(Dispatchers.IO) {
             settingsNavigationModel.load(this@MainActivity)

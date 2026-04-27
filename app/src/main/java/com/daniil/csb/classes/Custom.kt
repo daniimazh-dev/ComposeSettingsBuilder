@@ -6,6 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.util.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +16,7 @@ import kotlin.reflect.KClass
 
 class Custom<T : Any>(
     override var id: String,
-    innitValue: T,
+    val defaultValue: T,
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
@@ -25,13 +26,11 @@ class Custom<T : Any>(
     val content: (@Composable () -> Unit)?,
     val clazz: KClass<T>
 ) : SettingsSealed<T>() {
-    private var _value = MutableStateFlow(innitValue)
+    private var _value = MutableStateFlow(this@Custom.defaultValue)
     override val value = _value.asStateFlow()
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
-
-
 
     override fun enabled(state: Boolean) {
         _enable.value = state
@@ -41,7 +40,8 @@ class Custom<T : Any>(
         _value.value = newValue
     }
 
-    override fun fetchValue(): StateFlow<T> = value
+    override fun resetToDefault() { changeValue(this@Custom.defaultValue) }
+
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         val data = value.value
@@ -56,7 +56,7 @@ class Custom<T : Any>(
     }
 
     class CustomBuilderScope<T>() {
-        var innitValue: T? = null
+        var defaultValue: T? = null
         var content: (@Composable () -> Unit)? = null
         var ignoreGroupClip: Boolean = false
         var onClick: () -> Unit = {}
@@ -73,17 +73,19 @@ class Custom<T : Any>(
     ) {
         val scope = CustomBuilderScope<T>().apply(builderScope)
         fun create(): Custom<T> = with(scope) {
-            return Custom(id, innitValue!!, title, description, enabled,  isSaveSetting, ignoreGroupClip, onClick = { onClick() }, content, clazz)
+            return Custom(id, defaultValue!!, title, description, enabled,  isSaveSetting, ignoreGroupClip, onClick = { onClick() }, content, clazz)
         }
     }
 
-
+    override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
         if (content == null) return
+        val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         DefaultContainer(
             modifier = Modifier.fillMaxWidth(),
+            focusState = focusState,
             enabled = enabled,
             itemGroupPosition = if (ignoreGroupClip) ItemGroupPosition.None else position,
             onClick = { onClick() }

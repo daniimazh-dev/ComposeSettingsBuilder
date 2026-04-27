@@ -1,6 +1,7 @@
 package com.daniil.csb
 
 import android.content.Context
+import android.util.Log
 import com.daniil.csb.classes.SettingsSealed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -11,17 +12,14 @@ import java.io.File
 
 object SettingsProvider {
     private var PATH_DIRECTION = "csb"
-    lateinit var navigationModel: SettingsNavigationModel
+    private lateinit var navigationModel: SettingsNavigationModel
     fun innit(model: SettingsNavigationModel) {
         navigationModel = model
         PATH_DIRECTION = model.config.storageDirection
     }
 
     fun findById(id: String): SettingsSealed<*> {
-        val setting = navigationModel.screenHeap.value
-            .flatMap { it.settings.values }.flatten()
-            .find { it.id == id } ?: error("Setting $id not found")
-        return setting
+        return navigationModel.findSettingById(id)
     }
 
     inline fun <reified T> getValue(id: String): StateFlow<T> {
@@ -46,6 +44,20 @@ object SettingsProvider {
         setting.enabled(state)
     }
 
+    fun resetToDefault(id: String) {
+        val setting = findById(id)
+        setting.resetToDefault()
+    }
+
+    fun saveState(id: String, state: Boolean) {
+        val setting = findById(id)
+        if (state) setting.saveOn() else setting.saveOff()
+    }
+
+    fun navigateToSetting(id: String) {
+        navigationModel.navigateToSetting(id)
+    }
+
     suspend fun loadData(context: Context) = withContext(Dispatchers.IO) {
         val patch = File(context.filesDir, PATH_DIRECTION)
         if (!patch.exists()) {
@@ -57,7 +69,13 @@ object SettingsProvider {
             val file = File(patch, "csb_${screenInstance.id}")
             if (!file.exists()) return@forEach
             val json = file.bufferedReader().use { it.readText() }
-            val packages = Json.decodeFromString<List<SaveSettingPackage>>(json)
+            val packages = try {
+                Json.decodeFromString<List<SaveSettingPackage>>(json)
+            } catch (_: Exception) {
+                Log.d("CSB", "Error load settings")
+                emptyList()
+            }
+
             packages.forEach { pack ->
                 try {
                     val setting = findById(pack.id)

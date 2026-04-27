@@ -2,7 +2,9 @@ package com.daniil.csb.classes
 
 import androidx.compose.runtime.Composable
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.util.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 interface SettingInterface <T> {
@@ -12,11 +14,18 @@ interface SettingInterface <T> {
     val value: StateFlow<T>
     val enabled: StateFlow<Boolean>
     var isSaveSetting: Boolean
+    val focusState: MutableStateFlow<Boolean>
+
+    fun saveOff() { isSaveSetting = false }
+    fun saveOn() { isSaveSetting = true }
+
+    fun focus(state: Boolean) { focusState.value = state }
 
     fun enabled(state: Boolean)
 
     fun changeValue(newValue: T)
     fun fetchValue(): StateFlow<T> = value
+    fun resetToDefault()
     fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.UnitPackage(id, enabled.value)
@@ -28,5 +37,6 @@ interface SettingInterface <T> {
         @Suppress("UNCHECKED_CAST")
         if (isSaveSetting) changeValue(pack.value as T) // Set value
     }
-    @Composable fun UI(screen: ScreenInstance, position: ItemGroupPosition)
+    @Composable
+    fun UI(screen: ScreenInstance, position: ItemGroupPosition)
 }

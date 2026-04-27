@@ -10,6 +10,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.classes.SettingsSealed
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +39,7 @@ class Info(
         _value.value = newValue
     }
 
-    override fun fetchValue(): StateFlow<Unit> = value
+    override fun resetToDefault() { }
     override fun saveLogic(): SaveSettingPackage = SaveSettingPackage.UnitPackage(id, enabled.value)
     override fun loadLogic(pack: SaveSettingPackage?) {
         if (pack == null) return
@@ -63,12 +65,15 @@ class Info(
         }
     }
 
+    override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+        val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
 
         DefaultSettingUI(
             modifier = Modifier,
+            focusState = focusState,
             itemGroupPosition = position,
             enabled = enabled,
             title = { if(!title.isBlank()) Text(title) },

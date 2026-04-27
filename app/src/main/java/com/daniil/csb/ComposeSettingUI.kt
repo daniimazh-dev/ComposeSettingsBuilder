@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +30,11 @@ fun ComposeSettingUI(
         }
         SettingsProvider.enable("switch2", switch1)
         SettingsProvider.enable("slider", switch2)
+
+    }
+    LaunchedEffect(Unit) {
+        delay(300)
+        SettingsProvider.navigateToSetting("switch")
     }
 
 

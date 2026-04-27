@@ -1,17 +1,20 @@
 package com.daniil.csb
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.daniil.csb.classes.SettingsSealed
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.ScreenInstance
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlin.error
 
 class SettingsNavigationModel : ViewModel() {
 
@@ -51,8 +54,32 @@ class SettingsNavigationModel : ViewModel() {
         Back
     }
 
-    fun findScreenById(id: String): ScreenInstance? {
-        return screenHeap.value.find { it.id == id }
+    fun findScreenById(id: String): ScreenInstance {
+        return screenHeap.value.find { it.id == id } ?: error("Screen $id not found")
+    }
+    fun findScreenBySetting(id: String): ScreenInstance {
+        val screen = screenHeap.value.find { it.settings.values.flatten().find { it.id == id } != null }
+        return screen ?: error("Setting $id not found")
+    }
+    fun findSettingById(id: String): SettingsSealed<*> {
+        val settingsHeap = screenHeap.value.flatMap { it.settings.values }.flatten()
+        val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found")
+        return setting
+    }
+
+    fun navigateToSetting(id: String) {
+        val setting = findSettingById(id)
+        val screen = findScreenBySetting(id)
+        if (currentScreen != screen) goToScreen(screen)
+        viewModelScope.launch {
+            delay(200)
+            repeat(2) {
+                delay(200)
+                setting.focus(true)
+                delay(200)
+                setting.focus(false)
+            }
+        }
     }
 
     fun goToScreen(screenInstance: ScreenInstance) {

@@ -153,8 +153,15 @@ class MainActivity : ComponentActivity() {
         val customScreen = CustomScreen
             .Builder("customScreen")
             .setTitle("Custom screen")
+            .registerSettings(
+                ColorPicker.Builder("color2") {
+                    defaultValue = Color.Blue
+                }.create(),
+            )
             .setContent {
-            Text("This is custom screen")
+                Text("This is custom screen")
+                RenderSetting("color2")
+                Text("hello")
         }.build()
 
         settingsNavigationModel.setScreensHeap(

@@ -2,6 +2,8 @@ package com.daniil.csb
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -100,7 +102,7 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(8.dp))
             if (currentScreen is CustomScreen) {
-                currentScreen.content()
+                currentScreen.Render()
                 return@AnimatedContent
             }
             LazyColumn(

@@ -1,30 +1,74 @@
 package com.daniil.csb.screens
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.remember
 import com.daniil.csb.classes.SettingsSealed
+import com.daniil.csb.classes.util.ItemGroupPosition
 
-open class CustomScreen(): ScreenInstance() {
-    lateinit var content: @Composable () -> Unit
-    override var settings: Map<Group, List<SettingsSealed<*>>> = mapOf()
+open class CustomScreen() : ScreenInstance() {
 
     constructor(
         id: String,
         title: String = "Custom Screen",
-        content: @Composable () -> Unit
-        ): this() {
+        settings: List<SettingsSealed<*>>,
+        content: @Composable CustomScreenScope.() -> Unit
+    ): this() {
         this.id = id
         this.title = title
+        this.registeredSettings = settings.toMutableList()
         this.content = content
     }
 
-    class Builder(
-        val id: String
-    ) {
-        private var title: String = id
-        private lateinit var content: @Composable () -> Unit
-        fun setTitle(title: String) = apply { this.title = title }
-        fun setContent(content: @Composable () -> Unit) = apply { this.content = content }
-        fun build() = CustomScreen(id, title, content)
+
+    var registeredSettings = mutableListOf<SettingsSealed<*>>()
+    override var settings: Map<Group, List<SettingsSealed<*>>>
+        get() = mapOf(ScreenInstance.Group("", "", true) to registeredSettings)
+        set(value) {}
+
+    var content: @Composable CustomScreenScope.() -> Unit = {}
+
+    inner class CustomScreenScope {
+        @Composable
+        fun RenderSetting(index: Int) {
+            val setting = registeredSettings.getOrNull(index)
+            setting?.UI(this@CustomScreen, ItemGroupPosition.None)
+        }
+
+        @Composable
+        fun RenderSetting(setting: SettingsSealed<*>) {
+            setting.UI(this@CustomScreen, ItemGroupPosition.None)
+        }
+
+        @Composable
+        fun RenderSetting(id: String) {
+            registeredSettings.find { it.id == id }?.UI(this@CustomScreen, ItemGroupPosition.None)
+        }
     }
+    class Builder(val id: String) {
+        private val builderSettings = mutableListOf<SettingsSealed<*>>()
+        private lateinit var content: @Composable CustomScreenScope.() -> Unit
+        var title = "Custom screen"
+
+        fun registerSettings(vararg items: SettingsSealed<*>) = apply {
+            this.builderSettings.addAll(items)
+        }
+        fun setTitle(title: String) = apply { this.title = title }
+
+        fun setContent(content: @Composable CustomScreenScope.() -> Unit) = apply {
+            this.content = content
+        }
+
+        fun build(): CustomScreen {
+            val instance = CustomScreen(id, title, builderSettings, content)
+            return instance
+        }
+    }
+
+    @Composable
+    fun Render() {
+        val scope = remember { CustomScreenScope() }
+        scope.content()
+    }
+
+
 }

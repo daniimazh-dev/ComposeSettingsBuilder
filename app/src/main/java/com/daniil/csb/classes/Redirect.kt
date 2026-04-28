@@ -15,7 +15,6 @@ import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.classes.util.ItemGroupPosition
-import com.daniil.csb.classes.SettingsSealed
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +24,7 @@ class Redirect(
     override var id: String,
     val redirectToId: String,
     val focus: String? = null,
+    var showArrow: Boolean = true,
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
@@ -35,12 +35,13 @@ class Redirect(
         id: String,
         redirectTo: ScreenInstance,
         focus: String? = null,
+        showArrow: Boolean = true,
         title: String,
         description: String,
         enabled: Boolean = true,
         navigationModel: SettingsNavigationModel,
         isSaveSetting: Boolean
-    ): this(id, redirectTo.id, focus, title, description, enabled, navigationModel, isSaveSetting)
+    ): this(id, redirectTo.id, focus, showArrow, title, description, enabled, navigationModel, isSaveSetting)
     override val value = MutableStateFlow(ScreenInstance())
 
     private var _enable = MutableStateFlow(enabled)
@@ -61,6 +62,7 @@ class Redirect(
         var redirectTo: ScreenInstance? = null
         var redirectToId: String? = null
         var focus: String? = null
+        var showArrow: Boolean = true
         lateinit var navigationModel: SettingsNavigationModel
         var title = "Redirect"
         var description = ""
@@ -74,8 +76,8 @@ class Redirect(
         val scope = RedirectBuilderScope().apply(builderScope)
         fun create(): Redirect = with(scope) {
             val res = when {
-                redirectToId != null -> Redirect(id, redirectToId!!, focus, title, description, enabled, navigationModel, isSaveSetting)
-                redirectTo != null -> Redirect(id, redirectTo!!, focus, title, description, enabled, navigationModel, isSaveSetting)
+                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title, description, enabled, navigationModel, isSaveSetting)
+                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title, description, enabled, navigationModel, isSaveSetting)
                 else -> error("Not found redirect parameter")
             }
             return res
@@ -88,6 +90,13 @@ class Redirect(
     override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
+        fun execute() {
+            if (focus != null) {
+                navigationModel.navigateToSetting(focus)
+            } else {
+                navigationModel.goToScreen(navigationModel.findScreenById(redirectToId))
+            }
+        }
         DefaultSettingUI(
             modifier = Modifier,
             focusState = focusState,
@@ -96,31 +105,20 @@ class Redirect(
             title = { if(!title.isBlank()) Text(title) },
             description = { if(!title.isBlank()) Text(description) },
             display = {
-                FilledIconButton(
-                    enabled = enabled,
-                    colors = IconButtonDefaults.iconButtonColors().copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                    onClick = {
-                        if (focus != null) {
-                            navigationModel.navigateToSetting(focus)
-                        } else {
-                            navigationModel.goToScreen(navigationModel.findScreenById(redirectToId))
-                        }
+                if (showArrow) {
+                    FilledIconButton(
+                        enabled = enabled,
+                        colors = IconButtonDefaults.iconButtonColors().copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        onClick = { execute() }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_right),
+                            contentDescription = "Go to $redirectToId"
+                        )
                     }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.arrow_right),
-                        contentDescription = "Go to $redirectToId"
-                    )
                 }
-
             },
-            onClick = {
-                if (focus != null) {
-                    navigationModel.navigateToSetting(focus)
-                } else {
-                    navigationModel.goToScreen(navigationModel.findScreenById(redirectToId))
-                }
-            }
+            onClick = { execute() }
         )
     }
 }

@@ -5,12 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.reflect.KClass
 
@@ -95,9 +95,9 @@ class Custom<T : Any>(
     }
 }
 
-//inline fun <reified T : Any> CustomSetting(
-//    id: String,
-//    noinline builder: Custom.CustomBuilderScope<T>.() -> Unit
-//): Custom<T> {
-//    return Custom.Builder(id, T::class, builder).create()
-//}
+inline fun <reified T : Any> createCustomSetting(
+    id: String,
+    noinline builder: Custom.CustomBuilderScope<T>.() -> Unit
+): Custom<T> {
+    return Custom.Builder(id, T::class, builder).create()
+}

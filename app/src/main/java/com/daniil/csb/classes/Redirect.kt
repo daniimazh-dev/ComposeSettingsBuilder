@@ -14,7 +14,7 @@ import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.SettingsNavigationModel
-import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -121,4 +121,11 @@ class Redirect(
             onClick = { execute() }
         )
     }
+}
+
+fun createRedirect(
+    id: String,
+    builder: Redirect.RedirectBuilderScope.() -> Unit
+): Redirect {
+    return Redirect.Builder(id, builder).create()
 }

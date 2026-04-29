@@ -2,7 +2,7 @@ package com.daniil.csb.classes
 
 import androidx.compose.runtime.Composable
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

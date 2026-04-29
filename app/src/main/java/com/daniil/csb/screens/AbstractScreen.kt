@@ -2,6 +2,7 @@ package com.daniil.csb.screens
 
 import com.daniil.csb.classes.SettingsSealed
 import com.daniil.csb.screens.ScreenInstance
+import java.util.UUID
 
 class AbstractScreen(): ScreenInstance() {
     constructor(
@@ -22,4 +23,13 @@ class AbstractScreen(): ScreenInstance() {
         }
         fun build() = AbstractScreen(id, settings)
     }
+}
+
+
+fun createAbstractScreen(
+    id: String,
+    vararg settings: SettingsSealed<*>
+): AbstractScreen {
+    val screen = AbstractScreen.Builder(id).setContent(*settings).build()
+    return screen
 }

@@ -14,17 +14,19 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
-import com.daniil.csb.classes.ColorPicker
-import com.daniil.csb.classes.Info
 import com.daniil.csb.classes.MultiplySelect
-import com.daniil.csb.classes.Redirect
 import com.daniil.csb.classes.Select
-import com.daniil.csb.classes.Slider
-import com.daniil.csb.classes.StringData
-import com.daniil.csb.classes.Switch
-import com.daniil.csb.screens.AbstractScreen
-import com.daniil.csb.screens.CustomScreen
-import com.daniil.csb.screens.ScreenInstance
+import com.daniil.csb.classes.createColorPicker
+import com.daniil.csb.classes.createInfo
+import com.daniil.csb.classes.createMultiplySelect
+import com.daniil.csb.classes.createRedirect
+import com.daniil.csb.classes.createSelect
+import com.daniil.csb.classes.createSlider
+import com.daniil.csb.classes.createStringData
+import com.daniil.csb.classes.createSwitch
+import com.daniil.csb.screens.createAbstractScreen
+import com.daniil.csb.screens.createCustomScreen
+import com.daniil.csb.screens.createScreen
 import com.daniil.csb.ui.theme.ComposeSettingsBuilderTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,104 +73,106 @@ class MainActivity : ComponentActivity() {
     }
 
     fun innitSettings() {
-        val secondScreen =
-            ScreenInstance.Builder("RedirectTest").setTitle("Redirect test").setGroupedContent {
-                newGroup(id = "test", name = "", hide = true,
-                    Switch.Builder("switch2") {
-                        innitValue = false
-                        title = "Switch 2"
-                        description = "This is test switch 2 ui"
-                    }.create(),
-                )
-                newGroup("test2", "Slider", hide = false,
-                    Slider.Builder("slider") {
-                        description = "This is test slider"
-                        startPointRange = "Slow"
-                        endPointRange = "Fast"
-                        steps = 0
-                        defaultValue = 3f
-                        range = 0f..1f
-                    }.create(),
-                    Info.Builder("info") {
-                        title = ""
-                        description = "Enable switch and switch 2 to activate"
-                    }.create(),
-                )
+        val secondScreen = createScreen("RedirectTest") {
+            title = "Redirect test"
 
-            }.build()
+            newGroup(
+                createSwitch("switch2") {
+                    defaultValue = false
+                    title = "Switch 2"
+                    description = "This is test switch 2 ui"
+                }
 
-
-        val mainScreen = ScreenInstance.Builder("Main").setTitle("Settings").setContent(
-            Redirect.Builder("redirect") {
-                title = "Redirect"
-                description = "This is text redirect"
-                redirectToId = "customScreen"
-                navigationModel = settingsNavigationModel
-            }.create(),
-            Redirect.Builder("redirect") {
-                title = "Redirect 2"
-                description = "This is text redirect"
-                focus = "info"
-                redirectToId = "RedirectTest"
-                navigationModel = settingsNavigationModel
-            }.create(),
-            MultiplySelect.Builder("multiply select") {
-                val options = listOf(
-                    MultiplySelect.Option(id = "1", title = "Item 1"),
-                    MultiplySelect.Option(id = "2", title = "Item 2"),
-                    MultiplySelect.Option(id = "3", title = "Item 3"),
-                    MultiplySelect.Option(id = "4", title = "Item 4"),
-                )
-                defaultValue = options
-                this.options = options
-
-            }.create(),
-            Select.Builder("select") {
-                val options = listOf(
-                    Select.Option(id = "1", title = "Item 1"),
-                    Select.Option(id = "2", title = "Item 2"),
-                    Select.Option(id = "3", title = "Item 3"),
-                    Select.Option(id = "4", title = "Item 4"),
-                )
-                defaultValue = options[0]
-                this.options = options
-            }.create(),
-            Switch.Builder("switch") {
-                innitValue = true
-                title = "Switch"
-                description = "This is test switch ui"
-            }.create(),
-            ColorPicker.Builder("color") {
-                defaultValue = Color.Blue
-            }.create(),
-            StringData.Builder("stringData") {
-                label = { Text("Test") }
-            }.create()
-        ).build()
-        val abstract = AbstractScreen.Builder("Abstract")
-            .setContent(
-                Switch.Builder("switch3") { innitValue = true }.create()
             )
-            .build()
-        val customScreen = CustomScreen
-            .Builder("customScreen")
-            .setTitle("Custom screen")
-            .registerSettings(
-                ColorPicker.Builder("color2") {
+            newGroup(
+                "test2", "Slider",
+                createSlider("slider") {
+                    description = "This is test slider"
+                    startPointRange = "Slow"
+                    endPointRange = "Fast"
+                    steps = 0
+                    defaultValue = 3f
+                    range = 0f..1f
+                },
+                createInfo("info") {
+                    title = ""
+                    description = "Enable switch and switch 2 to activate"
+                }
+            )
+
+
+        }
+
+        val mainScreen = createScreen("Main") {
+            title = "Settings"
+            newGroup(
+                createRedirect("redirect") {
+                    title = "Redirect"
+                    description = "This is text redirect"
+                    redirectToId = "customScreen"
+                    navigationModel = settingsNavigationModel
+                },
+                createRedirect("redirect2") {
+                    title = "Redirect 2"
+                    description = "This is text redirect"
+                    focus = "info"
+                    redirectToId = "RedirectTest"
+                    navigationModel = settingsNavigationModel
+                },
+                createMultiplySelect("multiply_select") {
+                    val options = listOf(
+                        MultiplySelect.Option(id = "1", title = "Item 1"),
+                        MultiplySelect.Option(id = "2", title = "Item 2"),
+                        MultiplySelect.Option(id = "3", title = "Item 3"),
+                        MultiplySelect.Option(id = "4", title = "Item 4"),
+                    )
+                    defaultValue = options
+                    this.options = options
+
+                },
+                createSelect("select") {
+                    val options = listOf(
+                        Select.Option(id = "1", title = "Item 1"),
+                        Select.Option(id = "2", title = "Item 2"),
+                        Select.Option(id = "3", title = "Item 3"),
+                        Select.Option(id = "4", title = "Item 4"),
+                    )
+                    defaultValue = options[0]
+                    this.options = options
+                },
+                createSwitch("switch") {
+                    defaultValue = true
+                    title = "Switch"
+                    description = "This is test switch ui"
+                },
+                createColorPicker("color") {
                     defaultValue = Color.Blue
-                }.create(),
+                },
+                createStringData("stringData") {
+                    label = { Text("Test") }
+                }
             )
-            .setContent {
+        }
+        val abstract = createAbstractScreen("Abstract",
+            createSwitch("switch3") { defaultValue = true }
+            )
+
+        val customScreen = createCustomScreen("customScreen") {
+            title = "Custom Screen"
+
+            register(createColorPicker("color2"))
+            content = {
                 Text("This is custom screen")
                 RenderSetting("color2")
                 Text("hello")
-        }.build()
+            }
+        }
 
         settingsNavigationModel.setScreensHeap(
             mainScreen, secondScreen, abstract, customScreen
         )
         lifecycleScope.launch(Dispatchers.IO) {
-            settingsNavigationModel.load(this@MainActivity)
+            SettingsProvider.loadData(this@MainActivity)
         }
     }
 }

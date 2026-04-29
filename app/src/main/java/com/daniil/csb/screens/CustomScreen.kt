@@ -3,7 +3,8 @@ package com.daniil.csb.screens
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.daniil.csb.classes.SettingsSealed
-import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.screens.CustomScreen.CustomScreenScope
 
 open class CustomScreen() : ScreenInstance() {
 
@@ -71,4 +72,28 @@ open class CustomScreen() : ScreenInstance() {
     }
 
 
+}
+
+class CreateCustomScreenScope() {
+
+    var title: String = "Screen"
+    val registeredSettings = mutableListOf<SettingsSealed<*>>()
+    lateinit var content: @Composable CustomScreenScope.() -> Unit
+
+    fun register(vararg settings: SettingsSealed<*>) {
+        this.registeredSettings.addAll(settings)
+    }
+}
+
+fun createCustomScreen(
+    id: String,
+    scope: CreateCustomScreenScope.() -> Unit
+): CustomScreen {
+    val data = CreateCustomScreenScope().apply(scope)
+
+    val screen =
+        CustomScreen.Builder(id).setTitle(data.title)
+            .registerSettings(*data.registeredSettings.toTypedArray())
+            .setContent(data.content).build()
+    return screen
 }

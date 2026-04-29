@@ -28,9 +28,6 @@ class SettingsNavigationModel : ViewModel() {
         _screenStack.value.add(screen[0])
         _currentScreen.value = screen[0]
     }
-    suspend fun load(context: Context) {
-        SettingsProvider.loadData(context)
-    }
     lateinit var config: CSBConfig
 
     fun initialize(context: Context) {

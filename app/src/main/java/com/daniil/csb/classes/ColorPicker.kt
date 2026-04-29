@@ -60,15 +60,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.FancyTabBar
-import com.daniil.csb.FancyTabBarData
+import com.daniil.csb.utils.FancyTabBar
+import com.daniil.csb.utils.FancyTabBarData
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -596,3 +595,9 @@ private fun CustomGradientSlider(
     }
 }
 
+fun createColorPicker(
+    id: String,
+    builder: ColorPicker.ColorPickerBuilderScope.() -> Unit = { defaultValue = Color.Blue }
+): ColorPicker {
+    return ColorPicker.Builder(id, builder).create()
+}

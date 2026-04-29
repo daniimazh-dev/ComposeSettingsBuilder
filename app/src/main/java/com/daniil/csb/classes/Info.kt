@@ -10,12 +10,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.util.ItemGroupPosition
-import com.daniil.csb.classes.SettingsSealed
+import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class Info(
@@ -88,4 +86,11 @@ class Info(
             onClick = {  }
         )
     }
+}
+
+fun createInfo(
+    id: String,
+    builder: Info.InfoBuilderScope.() -> Unit
+): Info {
+    return Info.Builder(id, builder).create()
 }

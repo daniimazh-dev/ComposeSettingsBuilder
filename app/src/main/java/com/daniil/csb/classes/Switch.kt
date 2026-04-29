@@ -7,11 +7,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.apply
 
@@ -23,7 +22,7 @@ class Switch(
     enabled: Boolean = true,
     override var isSaveSetting: Boolean = true
 ) : SettingsSealed<Boolean>() {
-    private var _value = MutableStateFlow(defaultValue)
+    private var _value = MutableStateFlow(this@Switch.defaultValue)
     override val value = _value.asStateFlow()
 
     private var _enable = MutableStateFlow(enabled)
@@ -37,7 +36,7 @@ class Switch(
         _value.value = newValue
     }
 
-    override fun resetToDefault() { changeValue(defaultValue) }
+    override fun resetToDefault() { changeValue(this@Switch.defaultValue) }
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.BooleanPackage(
@@ -50,7 +49,7 @@ class Switch(
 
 
     class SwitchBuilderScope() {
-        var innitValue = false
+        var defaultValue = false
         var title = "Switch"
         var description = ""
         var enabled = true
@@ -63,7 +62,7 @@ class Switch(
     ) {
         val scope = SwitchBuilderScope().apply(builderScope)
         fun create(): Switch = with(scope) {
-            return Switch(id, innitValue, title, description, enabled, isSaveSetting)
+            return Switch(id, defaultValue, title, description, enabled, isSaveSetting)
         }
     }
 
@@ -93,4 +92,11 @@ class Switch(
             onClick = { changeValue(!value) }
         )
     }
+}
+
+fun createSwitch(
+    id: String,
+    builder: Switch.SwitchBuilderScope.() -> Unit = { defaultValue = false }
+): Switch {
+    return Switch.Builder(id, builder).create()
 }

@@ -1,6 +1,7 @@
 package com.daniil.csb.screens
 
 import com.daniil.csb.classes.SettingsSealed
+import java.util.UUID
 
 open class ScreenInstance() {
     lateinit var id: String
@@ -49,6 +50,47 @@ open class ScreenInstance() {
             val settings = SettingsContentScope().apply(scope)
             this.settings = settings.groups
         }
+        fun setGroupedContent(settings: Map<Group, List<SettingsSealed<*>>>) = apply {
+            this.settings = settings
+        }
         fun build() = ScreenInstance(id, title, settings)
     }
+}
+
+class CreateScreenScope() {
+    private val groups: MutableMap<ScreenInstance.Group, List<SettingsSealed<*>>> = mutableMapOf()
+    var title: String = "Screen"
+    private var groupContent = ScreenInstance.SettingsContentScope()
+    fun newGroup(
+        id: String,
+        name: String,
+        vararg settings: SettingsSealed<*>
+    ) {
+        groups[ScreenInstance.Group(id, name)] = settings.toList()
+        ScreenInstance.SettingsContentScope().groups
+    }
+
+    fun newGroup(
+        vararg settings: SettingsSealed<*>
+    ) {
+        groups[ScreenInstance.Group(UUID.randomUUID().toString(), "", true)] = settings.toList()
+        ScreenInstance.SettingsContentScope().groups
+    }
+    internal fun getData(): ScreenInstance.SettingsContentScope {
+        groupContent.groups.putAll(groups)
+        return groupContent
+    }
+}
+
+fun createScreen(
+    id: String,
+    scope: CreateScreenScope.() -> Unit
+): ScreenInstance {
+    val data = CreateScreenScope().apply(scope)
+    val content = data.getData()
+
+    val screen =
+        ScreenInstance.Builder(id).setTitle(data.title)
+            .setGroupedContent(content.groups).build()
+    return screen
 }

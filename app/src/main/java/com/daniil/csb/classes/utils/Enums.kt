@@ -1,4 +1,4 @@
-package com.daniil.csb.classes.util
+package com.daniil.csb.classes.utils
 
 enum class ItemGroupPosition {
     First,

@@ -40,11 +40,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.util.ItemGroupPosition
+import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 
@@ -263,4 +262,15 @@ class Select(
 
         }
     }
+}
+
+
+fun createSelect(
+    id: String,
+    builder: Select.SelectBuilderScope.() -> Unit = {
+        defaultValue = Select.Option("", "")
+        options = listOf()
+    }
+): Select {
+    return Select.Builder(id, builder).create()
 }

@@ -5,14 +5,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.daniil.csb.SettingsNavigationModel
@@ -20,6 +24,7 @@ import com.daniil.csb.SettingsProvider
 import com.daniil.csb.SettingsScreen
 import com.daniil.csb.classes.MultiplySelect
 import com.daniil.csb.classes.Select
+import com.daniil.csb.classes.createAction
 import com.daniil.csb.classes.createColorPicker
 import com.daniil.csb.classes.createInfo
 import com.daniil.csb.classes.createMultiplySelect
@@ -61,8 +66,8 @@ class MainActivity : ComponentActivity() {
                     SettingsScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(innerPadding)
                             .padding(16.dp),
+                        paddingValues = innerPadding,
                         navigationModel = settingsNavigationModel
                     )
                 }
@@ -82,13 +87,13 @@ class MainActivity : ComponentActivity() {
 
         val secondScreen = createScreen("RedirectTest") {
             title = "Redirect test"
-
+            modifier = Modifier
             newGroup(
                 createSwitch("switch2") {
                     defaultValue = false
                     title = "Switch 2"
                     description = "This is test switch 2 ui"
-                }
+                },
 
             )
             newGroup(
@@ -101,6 +106,13 @@ class MainActivity : ComponentActivity() {
                     defaultValue = 3f
                     range = 0f..1f
                 },
+                createAction("action") {
+                    title = "Go to switch"
+                    requestAlert = true
+                    description = "Enable switch to activate slider"
+                    action = { SettingsProvider.navigateToSetting("switch2") }
+
+                },
                 createInfo("info") {
                     title = ""
                     description = "Enable switch and switch 2 to activate"
@@ -111,7 +123,8 @@ class MainActivity : ComponentActivity() {
         }
 
         val mainScreen = createScreen("Main") {
-            title = "Settings"
+//            modifier = Modifier.fillMaxSize().padding(16.dp)
+//            title = "Settings"
             newGroup(
                 createRedirect("redirect") {
                     title = "Redirect"
@@ -166,13 +179,22 @@ class MainActivity : ComponentActivity() {
             )
 
         val customScreen = createCustomScreen("customScreen") {
+            modifier = Modifier.background(Color.Blue)
             title = "Custom Screen"
 
             register(createColorPicker("color2"))
             content = {
-                Text("This is custom screen")
-                RenderSetting("color2")
-                Text("hello")
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    ScreenTopBar(navigationModel = settingsNavigationModel) {
+                        Icon(painter = painterResource(com.daniil.csb.R.drawable.palette_icon), contentDescription = null)
+                    }
+                    Text("This is custom screen")
+                    RenderSetting("color2")
+                    Text("hello")
+                }
+
             }
         }
 

@@ -14,12 +14,11 @@ class SettingsScreenModel(screenInstance: ScreenInstance) : ViewModel() {
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = screenInstance
     )
+    val modifier = currentScreen.value?.modifier
 
     private val _settings = MutableStateFlow(screenInstance.settings)
     val settings = _settings.asStateFlow()
 
     private var _title = MutableStateFlow(screenInstance.title)
     val title = _title.asStateFlow()
-
-
 }

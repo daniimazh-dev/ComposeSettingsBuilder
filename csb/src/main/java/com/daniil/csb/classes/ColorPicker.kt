@@ -80,7 +80,7 @@ class ColorPicker(
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean = true
-) : SettingsSealed<Color>() {
+) : ComposeSetting<Color>() {
     constructor(
         id: String,
         defaultValueInt: Int,

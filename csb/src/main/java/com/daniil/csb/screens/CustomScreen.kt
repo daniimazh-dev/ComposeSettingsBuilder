@@ -1,28 +1,54 @@
 package com.daniil.csb.screens
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import com.daniil.csb.classes.SettingsSealed
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.daniil.csb.R
+import com.daniil.csb.SettingsNavigationModel
+import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.CustomScreen.CustomScreenScope
 
-open class CustomScreen() : ScreenInstance() {
+open class CustomScreen internal constructor(
+    id: String,
+    title: String = "Custom Screen",
+    modifier: Modifier? = null,
+    content: @Composable CustomScreenScope.() -> Unit
+): ScreenInstance(id, settings = mapOf()) {
 
     constructor(
         id: String,
         title: String = "Custom Screen",
-        settings: List<SettingsSealed<*>>,
+        settings: List<ComposeSetting<*>>,
+        modifier: Modifier? = null,
         content: @Composable CustomScreenScope.() -> Unit
-    ): this() {
+    ) : this(id, title, modifier, content) {
         this.id = id
         this.title = title
         this.registeredSettings = settings.toMutableList()
         this.content = content
+        this.modifier = modifier
     }
 
 
-    var registeredSettings = mutableListOf<SettingsSealed<*>>()
-    override var settings: Map<Group, List<SettingsSealed<*>>>
+    var registeredSettings = mutableListOf<ComposeSetting<*>>()
+    override var settings: Map<Group, List<ComposeSetting<*>>>
         get() = mapOf(ScreenInstance.Group("", "", true) to registeredSettings)
         set(value) {}
 
@@ -30,37 +56,92 @@ open class CustomScreen() : ScreenInstance() {
 
     inner class CustomScreenScope {
         @Composable
-        fun RenderSetting(index: Int) {
+        fun RenderSetting(
+            index: Int,
+            itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
+        ) {
             val setting = registeredSettings.getOrNull(index)
-            setting?.UI(this@CustomScreen, ItemGroupPosition.None)
+            setting?.UI(this@CustomScreen, itemGroupPosition)
         }
 
         @Composable
-        fun RenderSetting(setting: SettingsSealed<*>) {
-            setting.UI(this@CustomScreen, ItemGroupPosition.None)
+        fun RenderSetting(
+            setting: ComposeSetting<*>,
+            itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
+        ) {
+            setting.UI(this@CustomScreen, itemGroupPosition)
         }
 
         @Composable
-        fun RenderSetting(id: String) {
-            registeredSettings.find { it.id == id }?.UI(this@CustomScreen, ItemGroupPosition.None)
+        fun RenderSetting(
+            id: String,
+            itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
+        ) {
+            registeredSettings.find { it.id == id }?.UI(this@CustomScreen, itemGroupPosition)
+        }
+
+        @Composable
+        fun ScreenTopBar(
+            modifier: Modifier = Modifier,
+            navigationModel: SettingsNavigationModel,
+            actions: (@Composable RowScope.() -> Unit)? = null
+        ) {
+            Row(
+                modifier = modifier
+                    .then(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp)
+                    ),
+
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        navigationModel.goBack()
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.arrow_back_icon),
+                        contentDescription = "back"
+                    )
+                }
+
+                Text(
+                    text = title.orEmpty(),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    actions?.invoke(this)
+                }
+
+            }
+            Spacer(Modifier.height(8.dp))
         }
     }
+
+
     class Builder(val id: String) {
-        private val builderSettings = mutableListOf<SettingsSealed<*>>()
+        private val builderSettings = mutableListOf<ComposeSetting<*>>()
         private lateinit var content: @Composable CustomScreenScope.() -> Unit
         var title = "Custom screen"
+        var modifier: Modifier? = null
 
-        fun registerSettings(vararg items: SettingsSealed<*>) = apply {
+        fun registerSettings(vararg items: ComposeSetting<*>) = apply {
             this.builderSettings.addAll(items)
         }
-        fun setTitle(title: String) = apply { this.title = title }
 
+        fun setTitle(title: String) = apply { this.title = title }
+        fun setModifier(modifier: Modifier?) = apply { this.modifier = modifier }
         fun setContent(content: @Composable CustomScreenScope.() -> Unit) = apply {
             this.content = content
         }
 
         fun build(): CustomScreen {
-            val instance = CustomScreen(id, title, builderSettings, content)
+            val instance = CustomScreen(id, title, builderSettings, modifier, content)
             return instance
         }
     }
@@ -68,19 +149,23 @@ open class CustomScreen() : ScreenInstance() {
     @Composable
     fun Render() {
         val scope = remember { CustomScreenScope() }
-        scope.content()
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            scope.content()
+        }
+
     }
-
-
 }
 
-class CreateCustomScreenScope() {
 
+class CreateCustomScreenScope() {
+    var modifier: Modifier? = null
     var title: String = "Screen"
-    val registeredSettings = mutableListOf<SettingsSealed<*>>()
+    val registeredSettings = mutableListOf<ComposeSetting<*>>()
     lateinit var content: @Composable CustomScreenScope.() -> Unit
 
-    fun register(vararg settings: SettingsSealed<*>) {
+    fun register(vararg settings: ComposeSetting<*>) {
         this.registeredSettings.addAll(settings)
     }
 }
@@ -93,6 +178,7 @@ fun createCustomScreen(
 
     val screen =
         CustomScreen.Builder(id).setTitle(data.title)
+            .setModifier(data.modifier)
             .registerSettings(*data.registeredSettings.toTypedArray())
             .setContent(data.content).build()
     return screen

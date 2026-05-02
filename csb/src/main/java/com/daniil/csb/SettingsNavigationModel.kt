@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.daniil.csb.classes.SettingsSealed
+import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.ScreenInstance
 import kotlinx.coroutines.delay
@@ -25,8 +25,10 @@ class SettingsNavigationModel : ViewModel() {
         vararg screen: ScreenInstance
     ) {
         _screenHeap.value = screen.toList()
-        _screenStack.value.add(screen[0])
-        _currentScreen.value = screen[0]
+        if (screenStack.value.isEmpty()) {
+            _screenStack.value.add(screen[0])
+            _currentScreen.value = screen[0]
+        }
     }
     lateinit var config: CSBConfig
 
@@ -48,7 +50,7 @@ class SettingsNavigationModel : ViewModel() {
         private set
     enum class LastNavigateAction {
         Go,
-        Back
+        Back,
     }
 
     fun findScreenById(id: String): ScreenInstance {
@@ -58,7 +60,7 @@ class SettingsNavigationModel : ViewModel() {
         val screen = screenHeap.value.find { it.settings.values.flatten().find { it.id == id } != null }
         return screen ?: error("Setting $id not found")
     }
-    fun findSettingById(id: String): SettingsSealed<*> {
+    fun findSettingById(id: String): ComposeSetting<*> {
         val settingsHeap = screenHeap.value.flatMap { it.settings.values }.flatten()
         val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found")
         return setting
@@ -81,10 +83,14 @@ class SettingsNavigationModel : ViewModel() {
 
     fun goToScreen(screenInstance: ScreenInstance) {
         if (screenInstance is AbstractScreen) error("Cannot go to abstract screen")
-        if (screenStack.value.find { it.id == screenInstance.id } != null) return
+        if (screenStack.value.find { it.id == screenInstance.id } != null) return // TODO("goBack if the screen is below the current screen")
         _currentScreen.update { screenInstance }
         _screenStack.value.add(screenInstance)
         lastNavigateAction.update { LastNavigateAction.Go }
+    }
+    fun goToScreen(screenId: String) {
+        val screenInstance = findScreenById(screenId)
+        goToScreen(screenInstance)
     }
 
     fun goBack() {

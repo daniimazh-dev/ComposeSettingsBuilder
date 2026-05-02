@@ -2,7 +2,7 @@ package com.daniil.csb
 
 import android.content.Context
 import android.util.Log
-import com.daniil.csb.classes.SettingsSealed
+import com.daniil.csb.classes.ComposeSetting
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -18,7 +18,7 @@ object SettingsProvider {
         PATH_DIRECTION = model.config.storageDirection
     }
 
-    fun findById(id: String): SettingsSealed<*> {
+    fun findById(id: String): ComposeSetting<*> {
         return navigationModel.findSettingById(id)
     }
 
@@ -35,7 +35,7 @@ object SettingsProvider {
         val setting = findById(id)
 
         @Suppress("UNCHECKED_CAST")
-        val target = setting as? SettingsSealed<T>
+        val target = setting as? ComposeSetting<T>
         target?.changeValue(newValue) ?: error("Type mismatch $id")
     }
 

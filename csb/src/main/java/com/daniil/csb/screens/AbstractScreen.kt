@@ -1,24 +1,22 @@
 package com.daniil.csb.screens
 
-import com.daniil.csb.classes.SettingsSealed
+import com.daniil.csb.classes.ComposeSetting
 
-class AbstractScreen(): ScreenInstance() {
-    constructor(
-        id: String,
-        settings: Map<Group, List<SettingsSealed<*>>>,
+class AbstractScreen
+internal constructor(
+    id: String,
+    settings: Map<Group, List<ComposeSetting<*>>>,
+) : ScreenInstance(id, settings = settings) {
 
-        ): this() {
-        this.id = id
-        this.settings = settings
-    }
 
     class Builder(
         val id: String
     ) {
-        private lateinit var settings: Map<Group, List<SettingsSealed<*>>>
-        fun setContent(vararg settings: SettingsSealed<*>) = apply {
+        private lateinit var settings: Map<Group, List<ComposeSetting<*>>>
+        fun setContent(vararg settings: ComposeSetting<*>) = apply {
             this.settings = mapOf(Group(id, "abstract_$id", true) to settings.toList())
         }
+
         fun build() = AbstractScreen(id, settings)
     }
 }
@@ -26,7 +24,7 @@ class AbstractScreen(): ScreenInstance() {
 
 fun createAbstractScreen(
     id: String,
-    vararg settings: SettingsSealed<*>
+    vararg settings: ComposeSetting<*>
 ): AbstractScreen {
     val screen = AbstractScreen.Builder(id).setContent(*settings).build()
     return screen

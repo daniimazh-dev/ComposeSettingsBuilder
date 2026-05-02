@@ -46,7 +46,7 @@ class StringData(
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean
-) : SettingsSealed<String>() {
+) : ComposeSetting<String>() {
     private var _value = MutableStateFlow(this@StringData.defaultValue)
     override val value = _value.asStateFlow()
 

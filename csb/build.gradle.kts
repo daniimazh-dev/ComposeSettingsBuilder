@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compose)
+    `maven-publish`
 }
 
 android {
@@ -34,8 +35,28 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                // Використовуємо afterEvaluate або просто звертаємось до компонентів
+                // Якщо ви додали singleVariant вище, цей рядок спрацює:
+                from(components["release"])
+
+                groupId = "com.daniil"
+                artifactId = "csb"
+                version = "1.0.0"
+            }
+        }
+    }
+}
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

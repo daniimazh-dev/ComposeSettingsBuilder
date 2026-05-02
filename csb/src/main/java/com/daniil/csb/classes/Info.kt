@@ -22,7 +22,7 @@ class Info(
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean = false
-) : SettingsSealed<Unit>() {
+) : ComposeSetting<Unit>() {
     private var _value = MutableStateFlow<Unit>(Unit)
     override val value = _value.asStateFlow()
 

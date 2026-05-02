@@ -56,7 +56,7 @@ class Select(
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean
-) : SettingsSealed<Select.Option>() {
+) : ComposeSetting<Select.Option>() {
     private var _value = MutableStateFlow(this@Select.defaultValue)
     override val value = _value.asStateFlow()
 

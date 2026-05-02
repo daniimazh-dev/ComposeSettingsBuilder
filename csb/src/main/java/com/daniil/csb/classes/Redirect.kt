@@ -30,7 +30,7 @@ class Redirect(
     enabled: Boolean = true,
     val navigationModel: SettingsNavigationModel,
     override var isSaveSetting: Boolean
-): SettingsSealed<ScreenInstance>() {
+): ComposeSetting<ScreenInstance>() {
     constructor(
         id: String,
         redirectTo: ScreenInstance,
@@ -42,7 +42,7 @@ class Redirect(
         navigationModel: SettingsNavigationModel,
         isSaveSetting: Boolean
     ): this(id, redirectTo.id, focus, showArrow, title, description, enabled, navigationModel, isSaveSetting)
-    override val value = MutableStateFlow(ScreenInstance())
+    override val value = MutableStateFlow(ScreenInstance(id = "", settings = mapOf(),))
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()

@@ -38,7 +38,7 @@ class Slider(
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean = true
-) : SettingsSealed<Float>() {
+) : ComposeSetting<Float>() {
 
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()

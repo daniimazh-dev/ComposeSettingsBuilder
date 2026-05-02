@@ -24,7 +24,7 @@ class Custom<T : Any>(
     val onClick: () -> Unit,
     val content: (@Composable () -> Unit)?,
     val clazz: KClass<T>
-) : SettingsSealed<T>() {
+) : ComposeSetting<T>() {
     private var _value = MutableStateFlow(this@Custom.defaultValue)
     override val value = _value.asStateFlow()
 

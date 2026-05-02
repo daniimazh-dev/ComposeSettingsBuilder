@@ -21,7 +21,7 @@ class Switch(
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean = true
-) : SettingsSealed<Boolean>() {
+) : ComposeSetting<Boolean>() {
     private var _value = MutableStateFlow(this@Switch.defaultValue)
     override val value = _value.asStateFlow()
 

@@ -57,7 +57,7 @@ class MultiplySelect(
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean
-) : SettingsSealed<List<MultiplySelect.Option>>() {
+) : ComposeSetting<List<MultiplySelect.Option>>() {
     private var _value = MutableStateFlow(this@MultiplySelect.defaultValue)
     override val value = _value.asStateFlow()
 

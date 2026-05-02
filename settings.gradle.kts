@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Compose Settings Builder"
 include(":app")
- 
+include(":csb")

@@ -1,0 +1,203 @@
+package com.daniil.csb.classes
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.retain.retain
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.daniil.csb.R
+import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.screens.ScreenInstance
+import com.daniil.csb.settingui.DefaultSettingUI
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+
+class StringData(
+    override var id: String,
+    val defaultValue: String,
+    override val title: String,
+    val alertTitle: String,
+    val label: (@Composable () -> Unit)?,
+    override val description: String,
+    enabled: Boolean = true,
+    override var isSaveSetting: Boolean
+) : SettingsSealed<String>() {
+    private var _value = MutableStateFlow(this@StringData.defaultValue)
+    override val value = _value.asStateFlow()
+
+    private var _enable = MutableStateFlow(enabled)
+    override val enabled = _enable.asStateFlow()
+
+    override fun enabled(state: Boolean) {
+        _enable.value = state
+    }
+
+    override fun changeValue(newValue: String) {
+        _value.value = newValue
+    }
+    override fun resetToDefault() { changeValue(this@StringData.defaultValue) }
+    override fun saveLogic(): SaveSettingPackage? {
+        if (!isSaveSetting) return null
+        return SaveSettingPackage.StringPackage(
+            id = id,
+            enable = enabled.value,
+            value = value.value
+        )
+    }
+
+
+
+    class StringDataBuilderScope() {
+        var defaultValue: String = ""
+        var title = "String Data"
+        var label: (@Composable () -> Unit)? = null
+        var alertTitle = "Edit value"
+        var description = ""
+        var enabled = true
+        var isSaveSetting = true
+    }
+
+    class Builder(
+        val id: String,
+        builderScope: StringDataBuilderScope.() -> Unit
+    ) {
+        val scope = StringDataBuilderScope().apply(builderScope)
+        fun create(): StringData = with(scope) {
+            return StringData(
+                id,
+                defaultValue,
+                title,
+                alertTitle,
+                label,
+                description,
+                enabled,
+                isSaveSetting
+            )
+        }
+    }
+
+    override val focusState = MutableStateFlow(false)
+    @Composable
+    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+        val focusState by this.focusState.collectAsState()
+        var alertOpen by retain { mutableStateOf(false) }
+        val enabled by this.enabled.collectAsState()
+        var text by retain { mutableStateOf(value.value) }
+
+        DefaultSettingUI(
+            modifier = Modifier,
+            focusState = focusState,
+            itemGroupPosition = position,
+            enabled = enabled,
+            title = { if (!title.isBlank()) Text(title) },
+            description = { if (!description.isBlank()) Text(description) },
+            display = {
+                Row(
+                    modifier = Modifier,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .widthIn(max = 112.dp),
+                        text = value.collectAsState().value,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    FilledIconButton(
+                        enabled = enabled,
+                        colors = IconButtonDefaults.iconButtonColors()
+                            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        onClick = {
+                            alertOpen = true
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.edit_icon),
+                            contentDescription = "Edit"
+                        )
+                    }
+                }
+            },
+            onClick = { alertOpen = true }
+        )
+        if (alertOpen) {
+            AlertDialog(
+                title = {
+                    if (!alertTitle.isBlank()) Text(alertTitle)
+                },
+                text = {
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = text,
+                            singleLine = true,
+                            onValueChange = { text = it },
+                            label = label
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            changeValue(text)
+                            alertOpen = false
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            alertOpen = false
+                        }
+                    ) {
+                        Text("Cancel")
+                    }
+                },
+                onDismissRequest = {
+                    alertOpen = false
+                }
+            )
+
+        }
+    }
+}
+
+fun createStringData(
+    id: String,
+    builder: StringData.StringDataBuilderScope.() -> Unit = {}
+): StringData {
+    return StringData.Builder(id, builder).create()
+}

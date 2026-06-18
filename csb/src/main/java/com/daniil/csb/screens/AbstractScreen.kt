@@ -1,6 +1,7 @@
 package com.daniil.csb.screens
 
 import com.daniil.csb.classes.ComposeSetting
+import com.daniil.csb.classes.utils.CSBCreator
 
 class AbstractScreen
 internal constructor(
@@ -22,7 +23,7 @@ internal constructor(
 }
 
 
-fun createAbstractScreen(
+fun CSBCreator.createAbstractScreen(
     id: String,
     vararg settings: ComposeSetting<*>
 ): AbstractScreen {

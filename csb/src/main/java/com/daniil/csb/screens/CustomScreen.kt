@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.classes.ComposeSetting
+import com.daniil.csb.classes.utils.CSBCreator
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.CustomScreen.CustomScreenScope
 
@@ -56,28 +57,28 @@ open class CustomScreen internal constructor(
 
     inner class CustomScreenScope {
         @Composable
-        fun RenderSetting(
+        fun RegisteredSetting(
             index: Int,
             itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
         ) {
             val setting = registeredSettings.getOrNull(index)
-            setting?.UI(this@CustomScreen, itemGroupPosition)
+            setting?.UI(itemGroupPosition)
         }
 
         @Composable
-        fun RenderSetting(
+        fun RegisteredSetting(
             setting: ComposeSetting<*>,
             itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
         ) {
-            setting.UI(this@CustomScreen, itemGroupPosition)
+            setting.UI(itemGroupPosition)
         }
 
         @Composable
-        fun RenderSetting(
+        fun RegisteredSetting(
             id: String,
             itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
         ) {
-            registeredSettings.find { it.id == id }?.UI(this@CustomScreen, itemGroupPosition)
+            registeredSettings.find { it.id == id }?.UI(itemGroupPosition)
         }
 
         @Composable
@@ -170,7 +171,7 @@ class CreateCustomScreenScope() {
     }
 }
 
-fun createCustomScreen(
+fun CSBCreator.createCustomScreen(
     id: String,
     scope: CreateCustomScreenScope.() -> Unit
 ): CustomScreen {

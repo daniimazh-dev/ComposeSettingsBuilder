@@ -14,6 +14,7 @@ import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.SettingsNavigationModel
+import com.daniil.csb.classes.utils.CSBCreator
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -87,7 +88,7 @@ class Redirect(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+    override fun UI(position: ItemGroupPosition?) {
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         fun execute() {
@@ -123,7 +124,7 @@ class Redirect(
     }
 }
 
-fun createRedirect(
+fun CSBCreator.createRedirect(
     id: String,
     builder: Redirect.RedirectBuilderScope.() -> Unit
 ): Redirect {

@@ -10,8 +10,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.utils.CSBCreator
 import com.daniil.csb.classes.utils.ItemGroupPosition
-import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,7 +65,7 @@ class Info(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+    override fun UI(position: ItemGroupPosition?) {
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
 
@@ -88,7 +88,7 @@ class Info(
     }
 }
 
-fun createInfo(
+fun CSBCreator.createInfo(
     id: String,
     builder: Info.InfoBuilderScope.() -> Unit
 ): Info {

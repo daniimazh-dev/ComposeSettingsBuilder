@@ -30,8 +30,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.utils.CSBCreator
 import com.daniil.csb.classes.utils.ItemGroupPosition
-import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -103,7 +103,7 @@ class StringData(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+    override fun UI(position: ItemGroupPosition?) {
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -195,7 +195,7 @@ class StringData(
     }
 }
 
-fun createStringData(
+fun CSBCreator.createStringData(
     id: String,
     builder: StringData.StringDataBuilderScope.() -> Unit = {}
 ): StringData {

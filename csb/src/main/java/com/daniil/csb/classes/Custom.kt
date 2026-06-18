@@ -6,8 +6,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.utils.CSBCreator
 import com.daniil.csb.classes.utils.ItemGroupPosition
-import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -78,7 +78,7 @@ class Custom<T : Any>(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+    override fun UI(position: ItemGroupPosition?) {
         if (content == null) return
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
@@ -94,7 +94,7 @@ class Custom<T : Any>(
     }
 }
 
-inline fun <reified T : Any> createCustomSetting(
+inline fun <reified T : Any> CSBCreator.createCustomSetting(
     id: String,
     noinline builder: Custom.CustomBuilderScope<T>.() -> Unit
 ): Custom<T> {

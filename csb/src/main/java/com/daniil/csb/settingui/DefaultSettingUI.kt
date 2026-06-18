@@ -21,13 +21,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
+import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.classes.utils.ItemGroupPosition
 
 @Composable
 fun DefaultSettingUI(
     modifier: Modifier = Modifier,
     focusState: Boolean = false,
-    itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None,
+    itemGroupPosition: ItemGroupPosition? = null,
     enabled: Boolean = true,
     title: @Composable () -> Unit,
     icon: (@Composable () -> Unit)? = null,
@@ -35,10 +36,11 @@ fun DefaultSettingUI(
     display: @Composable () -> Unit,
     onClick: () -> Unit
 ) {
+    val groupPosition = LocalGroupPosition.current
     DefaultContainer(
         modifier = modifier,
         focusState = focusState,
-        itemGroupPosition = itemGroupPosition,
+        itemGroupPosition = itemGroupPosition ?: groupPosition,
         enabled = enabled,
         onClick = { onClick() }
     ) {
@@ -85,11 +87,11 @@ private fun Preview() {
             Icon(painter = painterResource(R.drawable.info_icon), contentDescription = null)
         },
         description = {
-          Text("Preview settings default container")
+            Text("Preview settings default container")
         },
         display = {
             Switch(checked = true, onCheckedChange = {})
         },
-        enabled = true
+        enabled = true,
     ) {}
 }

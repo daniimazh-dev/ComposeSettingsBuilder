@@ -64,8 +64,8 @@ import com.daniil.csb.utils.FancyTabBar
 import com.daniil.csb.utils.FancyTabBarData
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.classes.utils.CSBCreator
 import com.daniil.csb.classes.utils.ItemGroupPosition
-import com.daniil.csb.screens.ScreenInstance
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -164,7 +164,7 @@ class ColorPicker(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(screen: ScreenInstance, position: ItemGroupPosition) {
+    override fun UI(position: ItemGroupPosition?) {
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
@@ -595,7 +595,7 @@ private fun CustomGradientSlider(
     }
 }
 
-fun createColorPicker(
+fun CSBCreator.createColorPicker(
     id: String,
     builder: ColorPicker.ColorPickerBuilderScope.() -> Unit = { defaultValue = Color.Blue }
 ): ColorPicker {

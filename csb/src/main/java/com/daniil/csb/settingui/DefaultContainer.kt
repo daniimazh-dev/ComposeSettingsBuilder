@@ -10,20 +10,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.classes.utils.ItemGroupPosition
 
 @Composable
 fun DefaultContainer(
     modifier: Modifier = Modifier,
     focusState: Boolean = false,
-    itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None,
+    itemGroupPosition: ItemGroupPosition?,
     enabled: Boolean,
     onClick: () -> Unit,
     content: @Composable () -> Unit
-
 ) {
+    val groupPosition = LocalGroupPosition.current
     val shape = MaterialTheme.shapes.medium
-    val groupClip = when (itemGroupPosition) {
+    val groupClip = when (itemGroupPosition ?: groupPosition) {
         ItemGroupPosition.First -> shape.copy(
             topStart = CornerSize(12.dp),
             topEnd = CornerSize(12.dp),

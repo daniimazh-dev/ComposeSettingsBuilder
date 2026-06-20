@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.R
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.classes.ComposeSetting
@@ -47,10 +48,14 @@ open class CustomScreen internal constructor(
         this.modifier = modifier
     }
 
-
-    var registeredSettings = mutableListOf<ComposeSetting<*>>()
+    lateinit var registeredSettings: MutableList<ComposeSetting<*>>
+    init {
+        if (!::registeredSettings.isInitialized) {
+            registeredSettings = mutableListOf()
+        }
+    }
     override var settings: Map<Group, List<ComposeSetting<*>>>
-        get() = mapOf(Screen.Group("", "", true) to registeredSettings)
+        get() = mapOf(Screen.Group("", "", true) to (if (::registeredSettings.isInitialized) registeredSettings else emptyList()))
         set(value) {}
 
     var content: @Composable CustomScreenScope.() -> Unit = {}
@@ -84,7 +89,8 @@ open class CustomScreen internal constructor(
         @Composable
         fun ScreenTopBar(
             modifier: Modifier = Modifier,
-            navigationModel: SettingsNavigationModel,
+            navigationModel: SettingsNavigationModel = CSB.navigationModel,
+            onBack: () -> Unit = {},
             actions: (@Composable RowScope.() -> Unit)? = null
         ) {
             Row(
@@ -99,6 +105,7 @@ open class CustomScreen internal constructor(
             ) {
                 IconButton(
                     onClick = {
+                        onBack()
                         navigationModel.goBack()
                     }
                 ) {

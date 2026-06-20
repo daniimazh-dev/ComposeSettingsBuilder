@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import com.daniil.csb.CSB
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.screens.Screen
@@ -30,7 +31,7 @@ class Redirect(
     override val description: String,
     enabled: Boolean = true,
     var onRedirect: () -> Unit = {},
-    val navigationModel: SettingsNavigationModel,
+    val navigationModel: SettingsNavigationModel = CSB.navigationModel,
     override var isSaveSetting: Boolean
 ): ComposeSetting<Screen>() {
     constructor(
@@ -42,7 +43,7 @@ class Redirect(
         description: String,
         enabled: Boolean = true,
         onRedirect: () -> Unit = {},
-        navigationModel: SettingsNavigationModel,
+        navigationModel: SettingsNavigationModel = CSB.navigationModel,
         isSaveSetting: Boolean
     ): this(id,redirectTo.id,  focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
     override val value = MutableStateFlow(Screen(id = "", settings = mapOf(),))
@@ -67,7 +68,7 @@ class Redirect(
         var focus: String? = null
         var showArrow: Boolean = true
         var onRedirect: () -> Unit = {}
-        lateinit var navigationModel: SettingsNavigationModel
+        var navigationModel: SettingsNavigationModel = CSB.navigationModel
         var title = "Redirect"
         var description = ""
         var enabled = true
@@ -104,7 +105,7 @@ class Redirect(
         }
         DefaultSettingUI(
             modifier = Modifier,
-            focusState = focusState,
+            isFocused = focusState,
             groupItemClip = position,
             enabled = enabled,
             title = { if(!title.isBlank()) Text(title) },

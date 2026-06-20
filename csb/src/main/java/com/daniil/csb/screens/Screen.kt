@@ -2,6 +2,7 @@ package com.daniil.csb.screens
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Modifier
+import com.daniil.csb.SettingsScreenModel
 import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.classes.utils.SettingBuilder
 import java.util.UUID
@@ -10,9 +11,11 @@ open class Screen internal constructor(
     var id: String,
     var title: String? = null,
     var modifier: Modifier? = null,
+
     var paddingValues: PaddingValues? = null,
     open val settings: Map<Group, List<ComposeSetting<*>>> = emptyMap(),
 ) {
+    internal val settingsScreenModel: SettingsScreenModel by lazy { SettingsScreenModel(this) }
     class SettingsContentScope() {
         val groups = mutableMapOf<Group, List<ComposeSetting<*>>>()
         fun newGroup(

@@ -146,7 +146,7 @@ class Select(
 
         DefaultSettingUI(
             modifier = Modifier,
-            focusState = focusState,
+            isFocused = focusState,
             groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },

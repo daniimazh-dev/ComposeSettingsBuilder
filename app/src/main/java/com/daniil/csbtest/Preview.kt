@@ -1,5 +1,6 @@
 package com.daniil.csbtest
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,15 +16,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.SettingsScreen
+import com.daniil.csb.settingui.styles.CSBStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun Preview() {
-    initSettings(
-        coroutineScope = rememberCoroutineScope()
-    )
-
+    initSettings()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -39,6 +38,7 @@ private fun Preview() {
                 .fillMaxSize()
                 .padding(16.dp),
             paddingValues = innerPadding,
+            style = CSBStyle.Unspecified(isSystemInDarkTheme())
         )
     }
 }

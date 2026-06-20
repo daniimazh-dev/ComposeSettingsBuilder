@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,11 +22,13 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.settingui.styles.CSBStyle
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 
 @Composable
 fun DefaultSettingUI(
     modifier: Modifier = Modifier,
-    focusState: Boolean = false,
+    isFocused: Boolean = false,
     groupItemClip: GroupItemClip? = null,
     enabled: Boolean = true,
     title: @Composable () -> Unit,
@@ -36,42 +37,46 @@ fun DefaultSettingUI(
     display: @Composable () -> Unit,
     onClick: () -> Unit
 ) {
-    val groupPosition = LocalGroupPosition.current
+    val style = LocalSettingsStyle.current
+    val groupPosition = groupItemClip ?: LocalGroupPosition.current
+    
     DefaultContainer(
         modifier = modifier,
-        focusState = focusState,
-        groupItemClip = groupItemClip ?: groupPosition,
+        isFocused = isFocused,
+        groupItemClip = groupPosition,
         enabled = enabled,
-        onClick = { onClick() }
+        onClick = onClick
     ) {
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 52.dp)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .heightIn(min = style.minHeight)
+                .padding(horizontal = style.horizontalPadding, vertical = style.verticalPadding),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                icon?.invoke()
-                Spacer(modifier = Modifier.width(8.dp))
-                Column() {
-                    val titleStyle = MaterialTheme.typography.titleMedium
-                    CompositionLocalProvider(LocalTextStyle provides titleStyle) {
+                icon?.let {
+                    it()
+                    Spacer(modifier = Modifier.width(style.itemSpacing))
+                }
+                Column {
+                    CompositionLocalProvider(LocalTextStyle provides style.titleStyle) {
                         title()
                     }
-                    val descriptionStyle = MaterialTheme.typography.labelSmall
-                        .copy(color = MaterialTheme.colorScheme.outline)
-                    CompositionLocalProvider(LocalTextStyle provides descriptionStyle) {
+                    CompositionLocalProvider(LocalTextStyle provides style.descriptionStyle) {
                         description()
                     }
                 }
             }
-
+            Spacer(modifier = Modifier.width(style.itemSpacing))
             display()
         }
+
     }
 }
 
@@ -79,19 +84,21 @@ fun DefaultSettingUI(
 @Preview
 @Composable
 private fun Preview() {
-    DefaultSettingUI(
-        title = {
-            Text("Preview")
-        },
-        icon = {
-            Icon(painter = painterResource(R.drawable.info_icon), contentDescription = null)
-        },
-        description = {
-            Text("Preview settings default container")
-        },
-        display = {
-            Switch(checked = true, onCheckedChange = {})
-        },
-        enabled = true,
-    ) {}
+    CompositionLocalProvider(LocalSettingsStyle provides CSBStyle.Material3()) {
+        DefaultSettingUI(
+            title = {
+                Text("Preview")
+            },
+            icon = {
+                Icon(painter = painterResource(R.drawable.info_icon), contentDescription = null)
+            },
+            description = {
+                Text("Preview settings default container")
+            },
+            display = {
+                Switch(checked = true, onCheckedChange = {})
+            },
+            enabled = true,
+        ) {}
+    }
 }

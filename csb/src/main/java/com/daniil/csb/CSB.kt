@@ -1,23 +1,50 @@
 package com.daniil.csb
 
+import android.app.Activity
+import android.app.Application
 import android.content.Context
+import android.os.Bundle
 import android.util.Log
 import com.daniil.csb.classes.ComposeSetting
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
-object SettingsProvider {
-    private var PATH_DIRECTION = "csb"
-    private lateinit var navigationModel: SettingsNavigationModel
-    fun innit(model: SettingsNavigationModel) {
-        navigationModel = model
-        PATH_DIRECTION = model.config.storageDirection
-    }
+object CSB {
+    private var _applicationContext: Context? = null
+    val context: Context get() = _applicationContext ?: error("CSB is not initialized. Ensure CSBInitializer is in your Manifest or call CSB.init(context).")
 
+    private val globalScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    val navigationModel: SettingsNavigationModel by lazy {
+        SettingsNavigationModel()
+    }
+    fun init(context: Context) {
+        if (_applicationContext != null) return
+        val app = context.applicationContext as Application
+        _applicationContext = app
+        navigationModel.initialize(app)
+
+        // Автоматичне збереження при паузі Activity
+        app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityPaused(activity: Activity) {
+                globalScope.launch { saveData() }
+            }
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityStarted(activity: Activity) {}
+            override fun onActivityResumed(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
+    }
+    private var PATH_DIRECTION = "csb"
     fun findById(id: String): ComposeSetting<*> {
         return navigationModel.findSettingById(id)
     }
@@ -58,7 +85,7 @@ object SettingsProvider {
         navigationModel.navigateToSetting(id)
     }
 
-    suspend fun loadData(context: Context) = withContext(Dispatchers.IO) {
+    suspend fun loadData() = withContext(Dispatchers.IO) {
         val patch = File(context.filesDir, PATH_DIRECTION)
         if (!patch.exists()) {
             patch.mkdir()
@@ -85,7 +112,7 @@ object SettingsProvider {
         }
     }
 
-    suspend fun saveData(context: Context) = withContext(Dispatchers.IO) {
+    suspend fun saveData() = withContext(Dispatchers.IO) {
         val patch = File(context.filesDir, PATH_DIRECTION)
         if (!patch.exists()) {
             patch.mkdir()
@@ -107,5 +134,4 @@ object SettingsProvider {
             }
         }
     }
-
 }

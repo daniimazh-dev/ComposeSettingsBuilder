@@ -114,7 +114,7 @@ class Slider(
 
         DefaultContainer(
             modifier = Modifier,
-            focusState = focusState,
+            isFocused = focusState,
             enabled = enabled,
             groupItemClip = position,
             onClick = {}

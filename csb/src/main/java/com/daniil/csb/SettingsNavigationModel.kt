@@ -35,7 +35,6 @@ class SettingsNavigationModel : ViewModel() {
         val json = context.assets.open("csb/csb_config.json").bufferedReader().use { it.readText() }
         val config = Json.decodeFromString<CSBConfig>(json)
         this.config = config
-        SettingsProvider.innit(this)
     }
 
     private val _screenStack = MutableStateFlow(mutableStateListOf<Screen>())
@@ -69,15 +68,8 @@ class SettingsNavigationModel : ViewModel() {
         val setting = findSettingById(id)
         val screen = findScreenBySetting(id)
         if (currentScreen != screen) goToScreen(screen)
-        viewModelScope.launch {
-            delay(200)
-            repeat(2) {
-                delay(200)
-                setting.focus(true)
-                delay(200)
-                setting.focus(false)
-            }
-        }
+        screen.settingsScreenModel.focusToSetting(setting.id)
+
     }
 
     fun goToScreen(screen: Screen) {

@@ -84,7 +84,7 @@ class Custom<T : Any>(
         val enabled by this.enabled.collectAsState()
         DefaultContainer(
             modifier = Modifier.fillMaxWidth(),
-            focusState = focusState,
+            isFocused = focusState,
             enabled = enabled,
             groupItemClip = groupClip,
             onClick = onClick

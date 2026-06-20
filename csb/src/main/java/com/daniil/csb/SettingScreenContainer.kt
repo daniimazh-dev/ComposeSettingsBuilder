@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -35,10 +36,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.screens.CustomScreen
+import com.daniil.csb.settingui.styles.CSBStyle
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.styles.SettingsStyle
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,114 +49,125 @@ import com.daniil.csb.screens.CustomScreen
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
+    style: SettingsStyle = CSBStyle.Material3()
 ) {
-    val navigationModel = CSB.navigationModel
-    val currentScreen by navigationModel.currentScreen.collectAsState()
-    val lastNavigateAction by navigationModel.lastNavigateAction.collectAsState()
-    val screenStack by navigationModel.screenStack.collectAsState()
-    val screenHeap by navigationModel.screenHeap.collectAsState()
+    CompositionLocalProvider(LocalSettingsStyle provides style) {
+        val navigationModel = CSB.navigationModel
+        val currentScreen by navigationModel.currentScreen.collectAsState()
+        val lastNavigateAction by navigationModel.lastNavigateAction.collectAsState()
+        val screenStack by navigationModel.screenStack.collectAsState()
+        val screenHeap by navigationModel.screenHeap.collectAsState()
 
-    BackHandler(screenStack.size > 1) {
-        navigationModel.goBack()
-    }
+        BackHandler(screenStack.size > 1) {
+            navigationModel.goBack()
+        }
 
-    AnimatedContent(
-        modifier = Modifier,
-        targetState = currentScreen ?: return,
-        transitionSpec = {
-            if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Back) {
-                fadeIn(tween(300))
-                    .togetherWith(slideOutHorizontally(animationSpec = tween(300)) { it / 1 })
-            } else {
-                slideInHorizontally(animationSpec = tween(300)) { it / 1 }
-                    .togetherWith(fadeOut(tween(300)))
-            }
-        },
-    ) { currentScreen ->
-        Box(
-            modifier = Modifier.fillMaxSize()
-                .padding(paddingValues)
-                .then(currentScreen.paddingValues?.let { Modifier.padding(it) } ?: Modifier)
-                .then(currentScreen.modifier ?: modifier)
-        ) {
-            if (currentScreen is CustomScreen) {
-                currentScreen.Render()
-                return@AnimatedContent
-            }
-
-            val settingsScreenModel: SettingsScreenModel =
-                viewModel(key = currentScreen.id) { SettingsScreenModel(currentScreen) }
-            val title by settingsScreenModel.title.collectAsState()
-            val settings by settingsScreenModel.settings.collectAsState()
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+        AnimatedContent(
+            modifier = Modifier,
+            targetState = currentScreen ?: return@CompositionLocalProvider,
+            transitionSpec = {
+                if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Back) {
+                    fadeIn(tween(300))
+                        .togetherWith(slideOutHorizontally(animationSpec = tween(300)) { it / 1 })
+                } else {
+                    slideInHorizontally(animationSpec = tween(300)) { it / 1 }
+                        .togetherWith(fadeOut(tween(300)))
+                }
+            },
+        ) { currentScreen ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .then(currentScreen.paddingValues?.let { Modifier.padding(it) } ?: Modifier)
+                    .then(currentScreen.modifier ?: modifier)
             ) {
-                title?.let { title ->
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 52.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val showNavigation = remember(currentScreen.id) { screenStack.size > 1 }
-                            if (showNavigation) {
-                                IconButton(
-                                    onClick = {
-                                        navigationModel.goBack()
-                                    }
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.arrow_back_icon),
-                                        contentDescription = "back"
-                                    )
-                                }
-                            }
+                if (currentScreen is CustomScreen) {
+                    currentScreen.Render()
+                    return@AnimatedContent
+                }
 
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleLarge
-                            )
+                val settingsScreenModel = currentScreen.settingsScreenModel
+                val title by settingsScreenModel.title.collectAsState()
+                val settings by settingsScreenModel.settings.collectAsState()
 
-                        }
-                        Spacer(Modifier.height(4.dp))
+                val scrollFocusIndex by settingsScreenModel.scrollFocusIndex.collectAsState()
+                LaunchedEffect(scrollFocusIndex) {
+                    if (scrollFocusIndex != null) {
+                        settingsScreenModel.lazyListState.animateScrollToItem(scrollFocusIndex!!)
                     }
                 }
 
-                settings.keys.forEach { key ->
-                    item {
-                        if (!key.hide) {
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    state = settingsScreenModel.lazyListState
+                ) {
+                    title?.let { title ->
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 52.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = key.name,
-                                    maxLines = 1,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
+                                val showNavigation =
+                                    remember(currentScreen.id) { screenStack.size > 1 }
+                                if (showNavigation) {
+                                    IconButton(
+                                        onClick = {
+                                            navigationModel.goBack()
+                                        }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.arrow_back_icon),
+                                            contentDescription = "back"
+                                        )
+                                    }
+                                }
 
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+
+                            }
+                            Spacer(Modifier.height(4.dp))
                         }
                     }
-                    val group = settings[key] ?: return@forEach
-                    itemsIndexed(group) { index, setting ->
-                        val groupPosition = when {
-                            group.size == 1 -> GroupItemClip.None
-                            index == group.size - 1 -> GroupItemClip.Last
-                            index == 0 -> GroupItemClip.First
-                            else -> GroupItemClip.Default
+
+                    settings.keys.forEach { key ->
+                        item {
+                            if (!key.hide) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = key.name,
+                                        maxLines = 1,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
+
+                            }
                         }
-                        CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                            setting.UI()
+                        val group = settings[key] ?: return@forEach
+                        itemsIndexed(group) { index, setting ->
+                            val groupPosition = when {
+                                group.size == 1 -> GroupItemClip.None
+                                index == group.size - 1 -> GroupItemClip.Last
+                                index == 0 -> GroupItemClip.First
+                                else -> GroupItemClip.Default
+                            }
+                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                setting.UI()
+                            }
                         }
                     }
                 }
             }
         }
-
     }
 }
 

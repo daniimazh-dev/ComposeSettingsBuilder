@@ -137,7 +137,7 @@ class Select(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: GroupItemClip?) {
+    override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -145,7 +145,7 @@ class Select(
         var selectId by retain(alertOpen) { mutableStateOf<String>(value.id) }
 
         DefaultSettingUI(
-            modifier = Modifier,
+            modifier = modifier,
             isFocused = focusState,
             groupItemClip = position,
             enabled = enabled,

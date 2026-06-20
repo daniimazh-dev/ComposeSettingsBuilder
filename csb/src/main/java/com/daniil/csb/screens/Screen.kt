@@ -1,6 +1,9 @@
 package com.daniil.csb.screens
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SettingsScreenModel
 import com.daniil.csb.classes.ComposeSetting
@@ -27,8 +30,12 @@ open class Screen internal constructor(
 
     class Group(
         val id: String,
-        val hide: Boolean = false
-    )
+        var _hide: Boolean = false
+    ) {
+        var hide by mutableStateOf(_hide)
+        fun hide() { hide = true }
+        fun show() { hide = false }
+    }
 
     class Builder(val id: String) {
         private var title: String? = id
@@ -76,14 +83,14 @@ class CreateScreenScope() {
         hide: Boolean,
         vararg settings: ComposeSetting<*>
     ) {
-        groups[Screen.Group(id, hide)] = settings.toList()
+        groups[Screen.Group(id,  hide)] = settings.toList()
     }
 
     fun newGroup(
         hide: Boolean,
         vararg settings: ComposeSetting<*>
     ) {
-        groups[Screen.Group(UUID.randomUUID().toString(), hide)] = settings.toList()
+        groups[Screen.Group(UUID.randomUUID().toString(),hide)] = settings.toList()
     }
 
     fun newGroup(
@@ -97,7 +104,7 @@ class CreateScreenScope() {
     fun newGroup(
         vararg settings: ComposeSetting<*>
     ) {
-        groups[Screen.Group(UUID.randomUUID().toString(), false)] = settings.toList()
+        groups[Screen.Group(UUID.randomUUID().toString())] = settings.toList()
     }
 
     internal fun getData(): Screen.SettingsContentScope {

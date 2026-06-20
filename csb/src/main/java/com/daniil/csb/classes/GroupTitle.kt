@@ -20,6 +20,7 @@ class GroupTitle(
     override val id: String,
     override val title: String,
     override val description: String?,
+    override var hide: Boolean,
     val content: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
 ) : ComposeGroup() {
@@ -36,6 +37,7 @@ class GroupTitle(
     class GroupTitleBuilderScope() {
         var title: String? = null
         var description: String? = null
+        var hide = false
         var content: (@Composable () -> Unit)? = null
         var isSaveSetting = false
     }
@@ -46,19 +48,20 @@ class GroupTitle(
     ) {
         val scope = GroupTitleBuilderScope().apply(builderScope)
         fun create(): GroupTitle = with(scope) {
-            return GroupTitle(id, title ?: id, description, content)
+            return GroupTitle(id, title ?: id, description, hide, content)
         }
     }
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: GroupItemClip?) {
+    override fun UI(modifier: Modifier, position: GroupItemClip?) {
+        if (hide) return
         val focusState by this.focusState.collectAsState()
         val style = LocalSettingsStyle.current
 
         if (content == null) {
             Box(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 val textStyle = style.titleStyle.copy(fontWeight = FontWeight.Bold)

@@ -1,6 +1,7 @@
 package com.daniil.csb.classes
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.GroupItemClip
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,5 +39,5 @@ interface SettingInterface <T> {
         if (isSaveSetting) changeValue(pack.value as T) // Set value
     }
     @Composable
-    fun UI(position: GroupItemClip? = null)
+    fun UI(modifier: Modifier = Modifier, position: GroupItemClip? = null)
 }

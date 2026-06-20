@@ -109,13 +109,13 @@ class Slider(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: GroupItemClip?) {
+    override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
 
         DefaultContainer(
-            modifier = Modifier,
+            modifier = modifier,
             isFocused = focusState,
             enabled = enabled,
             groupItemClip = position,

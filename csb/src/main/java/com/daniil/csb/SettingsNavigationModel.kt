@@ -1,9 +1,11 @@
 package com.daniil.csb
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.daniil.csb.classes.ComposeGroup
 import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.Screen
@@ -69,7 +71,12 @@ class SettingsNavigationModel : ViewModel() {
         val screen = findScreenBySetting(id)
         if (currentScreen != screen) goToScreen(screen)
         screen.settingsScreenModel.focusToSetting(setting.id)
+    }
 
+    fun hideGroup(id: String, hide: Boolean) {
+        val groupHeap = _screenHeap.value.flatMap { it.settings.keys }
+        val group = groupHeap.find { it.id == id } ?: error("Group $id nit found")
+        if (hide) group.hide() else group.show()
     }
 
     fun goToScreen(screen: Screen) {

@@ -63,7 +63,7 @@ open class CustomScreen internal constructor(
             groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
             val setting = registeredSettings.getOrNull(index)
-            setting?.UI(groupItemClip)
+            setting?.UI(position = groupItemClip)
         }
 
         @Composable
@@ -71,7 +71,7 @@ open class CustomScreen internal constructor(
             setting: ComposeSetting<*>,
             groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
-            setting.UI(groupItemClip)
+            setting.UI(position = groupItemClip)
         }
 
         @Composable
@@ -79,7 +79,7 @@ open class CustomScreen internal constructor(
             id: String,
             groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
-            registeredSettings.find { it.id == id }?.UI(groupItemClip)
+            registeredSettings.find { it.id == id }?.UI(position = groupItemClip)
         }
 
         @Composable

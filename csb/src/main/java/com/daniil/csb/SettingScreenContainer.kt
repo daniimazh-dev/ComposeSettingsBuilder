@@ -1,7 +1,6 @@
 package com.daniil.csb
 
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -21,7 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.classes.ComposeGroup
-import com.daniil.csb.classes.GroupTitle
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.screens.CustomScreen
@@ -141,9 +139,9 @@ fun SettingsScreen(
 
                     settings.keys.forEach { group ->
                         if (!group.hide) {
-                            val group = settings[group] ?: return@forEach
-                            itemsIndexed(group) { index, setting ->
-                                val groupWithoutTitle = group.filterNot { it is ComposeGroup }
+                            val groupItems = settings[group] ?: return@forEach
+                            items(items = groupItems, key = { it.id }) { setting ->
+                                val groupWithoutTitle = groupItems.filterNot { it is ComposeGroup }
                                 val first = groupWithoutTitle.first().id
                                 val last = groupWithoutTitle.last().id
                                 val groupPosition = when {
@@ -153,7 +151,7 @@ fun SettingsScreen(
                                     else -> GroupItemClip.None
                                 }
                                 CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                    setting.UI()
+                                    setting.UI(modifier = Modifier.animateItem())
                                 }
                             }
                         }

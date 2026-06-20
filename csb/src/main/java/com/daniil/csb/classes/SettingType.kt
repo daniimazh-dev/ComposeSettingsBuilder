@@ -1,4 +1,6 @@
 package com.daniil.csb.classes
 
 abstract class ComposeSetting<T>(): SettingInterface<T>
-abstract class ComposeGroup(): ComposeSetting<Unit>()
+abstract class ComposeGroup(): ComposeSetting<Unit>() {
+    open val hide: Boolean = false
+}

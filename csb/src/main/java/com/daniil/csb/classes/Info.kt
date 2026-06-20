@@ -54,12 +54,12 @@ class Info(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: GroupItemClip?) {
+    override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
 
         DefaultSettingUI(
-            modifier = Modifier,
+            modifier = modifier,
             isFocused = focusState,
             groupItemClip = position,
             enabled = enabled,

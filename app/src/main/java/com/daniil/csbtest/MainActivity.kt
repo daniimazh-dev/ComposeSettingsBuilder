@@ -83,11 +83,15 @@ fun initSettings() = with(SettingBuilder()){
                 defaultValue = false
                 title = "Switch 2"
                 description = "This is test switch 2 ui"
+                onChangeValue = {
+                    CSB.hideGroup("sliderGroup", !it)
+                }
             },
 
             )
         newGroup(
-            createGroupTitle("groupSliderTitle"),
+            "sliderGroup",
+            createGroupTitle("groupSliderTitle") { hide = true },
             createSlider("slider") {
                 description = "This is test slider"
                 startPointRange = "Slow"
@@ -103,10 +107,14 @@ fun initSettings() = with(SettingBuilder()){
 //                action = { CSB.navigateToSetting("switch2") }
 //
 //            },
+
+        )
+        newGroup(
             createInfo("info") {
                 title = ""
                 description = "Enable switch and switch 2 to activate"
                 onClick = {
+                    CSB.navigateToSetting("Main Screen tittle")
                     CSB.navigateToSetting("switch")
                 }
             }

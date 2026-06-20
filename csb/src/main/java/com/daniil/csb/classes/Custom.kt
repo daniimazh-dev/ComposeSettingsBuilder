@@ -78,12 +78,12 @@ class Custom<T : Any>(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: GroupItemClip?) {
+    override fun UI(modifier: Modifier, position: GroupItemClip?) {
         if (content == null) return
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         DefaultContainer(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             isFocused = focusState,
             enabled = enabled,
             groupItemClip = groupClip,

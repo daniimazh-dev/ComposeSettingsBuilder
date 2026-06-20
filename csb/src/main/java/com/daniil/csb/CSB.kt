@@ -85,6 +85,10 @@ object CSB {
         navigationModel.navigateToSetting(id)
     }
 
+    fun hideGroup(id: String, hide: Boolean) {
+        navigationModel.hideGroup(id, hide)
+    }
+
     suspend fun loadData() = withContext(Dispatchers.IO) {
         val patch = File(context.filesDir, PATH_DIRECTION)
         if (!patch.exists()) {

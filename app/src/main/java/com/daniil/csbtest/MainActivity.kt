@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.daniil.csb.CSB
+import com.daniil.csb.SettingViewModel
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.SettingsProvider
 import com.daniil.csb.SettingsScreen
@@ -34,29 +36,25 @@ import com.daniil.csb.classes.createSelect
 import com.daniil.csb.classes.createSlider
 import com.daniil.csb.classes.createStringData
 import com.daniil.csb.classes.createSwitch
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.screens.createAbstractScreen
 import com.daniil.csb.screens.createCustomScreen
 import com.daniil.csb.screens.createScreen
+import com.daniil.csb.settingViewModel
 import com.daniil.csb.ui.theme.ComposeSettingsBuilderTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    val settingsNavigationModel by viewModels<SettingsNavigationModel>()
-
+    val settingViewModel by settingViewModel()
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        initSettings(
-            settingsNavigationModel,
-            this,
-            lifecycleScope,
-        )
+        initSettings(lifecycleScope)
 
         setContent {
             ComposeSettingsBuilderTheme {
@@ -75,7 +73,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(16.dp),
                         paddingValues = innerPadding,
-                        navigationModel = settingsNavigationModel
+                        navigationModel = settingViewModel.navigationSettingViewModel!!
                     )
                 }
             }
@@ -93,18 +91,16 @@ class MainActivity : ComponentActivity() {
 }
 
 fun initSettings(
-    settingsNavigationModel: SettingsNavigationModel,
-    context: Context,
     coroutineScope: CoroutineScope
 ) {
-    settingsNavigationModel.initialize(context)
-    val csb = CSBCreator()
+    val settingsNavigationModel = CSB.navigationModel
+    val sb = SettingBuilder()
 
-    val secondScreen = csb.createScreen("RedirectTest") {
+    val secondScreen = sb.createScreen("RedirectTest") {
         title = "Redirect test"
         modifier = Modifier
         newGroup(
-            csb.createSwitch("switch2") {
+            sb.createSwitch("switch2") {
                 defaultValue = false
                 title = "Switch 2"
                 description = "This is test switch 2 ui"
@@ -113,7 +109,7 @@ fun initSettings(
             )
         newGroup(
             "test2", "Slider",
-            csb.createSlider("slider") {
+            sb.createSlider("slider") {
                 description = "This is test slider"
                 startPointRange = "Slow"
                 endPointRange = "Fast"
@@ -121,14 +117,14 @@ fun initSettings(
                 defaultValue = 3f
                 range = 0f..1f
             },
-            csb.createAction("action") {
+            sb.createAction("action") {
                 title = "Go to switch"
                 requestAlert = true
                 description = "Enable switch to activate slider"
                 action = { SettingsProvider.navigateToSetting("switch2") }
 
             },
-            csb.createInfo("info") {
+            sb.createInfo("info") {
                 title = ""
                 description = "Enable switch and switch 2 to activate"
             }
@@ -137,25 +133,25 @@ fun initSettings(
 
     }
 
-    val mainScreen = csb.createScreen("Main") {
+    val mainScreen = sb.createScreen("Main") {
 //            modifier = Modifier.fillMaxSize().padding(16.dp)
 //            title = "Settings"
         newGroup(
-            csb.createRedirect("redirect") {
+            sb.createRedirect("redirect") {
                 title = "Redirect"
                 description = "This is text redirect"
                 focus = "color2"
                 redirectToId = "customScreen"
                 navigationModel = settingsNavigationModel
             },
-            csb.createRedirect("redirect2") {
+            sb.createRedirect("redirect2") {
                 title = "Redirect 2"
                 description = "This is text redirect"
                 focus = "info"
                 redirectToId = "RedirectTest"
                 navigationModel = settingsNavigationModel
             },
-            csb.createMultiplySelect("multiply_select") {
+            sb.createMultiplySelect("multiply_select") {
                 val options = listOf(
                     MultiplySelect.Option(id = "1", title = "Item 1"),
                     MultiplySelect.Option(id = "2", title = "Item 2"),
@@ -166,7 +162,7 @@ fun initSettings(
                 this.options = options
 
             },
-            csb.createSelect("select") {
+            sb.createSelect("select") {
                 val options = listOf(
                     Select.Option(id = "1", title = "Item 1"),
                     Select.Option(id = "2", title = "Item 2"),
@@ -176,28 +172,28 @@ fun initSettings(
                 defaultValue = options[0]
                 this.options = options
             },
-            csb.createSwitch("switch") {
+            sb.createSwitch("switch") {
                 defaultValue = true
                 title = "Switch"
                 description = "This is test switch ui"
             },
-            csb.createColorPicker("color") {
+            sb.createColorPicker("color") {
                 defaultValue = Color.Blue
             },
-            csb.createStringData("stringData") {
+            sb.createStringData("stringData") {
                 label = { Text("Test") }
             }
         )
     }
-    val abstract = csb.createAbstractScreen("Abstract",
-        csb.createSwitch("switch3") { defaultValue = true }
+    val abstract = sb.createAbstractScreen("Abstract",
+        sb.createSwitch("switch3") { defaultValue = true }
     )
 
-    val customScreen = csb.createCustomScreen("customScreen") {
+    val customScreen = sb.createCustomScreen("customScreen") {
         modifier = Modifier.background(Color.Blue)
         title = "Custom Screen"
 
-        register(csb.createColorPicker("color2"))
+        register(sb.createColorPicker("color2"))
         content = {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -212,12 +208,9 @@ fun initSettings(
 
         }
     }
-
-    settingsNavigationModel.setScreensHeap(
-        mainScreen, secondScreen, abstract, customScreen
-    )
+    
     coroutineScope.launch(Dispatchers.IO) {
-        SettingsProvider.loadData(context)
+        sb.build(mainScreen, secondScreen, abstract, customScreen)
     }
 }
 

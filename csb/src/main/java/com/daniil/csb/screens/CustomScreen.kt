@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.classes.ComposeSetting
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.screens.CustomScreen.CustomScreenScope
 
@@ -171,7 +171,7 @@ class CreateCustomScreenScope() {
     }
 }
 
-fun CSBCreator.createCustomScreen(
+fun SettingBuilder.createCustomScreen(
     id: String,
     scope: CreateCustomScreenScope.() -> Unit
 ): CustomScreen {

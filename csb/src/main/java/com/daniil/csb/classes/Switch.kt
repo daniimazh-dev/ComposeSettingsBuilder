@@ -7,7 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -94,7 +94,7 @@ class Switch(
     }
 }
 
-fun CSBCreator.createSwitch(
+fun SettingBuilder.createSwitch(
     id: String,
     builder: Switch.SwitchBuilderScope.() -> Unit = { defaultValue = false }
 ): Switch {

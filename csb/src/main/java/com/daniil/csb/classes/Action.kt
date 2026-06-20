@@ -10,7 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -138,7 +138,7 @@ class Action(
     }
 }
 
-fun CSBCreator.createAction(
+fun SettingBuilder.createAction(
     id: String,
     builder: Action.ActionBuilderScope.() -> Unit = { }
 ): Action {

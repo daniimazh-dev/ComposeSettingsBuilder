@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -274,7 +274,7 @@ class MultiplySelect(
     }
 }
 
-fun CSBCreator.createMultiplySelect(
+fun SettingBuilder.createMultiplySelect(
     id: String,
     builder: MultiplySelect.MultiplySelectBuilderScope.() -> Unit = {
         defaultValue = listOf()

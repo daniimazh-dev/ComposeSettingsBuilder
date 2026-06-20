@@ -2,7 +2,7 @@ package com.daniil.csb.screens
 
 import androidx.compose.ui.Modifier
 import com.daniil.csb.classes.ComposeSetting
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import java.util.UUID
 
 open class ScreenInstance internal constructor(
@@ -79,7 +79,7 @@ class CreateScreenScope() {
     }
 }
 
-fun CSBCreator.createScreen(
+fun SettingBuilder.createScreen(
     id: String,
     scope: CreateScreenScope.() -> Unit
 ): ScreenInstance {

@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -165,7 +165,7 @@ class Slider(
 
 }
 
-fun CSBCreator.createSlider(
+fun SettingBuilder.createSlider(
     id: String,
     builder: Slider.SliderBuilderScope.() -> Unit = {}
 ): Slider {

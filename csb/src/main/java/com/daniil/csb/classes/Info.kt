@@ -10,7 +10,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,7 +88,7 @@ class Info(
     }
 }
 
-fun CSBCreator.createInfo(
+fun SettingBuilder.createInfo(
     id: String,
     builder: Info.InfoBuilderScope.() -> Unit
 ): Info {

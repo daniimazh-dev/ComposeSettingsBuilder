@@ -64,7 +64,7 @@ import com.daniil.csb.utils.FancyTabBar
 import com.daniil.csb.utils.FancyTabBarData
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.CSBCreator
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.ItemGroupPosition
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -595,7 +595,7 @@ private fun CustomGradientSlider(
     }
 }
 
-fun CSBCreator.createColorPicker(
+fun SettingBuilder.createColorPicker(
     id: String,
     builder: ColorPicker.ColorPickerBuilderScope.() -> Unit = { defaultValue = Color.Blue }
 ): ColorPicker {

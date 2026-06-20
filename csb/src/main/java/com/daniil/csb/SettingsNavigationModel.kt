@@ -2,12 +2,11 @@ package com.daniil.csb
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
-import com.daniil.csb.screens.ScreenInstance
+import com.daniil.csb.screens.Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,11 +17,11 @@ import kotlin.error
 
 class SettingsNavigationModel : ViewModel() {
 
-    private var _screenHeap = MutableStateFlow(listOf<ScreenInstance>())
+    private var _screenHeap = MutableStateFlow(listOf<Screen>())
     val screenHeap = _screenHeap.asStateFlow()
 
     fun setScreensHeap(
-        vararg screen: ScreenInstance
+        vararg screen: Screen
     ) {
         _screenHeap.value = screen.toList()
         if (screenStack.value.isEmpty()) {
@@ -39,12 +38,12 @@ class SettingsNavigationModel : ViewModel() {
         SettingsProvider.innit(this)
     }
 
-    private val _screenStack = MutableStateFlow(mutableStateListOf<ScreenInstance>())
+    private val _screenStack = MutableStateFlow(mutableStateListOf<Screen>())
     val screenStack = _screenStack.asStateFlow()
 
 
 
-    private var _currentScreen = MutableStateFlow<ScreenInstance?>(null)
+    private var _currentScreen = MutableStateFlow<Screen?>(null)
     val currentScreen = _currentScreen.asStateFlow()
     var lastNavigateAction = MutableStateFlow(LastNavigateAction.Go)
         private set
@@ -53,10 +52,10 @@ class SettingsNavigationModel : ViewModel() {
         Back,
     }
 
-    fun findScreenById(id: String): ScreenInstance {
+    fun findScreenById(id: String): Screen {
         return screenHeap.value.find { it.id == id } ?: error("Screen $id not found")
     }
-    fun findScreenBySetting(id: String): ScreenInstance {
+    fun findScreenBySetting(id: String): Screen {
         val screen = screenHeap.value.find { it.settings.values.flatten().find { it.id == id } != null }
         return screen ?: error("Setting $id not found")
     }
@@ -81,12 +80,21 @@ class SettingsNavigationModel : ViewModel() {
         }
     }
 
-    fun goToScreen(screenInstance: ScreenInstance) {
-        if (screenInstance is AbstractScreen) error("Cannot go to abstract screen")
-        if (screenStack.value.find { it.id == screenInstance.id } != null) return // TODO("goBack if the screen is below the current screen")
-        _currentScreen.update { screenInstance }
-        _screenStack.value.add(screenInstance)
-        lastNavigateAction.update { LastNavigateAction.Go }
+    fun goToScreen(screen: Screen) {
+        if (screen is AbstractScreen) error("Cannot go to abstract screen")
+        val indexInStack = screenStack.value.indexOfFirst { it.id == screen.id }
+        val isInStack = indexInStack != -1
+
+        if (isInStack) {
+            _currentScreen.update { screen }
+            val stackSize = screenStack.value.size
+            _screenStack.value.removeRange(indexInStack+1, stackSize)
+            lastNavigateAction.update { LastNavigateAction.Back }
+        } else {
+            _currentScreen.update { screen }
+            _screenStack.value.add(screen)
+            lastNavigateAction.update { LastNavigateAction.Go }
+        }
     }
     fun goToScreen(screenId: String) {
         val screenInstance = findScreenById(screenId)
@@ -95,10 +103,7 @@ class SettingsNavigationModel : ViewModel() {
 
     fun goBack() {
         if (screenStack.value.size < 2) return
-
-        _screenStack.update { it.dropLast(1).toMutableStateList() }
-        _currentScreen.update { screenStack.value.last() }
-        lastNavigateAction.update { LastNavigateAction.Back }
+        goToScreen(screenStack.value.dropLast(1).last())
     }
 
 }

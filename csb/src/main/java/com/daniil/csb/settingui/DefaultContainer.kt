@@ -11,39 +11,39 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.classes.utils.LocalGroupPosition
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 
 @Composable
 fun DefaultContainer(
     modifier: Modifier = Modifier,
     focusState: Boolean = false,
-    itemGroupPosition: ItemGroupPosition?,
+    groupItemClip: GroupItemClip?,
     enabled: Boolean,
     onClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val groupPosition = LocalGroupPosition.current
     val shape = MaterialTheme.shapes.medium
-    val groupClip = when (itemGroupPosition ?: groupPosition) {
-        ItemGroupPosition.First -> shape.copy(
+    val groupClip = when (groupItemClip ?: groupPosition) {
+        GroupItemClip.First -> shape.copy(
             topStart = CornerSize(12.dp),
             topEnd = CornerSize(12.dp),
             bottomEnd = CornerSize(4.dp),
             bottomStart = CornerSize(4.dp),
         )
-        ItemGroupPosition.Default -> shape.copy(
+        GroupItemClip.Default -> shape.copy(
             topStart = CornerSize(4.dp),
             topEnd = CornerSize(4.dp),
             bottomEnd = CornerSize(4.dp),
             bottomStart = CornerSize(4.dp),
         )
-        ItemGroupPosition.Last -> shape.copy(
+        GroupItemClip.Last -> shape.copy(
             topStart = CornerSize(4.dp),
             topEnd = CornerSize(4.dp),
             bottomEnd = CornerSize(12.dp),
             bottomStart = CornerSize(12.dp),
         )
-        ItemGroupPosition.None -> shape
+        GroupItemClip.None -> shape
     }
     val defaultColor = MaterialTheme.colorScheme.surfaceContainer
     val focusColor = MaterialTheme.colorScheme.surfaceContainerHighest

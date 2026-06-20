@@ -7,7 +7,7 @@ class AbstractScreen
 internal constructor(
     id: String,
     settings: Map<Group, List<ComposeSetting<*>>>,
-) : ScreenInstance(id, settings = settings) {
+) : Screen(id, settings = settings) {
 
 
     class Builder(

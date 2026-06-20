@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,6 +56,7 @@ class MultiplySelect(
     val alertTitle: String,
     override val description: String,
     enabled: Boolean = true,
+    var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<List<MultiplySelect.Option>>() {
     private var _value = MutableStateFlow(this@MultiplySelect.defaultValue)
@@ -70,6 +71,7 @@ class MultiplySelect(
 
     override fun changeValue(newValue: List<Option>) {
         if (!newValue.all { options.contains(it) }) return
+        onChangeValue(newValue)
         _value.value = newValue
     }
     @JvmName(name = "ChangeValueWitchId")
@@ -112,6 +114,7 @@ class MultiplySelect(
     class MultiplySelectBuilderScope() {
         lateinit var defaultValue: List<MultiplySelect.Option>
         lateinit var options: List<MultiplySelect.Option>
+        var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {}
         var title = "Multiply Select"
         var alertTitle = "Select multiple"
         var description = ""
@@ -133,6 +136,7 @@ class MultiplySelect(
                 alertTitle,
                 description,
                 enabled,
+                onChangeValue,
                 isSaveSetting
             )
         }
@@ -140,7 +144,7 @@ class MultiplySelect(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -149,7 +153,7 @@ class MultiplySelect(
         DefaultSettingUI(
             modifier = Modifier,
             focusState = focusState,
-            itemGroupPosition = position,
+            groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
             description = { if (!description.isBlank()) Text(description) },

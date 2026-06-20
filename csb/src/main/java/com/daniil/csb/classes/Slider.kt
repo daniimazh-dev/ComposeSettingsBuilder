@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +37,7 @@ class Slider(
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
+    var onChangeValue: (Float) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Float>() {
 
@@ -61,6 +62,7 @@ class Slider(
     }
 
     override fun changeValue(newValue: Float) {
+        onChangeValue(newValue)
         _value.value = newValue
         sliderState.value = SliderState(
             value = newValue,
@@ -86,6 +88,8 @@ class Slider(
         var steps = 0
         var title = "Slider"
         var description = ""
+
+        var onChangeValue: (Float) -> Unit = {}
         var startPointRange: String? = range.start.toString()
         var endPointRange: String? = range.endInclusive.toString()
         var enabled = true
@@ -98,13 +102,13 @@ class Slider(
     ) {
         val scope = SliderBuilderScope().apply(builderScope)
         fun create(): Slider = with(scope) {
-            return Slider(id, defaultValue, range, steps, startPointRange, endPointRange,  title, description, enabled, isSaveSetting)
+            return Slider(id, defaultValue, range, steps, startPointRange, endPointRange,  title, description, enabled, onChangeValue, isSaveSetting)
         }
     }
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
 
@@ -112,7 +116,7 @@ class Slider(
             modifier = Modifier,
             focusState = focusState,
             enabled = enabled,
-            itemGroupPosition = position,
+            groupItemClip = position,
             onClick = {}
         ) {
             Column(

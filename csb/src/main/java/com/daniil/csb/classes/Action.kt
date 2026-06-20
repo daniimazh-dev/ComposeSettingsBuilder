@@ -11,7 +11,7 @@ import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -79,7 +79,7 @@ class Action(
     override val focusState = MutableStateFlow(false)
 
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -87,7 +87,7 @@ class Action(
         DefaultSettingUI(
             modifier = Modifier,
             focusState = focusState,
-            itemGroupPosition = position,
+            groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
             description = { if (!description.isBlank()) Text(description) },

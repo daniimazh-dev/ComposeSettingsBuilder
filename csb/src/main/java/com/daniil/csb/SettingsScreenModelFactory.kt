@@ -2,9 +2,9 @@ package com.daniil.csb
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.daniil.csb.screens.ScreenInstance
+import com.daniil.csb.screens.Screen
 
-class ChatModelFactory(private val instance: ScreenInstance) : ViewModelProvider.Factory {
+class ChatModelFactory(private val instance: Screen) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsScreenModel::class.java)) {
             @Suppress("UNCHECKED_CAST")

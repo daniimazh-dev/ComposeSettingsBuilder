@@ -23,7 +23,7 @@ import com.daniil.csb.R
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.screens.CustomScreen.CustomScreenScope
 
 open class CustomScreen internal constructor(
@@ -31,7 +31,7 @@ open class CustomScreen internal constructor(
     title: String = "Custom Screen",
     modifier: Modifier? = null,
     content: @Composable CustomScreenScope.() -> Unit
-): ScreenInstance(id, settings = mapOf()) {
+): Screen(id, settings = mapOf()) {
 
     constructor(
         id: String,
@@ -50,7 +50,7 @@ open class CustomScreen internal constructor(
 
     var registeredSettings = mutableListOf<ComposeSetting<*>>()
     override var settings: Map<Group, List<ComposeSetting<*>>>
-        get() = mapOf(ScreenInstance.Group("", "", true) to registeredSettings)
+        get() = mapOf(Screen.Group("", "", true) to registeredSettings)
         set(value) {}
 
     var content: @Composable CustomScreenScope.() -> Unit = {}
@@ -59,26 +59,26 @@ open class CustomScreen internal constructor(
         @Composable
         fun RegisteredSetting(
             index: Int,
-            itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
+            groupItemClip: GroupItemClip = GroupItemClip.None
         ) {
             val setting = registeredSettings.getOrNull(index)
-            setting?.UI(itemGroupPosition)
+            setting?.UI(groupItemClip)
         }
 
         @Composable
         fun RegisteredSetting(
             setting: ComposeSetting<*>,
-            itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
+            groupItemClip: GroupItemClip = GroupItemClip.None
         ) {
-            setting.UI(itemGroupPosition)
+            setting.UI(groupItemClip)
         }
 
         @Composable
         fun RegisteredSetting(
             id: String,
-            itemGroupPosition: ItemGroupPosition = ItemGroupPosition.None
+            groupItemClip: GroupItemClip = GroupItemClip.None
         ) {
-            registeredSettings.find { it.id == id }?.UI(itemGroupPosition)
+            registeredSettings.find { it.id == id }?.UI(groupItemClip)
         }
 
         @Composable

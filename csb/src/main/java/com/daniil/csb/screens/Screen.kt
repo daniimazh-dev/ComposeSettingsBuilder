@@ -1,14 +1,16 @@
 package com.daniil.csb.screens
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Modifier
 import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.classes.utils.SettingBuilder
 import java.util.UUID
 
-open class ScreenInstance internal constructor(
+open class Screen internal constructor(
     var id: String,
     var title: String? = null,
     var modifier: Modifier? = null,
+    var paddingValues: PaddingValues? = null,
     open val settings: Map<Group, List<ComposeSetting<*>>> = emptyMap(),
 ) {
     class SettingsContentScope() {
@@ -30,7 +32,9 @@ open class ScreenInstance internal constructor(
     class Builder(val id: String) {
         private var title: String? = id
         private var modifier: Modifier? = null
+        private var paddingValues: PaddingValues? = null
         private lateinit var settings: Map<Group, List<ComposeSetting<*>>>
+
 
         fun setTitle(title: String?) = apply { this.title = title }
 
@@ -39,6 +43,7 @@ open class ScreenInstance internal constructor(
         }
 
         fun setModifier(modifier: Modifier?) = apply { this.modifier = modifier }
+        fun setPaddingValues(paddingValues: PaddingValues?) = apply { this.paddingValues = paddingValues }
 
         fun setGroupedContent(scope: SettingsContentScope.() -> Unit) = apply {
             val settings = SettingsContentScope().apply(scope)
@@ -49,31 +54,37 @@ open class ScreenInstance internal constructor(
             this.settings = settings
         }
 
-        fun build() = ScreenInstance(id, title, modifier, settings)
+        fun build() = Screen(id, title, modifier, paddingValues, settings)
     }
 }
 
+
+
 class CreateScreenScope() {
-    private val groups: MutableMap<ScreenInstance.Group, List<ComposeSetting<*>>> = mutableMapOf()
+    private val groups: MutableMap<Screen.Group, List<ComposeSetting<*>>> = mutableMapOf()
     var title: String? = null
     var modifier: Modifier? = null
-    private var groupContent = ScreenInstance.SettingsContentScope()
+
+    var innerPadding = PaddingValues.Zero
+    var paddingValues: PaddingValues? = null
+
+    private var groupContent = Screen.SettingsContentScope()
 
     fun newGroup(
         id: String,
         name: String,
         vararg settings: ComposeSetting<*>
     ) {
-        groups[ScreenInstance.Group(id, name)] = settings.toList()
+        groups[Screen.Group(id, name)] = settings.toList()
     }
 
     fun newGroup(
         vararg settings: ComposeSetting<*>
     ) {
-        groups[ScreenInstance.Group(UUID.randomUUID().toString(), "", true)] = settings.toList()
+        groups[Screen.Group(UUID.randomUUID().toString(), "", true)] = settings.toList()
     }
 
-    internal fun getData(): ScreenInstance.SettingsContentScope {
+    internal fun getData(): Screen.SettingsContentScope {
         groupContent.groups.putAll(groups)
         return groupContent
     }
@@ -82,12 +93,13 @@ class CreateScreenScope() {
 fun SettingBuilder.createScreen(
     id: String,
     scope: CreateScreenScope.() -> Unit
-): ScreenInstance {
+): Screen {
     val data = CreateScreenScope().apply(scope)
     val content = data.getData()
-    val screen = ScreenInstance.Builder(id)
+    val screen = Screen.Builder(id)
         .setTitle(data.title)
         .setModifier(data.modifier)
+        .setPaddingValues(data.paddingValues)
         .setGroupedContent(content.groups)
         .build()
     return screen

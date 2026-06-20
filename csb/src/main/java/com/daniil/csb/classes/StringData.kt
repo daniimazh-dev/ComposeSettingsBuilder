@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +45,7 @@ class StringData(
     val label: (@Composable () -> Unit)?,
     override val description: String,
     enabled: Boolean = true,
+    var onChangeValue: (String) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<String>() {
     private var _value = MutableStateFlow(this@StringData.defaultValue)
@@ -58,6 +59,7 @@ class StringData(
     }
 
     override fun changeValue(newValue: String) {
+        onChangeValue(newValue)
         _value.value = newValue
     }
     override fun resetToDefault() { changeValue(this@StringData.defaultValue) }
@@ -76,6 +78,7 @@ class StringData(
         var defaultValue: String = ""
         var title = "String Data"
         var label: (@Composable () -> Unit)? = null
+        var onChangeValue: (String) -> Unit = {}
         var alertTitle = "Edit value"
         var description = ""
         var enabled = true
@@ -96,6 +99,7 @@ class StringData(
                 label,
                 description,
                 enabled,
+                onChangeValue,
                 isSaveSetting
             )
         }
@@ -103,7 +107,7 @@ class StringData(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -112,7 +116,7 @@ class StringData(
         DefaultSettingUI(
             modifier = Modifier,
             focusState = focusState,
-            itemGroupPosition = position,
+            groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
             description = { if (!description.isBlank()) Text(description) },

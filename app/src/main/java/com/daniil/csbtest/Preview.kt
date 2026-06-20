@@ -20,11 +20,7 @@ import com.daniil.csb.SettingsScreen
 @Preview
 @Composable
 private fun Preview() {
-    val context = LocalContext.current
-    val viewModel = viewModel() { SettingsNavigationModel() }
     initSettings(
-        settingsNavigationModel = viewModel,
-        context = context,
         coroutineScope = rememberCoroutineScope()
     )
 
@@ -43,7 +39,6 @@ private fun Preview() {
                 .fillMaxSize()
                 .padding(16.dp),
             paddingValues = innerPadding,
-            navigationModel = viewModel
         )
     }
 }

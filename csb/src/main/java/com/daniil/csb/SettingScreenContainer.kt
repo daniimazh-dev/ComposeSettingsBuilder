@@ -37,7 +37,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.daniil.csb.classes.utils.LocalGroupPosition
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.screens.CustomScreen
 
 
@@ -46,8 +46,8 @@ import com.daniil.csb.screens.CustomScreen
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
-    navigationModel: SettingsNavigationModel
 ) {
+    val navigationModel = CSB.navigationModel
     val currentScreen by navigationModel.currentScreen.collectAsState()
     val lastNavigateAction by navigationModel.lastNavigateAction.collectAsState()
     val screenStack by navigationModel.screenStack.collectAsState()
@@ -70,9 +70,11 @@ fun SettingsScreen(
             }
         },
     ) { currentScreen ->
-
         Box(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).then(currentScreen.modifier ?: modifier)
+            modifier = Modifier.fillMaxSize()
+                .padding(paddingValues)
+                .then(currentScreen.paddingValues?.let { Modifier.padding(it) } ?: Modifier)
+                .then(currentScreen.modifier ?: modifier)
         ) {
             if (currentScreen is CustomScreen) {
                 currentScreen.Render()
@@ -139,10 +141,10 @@ fun SettingsScreen(
                     val group = settings[key] ?: return@forEach
                     itemsIndexed(group) { index, setting ->
                         val groupPosition = when {
-                            group.size == 1 -> ItemGroupPosition.None
-                            index == group.size - 1 -> ItemGroupPosition.Last
-                            index == 0 -> ItemGroupPosition.First
-                            else -> ItemGroupPosition.Default
+                            group.size == 1 -> GroupItemClip.None
+                            index == group.size - 1 -> GroupItemClip.Last
+                            index == 0 -> GroupItemClip.First
+                            else -> GroupItemClip.Default
                         }
                         CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
                             setting.UI()

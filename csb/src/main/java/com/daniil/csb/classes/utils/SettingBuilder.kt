@@ -2,7 +2,7 @@ package com.daniil.csb.classes.utils
 
 import com.daniil.csb.CSB
 import com.daniil.csb.SettingsProvider
-import com.daniil.csb.screens.ScreenInstance
+import com.daniil.csb.screens.Screen
 
 /**
  * Helper class to build the settings structure.
@@ -14,7 +14,7 @@ class SettingBuilder {
      * Uses the global CSB navigation model and context.
      */
     suspend fun build(
-        vararg screens: ScreenInstance
+        vararg screens: Screen
     ) {
         CSB.navigationModel.setScreensHeap(*screens)
         SettingsProvider.loadData(CSB.context)
@@ -24,7 +24,7 @@ class SettingBuilder {
      * Overload for list of screens.
      */
     suspend fun build(
-        screens: List<ScreenInstance>
+        screens: List<Screen>
     ) {
         CSB.navigationModel.setScreensHeap(*screens.toTypedArray())
         SettingsProvider.loadData(CSB.context)

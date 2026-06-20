@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,6 +55,7 @@ class Select(
     val alertTitle: String,
     override val description: String,
     enabled: Boolean = true,
+    var onChangeValue: (Option) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<Select.Option>() {
     private var _value = MutableStateFlow(this@Select.defaultValue)
@@ -74,7 +75,8 @@ class Select(
 
     fun changeValue(optionId: String) {
         val option = options.find { it.id == optionId }
-        _value.value = option ?: return
+        onChangeValue(option ?: return)
+        _value.value = option
     }
 
     override fun resetToDefault() { changeValue(this@Select.defaultValue) }
@@ -106,6 +108,7 @@ class Select(
         lateinit var defaultValue: Select.Option
         lateinit var options: List<Select.Option>
         var title = "Select"
+        var onChangeValue: (Option) -> Unit = {}
         var alertTitle = "Select item"
         var description = ""
         var enabled = true
@@ -126,6 +129,7 @@ class Select(
                 alertTitle,
                 description,
                 enabled,
+                onChangeValue,
                 isSaveSetting
             )
         }
@@ -133,7 +137,7 @@ class Select(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -143,7 +147,7 @@ class Select(
         DefaultSettingUI(
             modifier = Modifier,
             focusState = focusState,
-            itemGroupPosition = position,
+            groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
             description = { if (!description.isBlank()) Text(description) },

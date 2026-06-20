@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,7 +74,6 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(16.dp),
                         paddingValues = innerPadding,
-                        navigationModel = settingViewModel.navigationSettingViewModel!!
                     )
                 }
             }
@@ -97,8 +97,9 @@ fun initSettings(
     val sb = SettingBuilder()
 
     val secondScreen = sb.createScreen("RedirectTest") {
+//        paddingValues = PaddingValues(30.dp)
+
         title = "Redirect test"
-        modifier = Modifier
         newGroup(
             sb.createSwitch("switch2") {
                 defaultValue = false
@@ -117,16 +118,19 @@ fun initSettings(
                 defaultValue = 3f
                 range = 0f..1f
             },
-            sb.createAction("action") {
-                title = "Go to switch"
-                requestAlert = true
-                description = "Enable switch to activate slider"
-                action = { SettingsProvider.navigateToSetting("switch2") }
-
-            },
+//            sb.createAction("action") {
+//                title = "Go to switch"
+//                requestAlert = true
+//                description = "Enable switch to activate slider"
+//                action = { SettingsProvider.navigateToSetting("switch2") }
+//
+//            },
             sb.createInfo("info") {
                 title = ""
                 description = "Enable switch and switch 2 to activate"
+                onClick = {
+                    SettingsProvider.navigateToSetting("switch")
+                }
             }
         )
 
@@ -175,6 +179,10 @@ fun initSettings(
             sb.createSwitch("switch") {
                 defaultValue = true
                 title = "Switch"
+                onChangeValue = { state ->
+                    SettingsProvider.enable("switch2", state)
+                    SettingsProvider.enable("slider", state)
+                }
                 description = "This is test switch ui"
             },
             sb.createColorPicker("color") {

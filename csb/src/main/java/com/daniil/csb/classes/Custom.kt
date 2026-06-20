@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +20,7 @@ class Custom<T : Any>(
     override val description: String,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean,
-    val ignoreGroupClip: Boolean = false,
+    val groupClip: GroupItemClip?,
     val onClick: () -> Unit,
     val content: (@Composable () -> Unit)?,
     val clazz: KClass<T>
@@ -57,7 +57,7 @@ class Custom<T : Any>(
     class CustomBuilderScope<T>() {
         var defaultValue: T? = null
         var content: (@Composable () -> Unit)? = null
-        var ignoreGroupClip: Boolean = false
+        var groupClip: GroupItemClip? = null
         var onClick: () -> Unit = {}
         var title = "Custom"
         var description = ""
@@ -72,13 +72,13 @@ class Custom<T : Any>(
     ) {
         val scope = CustomBuilderScope<T>().apply(builderScope)
         fun create(): Custom<T> = with(scope) {
-            return Custom(id, defaultValue!!, title, description, enabled,  isSaveSetting, ignoreGroupClip, onClick = { onClick() }, content, clazz)
+            return Custom(id, defaultValue!!, title, description, enabled,  isSaveSetting, groupClip, onClick, content, clazz)
         }
     }
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         if (content == null) return
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
@@ -86,8 +86,8 @@ class Custom<T : Any>(
             modifier = Modifier.fillMaxWidth(),
             focusState = focusState,
             enabled = enabled,
-            itemGroupPosition = if (ignoreGroupClip) ItemGroupPosition.None else position,
-            onClick = { onClick() }
+            groupItemClip = groupClip,
+            onClick = onClick
         ) {
             content()
         }

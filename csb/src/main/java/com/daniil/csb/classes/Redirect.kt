@@ -12,10 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.screens.ScreenInstance
+import com.daniil.csb.screens.Screen
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,28 +29,30 @@ class Redirect(
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
+    var onRedirect: () -> Unit = {},
     val navigationModel: SettingsNavigationModel,
     override var isSaveSetting: Boolean
-): ComposeSetting<ScreenInstance>() {
+): ComposeSetting<Screen>() {
     constructor(
         id: String,
-        redirectTo: ScreenInstance,
+        redirectTo: Screen,
         focus: String? = null,
         showArrow: Boolean = true,
         title: String,
         description: String,
         enabled: Boolean = true,
+        onRedirect: () -> Unit = {},
         navigationModel: SettingsNavigationModel,
         isSaveSetting: Boolean
-    ): this(id, redirectTo.id, focus, showArrow, title, description, enabled, navigationModel, isSaveSetting)
-    override val value = MutableStateFlow(ScreenInstance(id = "", settings = mapOf(),))
+    ): this(id,redirectTo.id,  focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
+    override val value = MutableStateFlow(Screen(id = "", settings = mapOf(),))
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
 
     override fun enabled(state: Boolean) { _enable.value = state }
-    override fun changeValue(newValue: ScreenInstance) { error("Cannot change redirect value") }
-    override fun fetchValue(): StateFlow<ScreenInstance> { error("Cannot get redirect value") }
+    override fun changeValue(newValue: Screen) { error("Cannot change redirect value") }
+    override fun fetchValue(): StateFlow<Screen> { error("Cannot get redirect value") }
     override fun resetToDefault() {}
 
     override fun loadLogic(pack: SaveSettingPackage?) {
@@ -60,10 +62,11 @@ class Redirect(
 
 
     class RedirectBuilderScope() {
-        var redirectTo: ScreenInstance? = null
+        var redirectTo: Screen? = null
         var redirectToId: String? = null
         var focus: String? = null
         var showArrow: Boolean = true
+        var onRedirect: () -> Unit = {}
         lateinit var navigationModel: SettingsNavigationModel
         var title = "Redirect"
         var description = ""
@@ -77,8 +80,8 @@ class Redirect(
         val scope = RedirectBuilderScope().apply(builderScope)
         fun create(): Redirect = with(scope) {
             val res = when {
-                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title, description, enabled, navigationModel, isSaveSetting)
-                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title, description, enabled, navigationModel, isSaveSetting)
+                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
+                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
                 else -> error("Not found redirect parameter")
             }
             return res
@@ -88,7 +91,7 @@ class Redirect(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         fun execute() {
@@ -97,11 +100,12 @@ class Redirect(
             } else {
                 navigationModel.goToScreen(navigationModel.findScreenById(redirectToId))
             }
+            onRedirect()
         }
         DefaultSettingUI(
             modifier = Modifier,
             focusState = focusState,
-            itemGroupPosition = position,
+            groupItemClip = position,
             enabled = enabled,
             title = { if(!title.isBlank()) Text(title) },
             description = { if(!title.isBlank()) Text(description) },

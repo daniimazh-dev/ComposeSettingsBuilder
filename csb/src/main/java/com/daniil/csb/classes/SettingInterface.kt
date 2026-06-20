@@ -2,7 +2,7 @@ package com.daniil.csb.classes
 
 import androidx.compose.runtime.Composable
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -14,6 +14,7 @@ interface SettingInterface <T> {
     val enabled: StateFlow<Boolean>
     var isSaveSetting: Boolean
     val focusState: MutableStateFlow<Boolean>
+
 
     fun saveOff() { isSaveSetting = false }
     fun saveOn() { isSaveSetting = true }
@@ -37,5 +38,5 @@ interface SettingInterface <T> {
         if (isSaveSetting) changeValue(pack.value as T) // Set value
     }
     @Composable
-    fun UI(position: ItemGroupPosition? = null)
+    fun UI(position: GroupItemClip? = null)
 }

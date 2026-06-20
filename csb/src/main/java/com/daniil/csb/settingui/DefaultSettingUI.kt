@@ -22,13 +22,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.classes.utils.LocalGroupPosition
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 
 @Composable
 fun DefaultSettingUI(
     modifier: Modifier = Modifier,
     focusState: Boolean = false,
-    itemGroupPosition: ItemGroupPosition? = null,
+    groupItemClip: GroupItemClip? = null,
     enabled: Boolean = true,
     title: @Composable () -> Unit,
     icon: (@Composable () -> Unit)? = null,
@@ -40,7 +40,7 @@ fun DefaultSettingUI(
     DefaultContainer(
         modifier = modifier,
         focusState = focusState,
-        itemGroupPosition = itemGroupPosition ?: groupPosition,
+        groupItemClip = groupItemClip ?: groupPosition,
         enabled = enabled,
         onClick = { onClick() }
     ) {

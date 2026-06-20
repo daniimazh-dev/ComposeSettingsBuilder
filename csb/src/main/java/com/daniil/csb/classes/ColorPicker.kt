@@ -65,7 +65,7 @@ import com.daniil.csb.utils.FancyTabBarData
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -79,6 +79,7 @@ class ColorPicker(
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
+    var onChangeValue: (Color) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Color>() {
     constructor(
@@ -87,8 +88,9 @@ class ColorPicker(
         title: String,
         description: String,
         enabled: Boolean = true,
+        onChangeValue: (Color) -> Unit = {},
         isSaveSetting: Boolean = true
-    ) : this(id, defaultValue = Color(defaultValueInt), title, description, enabled, isSaveSetting)
+    ) : this(id, defaultValue = Color(defaultValueInt), title, description, enabled, onChangeValue, isSaveSetting)
 
 
     private var _value = MutableStateFlow(this@ColorPicker.defaultValue)
@@ -102,6 +104,7 @@ class ColorPicker(
     }
 
     override fun changeValue(newValue: Color) {
+        onChangeValue(newValue)
         _value.value = newValue
     }
 
@@ -125,6 +128,7 @@ class ColorPicker(
     class ColorPickerBuilderScope() {
         var defaultValue: Color? = null
         var defaultValueInt: Int? = null
+        var onChangeValue: (Color) -> Unit = {}
         var title = "Color picker"
         var description = ""
         var enabled = true
@@ -144,6 +148,7 @@ class ColorPicker(
                     title,
                     description,
                     enabled,
+                    onChangeValue,
                     isSaveSetting
                 )
 
@@ -153,6 +158,7 @@ class ColorPicker(
                     title,
                     description,
                     enabled,
+                    onChangeValue,
                     isSaveSetting
                 )
 
@@ -164,7 +170,7 @@ class ColorPicker(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
@@ -173,7 +179,7 @@ class ColorPicker(
         DefaultSettingUI(
             modifier = Modifier,
             focusState = focusState,
-            itemGroupPosition = position,
+            groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
             description = { if (!description.isBlank()) Text(description) },

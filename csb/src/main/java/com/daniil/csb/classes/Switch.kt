@@ -8,7 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.ItemGroupPosition
+import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +20,7 @@ class Switch(
     override val title: String,
     override val description: String,
     enabled: Boolean = true,
+    var onChangeValue: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Boolean>() {
     private var _value = MutableStateFlow(this@Switch.defaultValue)
@@ -28,11 +29,14 @@ class Switch(
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
 
+
+
     override fun enabled(state: Boolean) {
         _enable.value = state
     }
 
     override fun changeValue(newValue: Boolean) {
+        onChangeValue(newValue)
         _value.value = newValue
     }
 
@@ -46,13 +50,12 @@ class Switch(
         )
     }
 
-
-
     class SwitchBuilderScope() {
         var defaultValue = false
         var title = "Switch"
         var description = ""
         var enabled = true
+        var onChangeValue: (Boolean) -> Unit = {}
         var isSaveSetting = true
     }
 
@@ -62,13 +65,13 @@ class Switch(
     ) {
         val scope = SwitchBuilderScope().apply(builderScope)
         fun create(): Switch = with(scope) {
-            return Switch(id, defaultValue, title, description, enabled, isSaveSetting)
+            return Switch(id, defaultValue, title, description, enabled, onChangeValue,  isSaveSetting)
         }
     }
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(position: ItemGroupPosition?) {
+    override fun UI(position: GroupItemClip?) {
         val enabled by this.enabled.collectAsState()
         val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()
@@ -76,7 +79,7 @@ class Switch(
         DefaultSettingUI(
             modifier = Modifier,
             focusState = focusState,
-            itemGroupPosition = position,
+            groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
             description = { if (!description.isBlank()) Text(description) },
@@ -89,7 +92,9 @@ class Switch(
                     enabled = enabled
                 )
             },
-            onClick = { changeValue(!value) }
+            onClick = {
+                changeValue(!value)
+            }
         )
     }
 }

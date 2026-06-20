@@ -18,7 +18,7 @@ class Switch(
     override var id: String,
     val defaultValue: Boolean,
     override val title: String,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     var onChangeValue: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean = true
@@ -52,8 +52,8 @@ class Switch(
 
     class SwitchBuilderScope() {
         var defaultValue = false
-        var title = "Switch"
-        var description = ""
+        var title: String? = null
+        var description: String? = null
         var enabled = true
         var onChangeValue: (Boolean) -> Unit = {}
         var isSaveSetting = true
@@ -65,7 +65,7 @@ class Switch(
     ) {
         val scope = SwitchBuilderScope().apply(builderScope)
         fun create(): Switch = with(scope) {
-            return Switch(id, defaultValue, title, description, enabled, onChangeValue,  isSaveSetting)
+            return Switch(id, defaultValue, title ?: id, description, enabled, onChangeValue,  isSaveSetting)
         }
     }
 
@@ -82,7 +82,7 @@ class Switch(
             groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
-            description = { if (!description.isBlank()) Text(description) },
+            description = { description?.let { Text(it) } },
             display = {
                 Switch(
                     checked = value,

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface SettingInterface <T> {
     val id: String
     val title: String
-    val description: String
+    val description: String?
     val value: StateFlow<T>
     val enabled: StateFlow<Boolean>
     var isSaveSetting: Boolean

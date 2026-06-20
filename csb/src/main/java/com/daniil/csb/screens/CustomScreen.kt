@@ -48,14 +48,10 @@ open class CustomScreen internal constructor(
         this.modifier = modifier
     }
 
-    lateinit var registeredSettings: MutableList<ComposeSetting<*>>
-    init {
-        if (!::registeredSettings.isInitialized) {
-            registeredSettings = mutableListOf()
-        }
-    }
+    private lateinit var registeredSettings: MutableList<ComposeSetting<*>>
+
     override var settings: Map<Group, List<ComposeSetting<*>>>
-        get() = mapOf(Screen.Group("", "", true) to (if (::registeredSettings.isInitialized) registeredSettings else emptyList()))
+        get() = mapOf(Screen.Group(id, false) to registeredSettings)
         set(value) {}
 
     var content: @Composable CustomScreenScope.() -> Unit = {}
@@ -64,7 +60,7 @@ open class CustomScreen internal constructor(
         @Composable
         fun RegisteredSetting(
             index: Int,
-            groupItemClip: GroupItemClip = GroupItemClip.None
+            groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
             val setting = registeredSettings.getOrNull(index)
             setting?.UI(groupItemClip)
@@ -73,7 +69,7 @@ open class CustomScreen internal constructor(
         @Composable
         fun RegisteredSetting(
             setting: ComposeSetting<*>,
-            groupItemClip: GroupItemClip = GroupItemClip.None
+            groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
             setting.UI(groupItemClip)
         }
@@ -81,7 +77,7 @@ open class CustomScreen internal constructor(
         @Composable
         fun RegisteredSetting(
             id: String,
-            groupItemClip: GroupItemClip = GroupItemClip.None
+            groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
             registeredSettings.find { it.id == id }?.UI(groupItemClip)
         }

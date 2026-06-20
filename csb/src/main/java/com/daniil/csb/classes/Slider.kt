@@ -23,6 +23,7 @@ import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultContainer
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -35,7 +36,7 @@ class Slider(
     val startPointRange: String? = range.start.toString(),
     val endPointRange: String? = range.endInclusive.toString(),
     override val title: String,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     var onChangeValue: (Float) -> Unit = {},
     override var isSaveSetting: Boolean = true
@@ -86,8 +87,8 @@ class Slider(
         var defaultValue = 0f
         var range: ClosedFloatingPointRange<Float> = 0f..1f
         var steps = 0
-        var title = "Slider"
-        var description = ""
+        var title: String? = null
+        var description: String? = null
 
         var onChangeValue: (Float) -> Unit = {}
         var startPointRange: String? = range.start.toString()
@@ -102,13 +103,14 @@ class Slider(
     ) {
         val scope = SliderBuilderScope().apply(builderScope)
         fun create(): Slider = with(scope) {
-            return Slider(id, defaultValue, range, steps, startPointRange, endPointRange,  title, description, enabled, onChangeValue, isSaveSetting)
+            return Slider(id, defaultValue, range, steps, startPointRange, endPointRange,  title ?: id, description, enabled, onChangeValue, isSaveSetting)
         }
     }
 
     override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(position: GroupItemClip?) {
+        val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
 
@@ -133,14 +135,11 @@ class Slider(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        val titleStyle = MaterialTheme.typography.titleMedium
-                        if (!title.isBlank()) Text(text = title, style = titleStyle)
-                        val descriptionStyle = MaterialTheme.typography.labelSmall
+                        if (!title.isBlank()) Text(text = title, style = style.titleStyle)
+                        val descriptionStyle = style.labelStyle
                             .copy(color = MaterialTheme.colorScheme.outline)
-                        if (!description.isBlank()) Text(
-                            text = description,
-                            style = descriptionStyle
-                        )
+                        description?.let { Text(text = it, style = descriptionStyle) }
+
                     }
                 }
 
@@ -155,10 +154,10 @@ class Slider(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        val descriptionStyle = MaterialTheme.typography.labelSmall
+                        val labelStile = MaterialTheme.typography.labelSmall
                             .copy(color = MaterialTheme.colorScheme.outline)
-                        Text(text = startPointRange, style = descriptionStyle)
-                        Text(text = endPointRange, style = descriptionStyle)
+                        Text(text = startPointRange, style = labelStile)
+                        Text(text = endPointRange, style = labelStile)
                     }
                 }
 

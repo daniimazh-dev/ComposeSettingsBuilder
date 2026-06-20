@@ -1,6 +1,7 @@
 package com.daniil.csb
 
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -36,6 +37,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.classes.ComposeGroup
+import com.daniil.csb.classes.GroupTitle
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.screens.CustomScreen
@@ -136,32 +139,22 @@ fun SettingsScreen(
                         }
                     }
 
-                    settings.keys.forEach { key ->
-                        item {
-                            if (!key.hide) {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = key.name,
-                                        maxLines = 1,
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
+                    settings.keys.forEach { group ->
+                        if (!group.hide) {
+                            val group = settings[group] ?: return@forEach
+                            itemsIndexed(group) { index, setting ->
+                                val groupWithoutTitle = group.filterNot { it is ComposeGroup }
+                                val first = groupWithoutTitle.first().id
+                                val last = groupWithoutTitle.last().id
+                                val groupPosition = when {
+                                    last == first -> GroupItemClip.Full
+                                    setting.id == last -> GroupItemClip.Last
+                                    setting.id == first -> GroupItemClip.First
+                                    else -> GroupItemClip.None
                                 }
-
-                            }
-                        }
-                        val group = settings[key] ?: return@forEach
-                        itemsIndexed(group) { index, setting ->
-                            val groupPosition = when {
-                                group.size == 1 -> GroupItemClip.None
-                                index == group.size - 1 -> GroupItemClip.Last
-                                index == 0 -> GroupItemClip.First
-                                else -> GroupItemClip.Default
-                            }
-                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                setting.UI()
+                                CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                    setting.UI()
+                                }
                             }
                         }
                     }

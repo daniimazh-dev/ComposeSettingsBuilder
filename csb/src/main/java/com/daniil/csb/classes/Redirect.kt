@@ -28,7 +28,7 @@ class Redirect(
     val focus: String? = null,
     var showArrow: Boolean = true,
     override val title: String,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     var onRedirect: () -> Unit = {},
     val navigationModel: SettingsNavigationModel = CSB.navigationModel,
@@ -40,7 +40,7 @@ class Redirect(
         focus: String? = null,
         showArrow: Boolean = true,
         title: String,
-        description: String,
+        description: String?,
         enabled: Boolean = true,
         onRedirect: () -> Unit = {},
         navigationModel: SettingsNavigationModel = CSB.navigationModel,
@@ -69,8 +69,8 @@ class Redirect(
         var showArrow: Boolean = true
         var onRedirect: () -> Unit = {}
         var navigationModel: SettingsNavigationModel = CSB.navigationModel
-        var title = "Redirect"
-        var description = ""
+        var title: String? = null
+        var description: String? = null
         var enabled = true
         var isSaveSetting = true
     }
@@ -81,8 +81,8 @@ class Redirect(
         val scope = RedirectBuilderScope().apply(builderScope)
         fun create(): Redirect = with(scope) {
             val res = when {
-                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
-                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
+                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, enabled, onRedirect, navigationModel, isSaveSetting)
+                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title ?: id, description, enabled, onRedirect, navigationModel, isSaveSetting)
                 else -> error("Not found redirect parameter")
             }
             return res
@@ -109,7 +109,7 @@ class Redirect(
             groupItemClip = position,
             enabled = enabled,
             title = { if(!title.isBlank()) Text(title) },
-            description = { if(!title.isBlank()) Text(description) },
+            description = { description?.let { Text(it) } },
             display = {
                 if (showArrow) {
                     FilledIconButton(

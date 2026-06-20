@@ -43,7 +43,7 @@ class StringData(
     override val title: String,
     val alertTitle: String,
     val label: (@Composable () -> Unit)?,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     var onChangeValue: (String) -> Unit = {},
     override var isSaveSetting: Boolean
@@ -76,11 +76,11 @@ class StringData(
 
     class StringDataBuilderScope() {
         var defaultValue: String = ""
-        var title = "String Data"
+        var title: String? = null
         var label: (@Composable () -> Unit)? = null
         var onChangeValue: (String) -> Unit = {}
         var alertTitle = "Edit value"
-        var description = ""
+        var description: String? = null
         var enabled = true
         var isSaveSetting = true
     }
@@ -94,7 +94,7 @@ class StringData(
             return StringData(
                 id,
                 defaultValue,
-                title,
+                title ?: id,
                 alertTitle,
                 label,
                 description,
@@ -119,7 +119,7 @@ class StringData(
             groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
-            description = { if (!description.isBlank()) Text(description) },
+            description = { description?.let { Text(it) } },
             display = {
                 Row(
                     modifier = Modifier,

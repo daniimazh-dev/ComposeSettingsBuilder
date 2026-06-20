@@ -16,15 +16,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class Info(
-    id: String,
+    override val id: String,
     override val title: String,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     var onClicked: () -> Unit = {},
-    override var isSaveSetting: Boolean = false
 ) : ComposeSetting<Unit>() {
     private var _value = MutableStateFlow<Unit>(Unit)
     override val value = _value.asStateFlow()
+
+    override var isSaveSetting: Boolean = false
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
@@ -34,14 +35,11 @@ class Info(
     override fun changeValue(newValue: Unit) {}
     override fun resetToDefault() {}
 
-    override var id: String = id
-
     class InfoBuilderScope() {
-        var title = "Info"
-        var description = ""
+        var title: String? = null
+        var description: String? = null
         var enabled = true
         var onClick: () -> Unit = {}
-        var isSaveSetting = false
     }
 
     class Builder(
@@ -50,7 +48,7 @@ class Info(
     ) {
         val scope = InfoBuilderScope().apply(builderScope)
         fun create(): Info = with(scope) {
-            return Info(id, title, description, enabled, onClick, isSaveSetting)
+            return Info(id, title ?: id, description, enabled, onClick)
         }
     }
 
@@ -66,7 +64,7 @@ class Info(
             groupItemClip = position,
             enabled = enabled,
             title = { if(!title.isBlank()) Text(title) },
-            description = { if(!description.isBlank()) Text(description) },
+            description = { description?.let { Text(it) } },
             display = {
                 Icon(
                     modifier = Modifier.alpha(0.7f),
@@ -81,7 +79,7 @@ class Info(
 
 fun SettingBuilder.createInfo(
     id: String,
-    builder: Info.InfoBuilderScope.() -> Unit
+    builder: Info.InfoBuilderScope.() -> Unit = {}
 ): Info {
     return Info.Builder(id, builder).create()
 }

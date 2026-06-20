@@ -20,15 +20,13 @@ open class Screen internal constructor(
         val groups = mutableMapOf<Group, List<ComposeSetting<*>>>()
         fun newGroup(
             id: String,
-            name: String,
             hide: Boolean = false,
             vararg settings: ComposeSetting<*>
-        ) = apply { groups[Group(id, name, hide)] = settings.toList() }
+        ) = apply { groups[Group(id, hide)] = settings.toList() }
     }
 
     class Group(
         val id: String,
-        val name: String,
         val hide: Boolean = false
     )
 
@@ -42,7 +40,7 @@ open class Screen internal constructor(
         fun setTitle(title: String?) = apply { this.title = title }
 
         fun setContent(vararg settings: ComposeSetting<*>) = apply {
-            this.settings = mapOf(Group(id, title ?: id, true) to settings.toList())
+            this.settings = mapOf(Group(id) to settings.toList())
         }
 
         fun setModifier(modifier: Modifier?) = apply { this.modifier = modifier }
@@ -75,16 +73,31 @@ class CreateScreenScope() {
 
     fun newGroup(
         id: String,
-        name: String,
+        hide: Boolean,
         vararg settings: ComposeSetting<*>
     ) {
-        groups[Screen.Group(id, name)] = settings.toList()
+        groups[Screen.Group(id, hide)] = settings.toList()
     }
+
+    fun newGroup(
+        hide: Boolean,
+        vararg settings: ComposeSetting<*>
+    ) {
+        groups[Screen.Group(UUID.randomUUID().toString(), hide)] = settings.toList()
+    }
+
+    fun newGroup(
+        id: String,
+        vararg settings: ComposeSetting<*>
+    ) {
+        groups[Screen.Group(id)] = settings.toList()
+    }
+
 
     fun newGroup(
         vararg settings: ComposeSetting<*>
     ) {
-        groups[Screen.Group(UUID.randomUUID().toString(), "", true)] = settings.toList()
+        groups[Screen.Group(UUID.randomUUID().toString(), false)] = settings.toList()
     }
 
     internal fun getData(): Screen.SettingsContentScope {

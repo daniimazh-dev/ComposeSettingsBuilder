@@ -24,6 +24,7 @@ import com.daniil.csb.SettingsScreen
 import com.daniil.csb.classes.MultiplySelect
 import com.daniil.csb.classes.Select
 import com.daniil.csb.classes.createColorPicker
+import com.daniil.csb.classes.createGroupTitle
 import com.daniil.csb.classes.createInfo
 import com.daniil.csb.classes.createMultiplySelect
 import com.daniil.csb.classes.createRedirect
@@ -86,7 +87,7 @@ fun initSettings() = with(SettingBuilder()){
 
             )
         newGroup(
-            "test2", "Slider",
+            createGroupTitle("groupSliderTitle"),
             createSlider("slider") {
                 description = "This is test slider"
                 startPointRange = "Slow"
@@ -118,6 +119,7 @@ fun initSettings() = with(SettingBuilder()){
 //            modifier = Modifier.fillMaxSize().padding(16.dp)
 //            title = "Settings"
         newGroup(
+            createGroupTitle("Main Screen tittle"),
             createRedirect("redirect") {
                 title = "Redirect"
                 description = "This is text redirect"

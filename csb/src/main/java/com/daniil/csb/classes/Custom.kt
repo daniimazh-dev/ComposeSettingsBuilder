@@ -17,7 +17,7 @@ class Custom<T : Any>(
     override var id: String,
     val defaultValue: T,
     override val title: String,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean,
     val groupClip: GroupItemClip?,
@@ -59,8 +59,8 @@ class Custom<T : Any>(
         var content: (@Composable () -> Unit)? = null
         var groupClip: GroupItemClip? = null
         var onClick: () -> Unit = {}
-        var title = "Custom"
-        var description = ""
+        var title: String? = null
+        var description: String? = null
         var enabled = true
         var isSaveSetting = true
     }
@@ -72,7 +72,7 @@ class Custom<T : Any>(
     ) {
         val scope = CustomBuilderScope<T>().apply(builderScope)
         fun create(): Custom<T> = with(scope) {
-            return Custom(id, defaultValue!!, title, description, enabled,  isSaveSetting, groupClip, onClick, content, clazz)
+            return Custom(id, defaultValue ?: error("Default value must be not null in setting $id"), title ?: id, description, enabled,  isSaveSetting, groupClip, onClick, content, clazz)
         }
     }
 

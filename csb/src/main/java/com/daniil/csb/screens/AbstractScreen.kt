@@ -15,7 +15,7 @@ internal constructor(
     ) {
         private lateinit var settings: Map<Group, List<ComposeSetting<*>>>
         fun setContent(vararg settings: ComposeSetting<*>) = apply {
-            this.settings = mapOf(Group(id, "abstract_$id", true) to settings.toList())
+            this.settings = mapOf(Group(id,true) to settings.toList())
         }
 
         fun build() = AbstractScreen(id, settings)

@@ -7,11 +7,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 
 data class SettingsStyle(
     val backgroundColor: Color = Color.Transparent,
     val focusColor: Color = Color.Transparent,
     val titleStyle: TextStyle = TextStyle.Default,
+    val labelStyle: TextStyle = TextStyle.Default.copy(fontSize = 8.sp),
     val descriptionStyle: TextStyle = TextStyle.Default,
     val containerShape: Shape = RoundedCornerShape(12.dp),
     val groupCornerShape: Dp = 4.dp,

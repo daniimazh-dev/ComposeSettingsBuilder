@@ -17,6 +17,7 @@ object CSBStyle {
     @Composable
     fun Material3() = SettingsStyle(
         titleStyle = MaterialTheme.typography.titleMedium,
+        labelStyle = MaterialTheme.typography.labelSmall,
         descriptionStyle = MaterialTheme.typography.bodySmall.copy(
             color = MaterialTheme.colorScheme.outline
         ),
@@ -35,6 +36,9 @@ object CSBStyle {
     fun Unspecified(isDarkTheme: Boolean) = SettingsStyle(
         titleStyle = TextStyle.Default.copy(
             fontSize = 16.sp
+        ),
+        labelStyle = TextStyle.Default.copy(
+            fontSize = 11.sp
         ),
         descriptionStyle = TextStyle.Default.copy(
             fontSize = 12.sp,

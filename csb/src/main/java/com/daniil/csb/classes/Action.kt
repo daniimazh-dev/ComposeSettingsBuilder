@@ -25,7 +25,7 @@ class Action(
     val icon: @Composable (() -> Unit)?,
     val text: String?,
     override val title: String,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean
 ) : ComposeSetting<Unit>() {
@@ -49,8 +49,8 @@ class Action(
         var icon: (@Composable () -> Unit)? = null
         val text: String? = null
         var alertTitle: String? = null
-        var title: String = "Action"
-        var description = ""
+        var title: String? = null
+        var description: String? = null
         var enabled = true
         var isSaveSetting = true
     }
@@ -68,7 +68,7 @@ class Action(
                 alertTitle,
                 icon,
                 text,
-                title,
+                title ?: id,
                 description,
                 enabled,
                 isSaveSetting
@@ -90,7 +90,7 @@ class Action(
             groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
-            description = { if (!description.isBlank()) Text(description) },
+            description = { description?.let { Text(it) } },
             display = { icon?.invoke() },
             onClick = {
                 if (this@Action.requestAlert) {

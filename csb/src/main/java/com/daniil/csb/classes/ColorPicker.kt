@@ -77,7 +77,7 @@ class ColorPicker(
     override var id: String,
     val defaultValue: Color,
     override val title: String,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     var onChangeValue: (Color) -> Unit = {},
     override var isSaveSetting: Boolean = true
@@ -86,7 +86,7 @@ class ColorPicker(
         id: String,
         defaultValueInt: Int,
         title: String,
-        description: String,
+        description: String?,
         enabled: Boolean = true,
         onChangeValue: (Color) -> Unit = {},
         isSaveSetting: Boolean = true
@@ -129,8 +129,8 @@ class ColorPicker(
         var defaultValue: Color? = null
         var defaultValueInt: Int? = null
         var onChangeValue: (Color) -> Unit = {}
-        var title = "Color picker"
-        var description = ""
+        var title: String? = null
+        var description: String? = null
         var enabled = true
         var isSaveSetting = true
     }
@@ -145,7 +145,7 @@ class ColorPicker(
                 defaultValueInt != null -> ColorPicker(
                     id,
                     defaultValueInt!!,
-                    title,
+                    title ?: id,
                     description,
                     enabled,
                     onChangeValue,
@@ -155,7 +155,7 @@ class ColorPicker(
                 defaultValue != null -> ColorPicker(
                     id,
                     defaultValue!!,
-                    title,
+                    title ?: id,
                     description,
                     enabled,
                     onChangeValue,
@@ -182,7 +182,7 @@ class ColorPicker(
             groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
-            description = { if (!description.isBlank()) Text(description) },
+            description = { description?.let { Text(it) } },
             display = {
                 FilledIconButton(
                     enabled = enabled,

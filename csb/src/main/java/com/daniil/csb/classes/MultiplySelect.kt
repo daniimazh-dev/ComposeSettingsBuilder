@@ -54,7 +54,7 @@ class MultiplySelect(
     val defaultValue: List<Option>,
     override val title: String,
     val alertTitle: String,
-    override val description: String,
+    override val description: String?,
     enabled: Boolean = true,
     var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {},
     override var isSaveSetting: Boolean
@@ -115,9 +115,9 @@ class MultiplySelect(
         lateinit var defaultValue: List<MultiplySelect.Option>
         lateinit var options: List<MultiplySelect.Option>
         var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {}
-        var title = "Multiply Select"
+        var title: String? = null
         var alertTitle = "Select multiple"
-        var description = ""
+        var description: String? = null
         var enabled = true
         var isSaveSetting = true
     }
@@ -132,7 +132,7 @@ class MultiplySelect(
                 id,
                 options,
                 defaultValue,
-                title,
+                title ?: id,
                 alertTitle,
                 description,
                 enabled,
@@ -156,7 +156,7 @@ class MultiplySelect(
             groupItemClip = position,
             enabled = enabled,
             title = { if (!title.isBlank()) Text(title) },
-            description = { if (!description.isBlank()) Text(description) },
+            description = { description?.let { Text(it) } },
             display = {
                 Row(
                     modifier = Modifier,

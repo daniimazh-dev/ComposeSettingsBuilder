@@ -4,9 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,7 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import com.daniil.csb.CSB
-import com.daniil.csb.SettingsScreen
+import com.daniil.csb.R
 import com.daniil.csb.classes.MultiplySelect
 import com.daniil.csb.classes.Select
 import com.daniil.csb.classes.createColorPicker
@@ -33,10 +32,11 @@ import com.daniil.csb.classes.createSlider
 import com.daniil.csb.classes.createStringData
 import com.daniil.csb.classes.createSwitch
 import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.local.LocalSettings
+import com.daniil.csb.local.rememberLocalSettingsController
 import com.daniil.csb.screens.createAbstractScreen
 import com.daniil.csb.screens.createCustomScreen
 import com.daniil.csb.screens.createScreen
-import com.daniil.csb.settingui.styles.CSBStyle
 import com.daniil.csb.ui.theme.ComposeSettingsBuilderTheme
 import kotlinx.coroutines.launch
 
@@ -61,12 +61,27 @@ class MainActivity : ComponentActivity() {
                     },
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
-                    SettingsScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        paddingValues = innerPadding,
-                        style = CSBStyle.Material3()
+                    val localController = rememberLocalSettingsController()
+                    localController.setScreen {
+                        val ls = localSettingBuilder
+                        register(
+                            ls.createSwitch("test"),
+                            ls.createSwitch("test2") {
+                                onChangeValue = {
+                                    localController.enable("test", it)
+                                }
+                            },
+                        )
+
+                        content = {
+                            RegisteredSetting("test")
+                            RegisteredSetting("test2")
+                        }
+                    }
+                    LocalSettings(
+                        modifier = Modifier.fillMaxSize().padding(innerPadding),
+                        paddingValues = PaddingValues(16.dp),
+                        localController = localController
                     )
                 }
             }
@@ -192,7 +207,7 @@ fun initSettings() = with(SettingBuilder()){
             ) {
                 ScreenTopBar(
                     actions = {
-                        Icon(painter = painterResource(com.daniil.csb.R.drawable.palette_icon), contentDescription = null)
+                        Icon(painter = painterResource(R.drawable.palette_icon), contentDescription = null)
                     }
                 )
                 Text("This is custom screen")

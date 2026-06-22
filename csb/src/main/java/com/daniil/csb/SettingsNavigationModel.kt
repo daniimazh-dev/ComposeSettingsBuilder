@@ -65,6 +65,11 @@ class SettingsNavigationModel : ViewModel() {
         val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found")
         return setting
     }
+    fun findGroupById(id: String): Screen.Group {
+        val groupHeap = _screenHeap.value.flatMap { it.settings.keys }
+        val group = groupHeap.find { it.id == id } ?: error("Group $id not found")
+        return group
+    }
 
     fun navigateToSetting(id: String) {
         val setting = findSettingById(id)
@@ -74,8 +79,7 @@ class SettingsNavigationModel : ViewModel() {
     }
 
     fun hideGroup(id: String, hide: Boolean) {
-        val groupHeap = _screenHeap.value.flatMap { it.settings.keys }
-        val group = groupHeap.find { it.id == id } ?: error("Group $id nit found")
+        val group = findGroupById(id)
         if (hide) group.hide() else group.show()
     }
 

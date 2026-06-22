@@ -31,7 +31,6 @@ object CSB {
         _applicationContext = app
         navigationModel.initialize(app)
 
-        // Автоматичне збереження при паузі Activity
         app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityPaused(activity: Activity) {
                 globalScope.launch { saveData() }

@@ -46,13 +46,12 @@ afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
-                // Використовуємо afterEvaluate або просто звертаємось до компонентів
-                // Якщо ви додали singleVariant вище, цей рядок спрацює:
+
                 from(components["release"])
 
                 groupId = "com.daniil"
                 artifactId = "csb"
-                version = "1.0.0"
+                version = "1.1.0"
             }
         }
     }

@@ -49,7 +49,7 @@ import com.daniil.csb.settingui.styles.SettingsStyle
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    paddingValues: PaddingValues,
+    paddingValues: PaddingValues = PaddingValues.Zero,
     style: SettingsStyle = CSBStyle.Material3()
 ) {
     CompositionLocalProvider(LocalSettingsStyle provides style) {

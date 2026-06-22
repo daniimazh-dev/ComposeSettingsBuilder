@@ -163,7 +163,7 @@ open class CustomScreen internal constructor(
 }
 
 
-class CreateCustomScreenScope() {
+open class CreateCustomScreenScope() {
     var modifier: Modifier? = null
     var title: String = "Screen"
     val registeredSettings = mutableListOf<ComposeSetting<*>>()

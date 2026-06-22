@@ -44,10 +44,22 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
         }
     }
 
+
+
+    fun hideGroup(id: String, hide: Boolean) {
+        val group = findGroupById(id)
+        if (hide) group.hide() else group.show()
+    }
+
+
     fun findSettingById(id: String): ComposeSetting<*> {
         val settingsHeap = settings.value.values.flatten()
         val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found in screen ${currentScreen.value?.id}")
         return setting
+    }
+    fun findGroupById(id: String): Screen.Group {
+        val group = settings.value.keys.find { it.id == id } ?: error("Group $id not found")
+        return group
     }
     private var _title = MutableStateFlow(screen.title)
     val title = _title.asStateFlow()

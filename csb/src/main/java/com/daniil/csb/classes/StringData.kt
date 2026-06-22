@@ -203,5 +203,7 @@ fun SettingBuilder.createStringData(
     id: String,
     builder: StringData.StringDataBuilderScope.() -> Unit = {}
 ): StringData {
-    return StringData.Builder(id, builder).create()
+    val setting = StringData.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

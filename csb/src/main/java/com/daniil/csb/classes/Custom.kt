@@ -98,5 +98,7 @@ inline fun <reified T : Any> SettingBuilder.createCustomSetting(
     id: String,
     noinline builder: Custom.CustomBuilderScope<T>.() -> Unit
 ): Custom<T> {
-    return Custom.Builder(id, T::class, builder).create()
+    val setting = Custom.Builder(id, T::class, builder).create()
+    setting.addToHeap()
+    return setting
 }

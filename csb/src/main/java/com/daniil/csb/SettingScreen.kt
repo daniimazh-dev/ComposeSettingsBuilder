@@ -36,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.classes.ComposeGroup
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.screens.CustomScreen
@@ -64,7 +63,7 @@ fun SettingsScreen(
         }
 
         AnimatedContent(
-            modifier = Modifier,
+            modifier = modifier,
             targetState = currentScreen ?: return@CompositionLocalProvider,
             transitionSpec = {
                 if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Back) {
@@ -80,8 +79,8 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .then(currentScreen.paddingValues?.let { Modifier.padding(it) } ?: Modifier)
-                    .then(currentScreen.modifier ?: modifier)
+                    .padding(currentScreen.paddingValues)
+                    .then(currentScreen.modifier)
             ) {
                 if (currentScreen is CustomScreen) {
                     currentScreen.Render()
@@ -133,7 +132,7 @@ fun SettingsScreen(
                                 )
 
                             }
-                            Spacer(Modifier.height(4.dp))
+                            Spacer(Modifier.height(style.itemSpacing))
                         }
                     }
 
@@ -141,8 +140,8 @@ fun SettingsScreen(
                         if (!group.hide) {
                             val groupItems = settings[group] ?: return@forEach
                             items(items = groupItems, key = { it.id }) { setting ->
-                                val groupWithoutTitle = groupItems.filterNot { it is ComposeGroup }
-                                val first = groupWithoutTitle.first().id
+                                val groupWithoutTitle = groupItems.filterNot { it.independedObject }
+                                val first = groupWithoutTitle.firstOrNull()?.id ?: return@items
                                 val last = groupWithoutTitle.last().id
                                 val groupPosition = when {
                                     last == first -> GroupItemClip.Full

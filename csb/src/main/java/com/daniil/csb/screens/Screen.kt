@@ -7,15 +7,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SettingsScreenModel
 import com.daniil.csb.classes.ComposeSetting
+import com.daniil.csb.classes.utils.ScreenBuilder
 import com.daniil.csb.classes.utils.SettingBuilder
 import java.util.UUID
 
 open class Screen internal constructor(
-    var id: String,
-    var title: String? = null,
-    var modifier: Modifier? = null,
-
-    var paddingValues: PaddingValues? = null,
+    open var id: String,
+    open var title: String? = id,
+    open var modifier: Modifier,
+    open var paddingValues: PaddingValues,
     open val settings: Map<Group, List<ComposeSetting<*>>> = emptyMap(),
 ) {
     internal val settingsScreenModel: SettingsScreenModel by lazy { SettingsScreenModel(this) }
@@ -24,8 +24,11 @@ open class Screen internal constructor(
         fun newGroup(
             id: String,
             hide: Boolean = false,
-            vararg settings: ComposeSetting<*>
-        ) = apply { groups[Group(id, hide)] = settings.toList() }
+            groupScope: GroupScope.() -> Unit,
+        ) = apply {
+            val data = GroupScope().apply(groupScope)
+            groups[Group(id, hide)] = data.settings
+        }
     }
 
     class Group(
@@ -62,7 +65,7 @@ open class Screen internal constructor(
             this.settings = settings
         }
 
-        fun build() = Screen(id, title, modifier, paddingValues, settings)
+        fun build() = Screen(id, title, modifier ?: Modifier, paddingValues ?: PaddingValues.Zero, settings)
     }
 }
 
@@ -78,33 +81,37 @@ class CreateScreenScope() {
 
     private var groupContent = Screen.SettingsContentScope()
 
-    fun newGroup(
+    fun group(
         id: String,
         hide: Boolean,
-        vararg settings: ComposeSetting<*>
+        groupScope: GroupScope.() -> Unit,
     ) {
-        groups[Screen.Group(id,  hide)] = settings.toList()
+        val data = GroupScope().apply(groupScope)
+        groups[Screen.Group(id,  hide)] = data.settings
     }
 
-    fun newGroup(
+    fun group(
         hide: Boolean,
-        vararg settings: ComposeSetting<*>
+        groupScope: GroupScope.() -> Unit,
     ) {
-        groups[Screen.Group(UUID.randomUUID().toString(),hide)] = settings.toList()
+        val data = GroupScope().apply(groupScope)
+        groups[Screen.Group(UUID.randomUUID().toString(),hide)] = data.settings
     }
 
-    fun newGroup(
+    fun group(
         id: String,
-        vararg settings: ComposeSetting<*>
+        groupScope: GroupScope.() -> Unit,
     ) {
-        groups[Screen.Group(id)] = settings.toList()
+        val data = GroupScope().apply(groupScope)
+        groups[Screen.Group(id)] = data.settings
     }
 
 
-    fun newGroup(
-        vararg settings: ComposeSetting<*>
+    fun group(
+        groupScope: GroupScope.() -> Unit,
     ) {
-        groups[Screen.Group(UUID.randomUUID().toString())] = settings.toList()
+        val data = GroupScope().apply(groupScope)
+        groups[Screen.Group(UUID.randomUUID().toString())] = data.settings
     }
 
     internal fun getData(): Screen.SettingsContentScope {
@@ -112,8 +119,9 @@ class CreateScreenScope() {
         return groupContent
     }
 }
+class GroupScope(): SettingBuilder()
 
-fun SettingBuilder.createScreen(
+fun ScreenBuilder.createScreen(
     id: String,
     scope: CreateScreenScope.() -> Unit
 ): Screen {
@@ -125,5 +133,6 @@ fun SettingBuilder.createScreen(
         .setPaddingValues(data.paddingValues)
         .setGroupedContent(content.groups)
         .build()
+    screen.addToHeap()
     return screen
 }

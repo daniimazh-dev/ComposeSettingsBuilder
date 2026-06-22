@@ -81,5 +81,7 @@ fun SettingBuilder.createInfo(
     id: String,
     builder: Info.InfoBuilderScope.() -> Unit = {}
 ): Info {
-    return Info.Builder(id, builder).create()
+    val setting = Info.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

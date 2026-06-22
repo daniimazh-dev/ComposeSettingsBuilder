@@ -1,32 +1,39 @@
 package com.daniil.csb.screens
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.Modifier
 import com.daniil.csb.classes.ComposeSetting
+import com.daniil.csb.classes.utils.ScreenBuilder
 import com.daniil.csb.classes.utils.SettingBuilder
 
 class AbstractScreen
 internal constructor(
     id: String,
-    settings: Map<Group, List<ComposeSetting<*>>>,
-) : Screen(id, settings = settings) {
+    val abstractSettings: List<ComposeSetting<*>>
+) : Screen(id, id, Modifier, PaddingValues.Zero) {
 
+    override var settings: Map<Group, List<ComposeSetting<*>>>
+        get() = mapOf(Screen.Group(id, false) to abstractSettings)
+        set(value) {}
 
     class Builder(
         val id: String
     ) {
-        private lateinit var settings: Map<Group, List<ComposeSetting<*>>>
+        private lateinit var settings: List<ComposeSetting<*>>
         fun setContent(vararg settings: ComposeSetting<*>) = apply {
-            this.settings = mapOf(Group(id,true) to settings.toList())
+            this.settings = settings.toList()
         }
-
         fun build() = AbstractScreen(id, settings)
     }
 }
 
 
-fun SettingBuilder.createAbstractScreen(
+fun ScreenBuilder.createAbstractScreen(
     id: String,
-    vararg settings: ComposeSetting<*>
+    settingsBuilderScope: SettingBuilder.() -> Unit,
 ): AbstractScreen {
-    val screen = AbstractScreen.Builder(id).setContent(*settings).build()
+    val data = SettingBuilder().apply(settingsBuilderScope)
+    val screen = AbstractScreen.Builder(id).setContent(*data.settings.toTypedArray()).build()
+    screen.addToHeap()
     return screen
 }

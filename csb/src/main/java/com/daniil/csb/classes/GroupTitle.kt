@@ -10,7 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.screens.CreateScreenScope
+import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.screens.GroupScope
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,24 +21,24 @@ class GroupTitle(
     override val id: String,
     override val title: String,
     override val description: String?,
-    override var hide: Boolean,
     val content: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
-) : ComposeGroup() {
+) : ComposeSetting<Unit>(independedObject = true) {
     private var _value = MutableStateFlow<Unit>(Unit)
     override val value = _value.asStateFlow()
     override var isSaveSetting: Boolean = true
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
 
-    override fun enabled(state: Boolean) { _enable.value = state }
+    override fun enabled(state: Boolean) {
+        _enable.value = state
+    }
 
     override fun changeValue(newValue: Unit) {}
     override fun resetToDefault() {}
     class GroupTitleBuilderScope() {
         var title: String? = null
         var description: String? = null
-        var hide = false
         var content: (@Composable () -> Unit)? = null
         var isSaveSetting = false
     }
@@ -48,14 +49,14 @@ class GroupTitle(
     ) {
         val scope = GroupTitleBuilderScope().apply(builderScope)
         fun create(): GroupTitle = with(scope) {
-            return GroupTitle(id, title ?: id, description, hide, content)
+            return GroupTitle(id, title ?: id, description, content)
         }
     }
 
     override val focusState = MutableStateFlow(false)
+
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
-        if (hide) return
         val focusState by this.focusState.collectAsState()
         val style = LocalSettingsStyle.current
 
@@ -77,9 +78,11 @@ class GroupTitle(
     }
 }
 
-fun CreateScreenScope.createGroupTitle(
+fun GroupScope.createGroupTitle(
     id: String,
-    builder:  GroupTitle.GroupTitleBuilderScope.() -> Unit = {}
+    builder: GroupTitle.GroupTitleBuilderScope.() -> Unit = {}
 ): GroupTitle {
-    return GroupTitle.Builder(id, builder).create()
+    val setting = GroupTitle.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

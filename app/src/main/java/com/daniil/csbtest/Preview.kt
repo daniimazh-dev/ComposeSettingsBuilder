@@ -1,6 +1,8 @@
 package com.daniil.csbtest
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,13 +18,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.SettingsScreen
+import com.daniil.csb.classes.createSwitch
+import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.local.LocalSettings
+import com.daniil.csb.local.rememberLocalSettingsController
 import com.daniil.csb.settingui.styles.CSBStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun Preview() {
-    initSettings()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -34,12 +39,26 @@ private fun Preview() {
         },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        SettingsScreen(
+        val localController = rememberLocalSettingsController {
+            register {
+                createSwitch("test")
+                createSwitch("test3")
+                createSwitch("test2") {
+                    onChangeValue = {
+                        localController.enable("test", it)
+                    }
+                }
+            }
+            content = { AllSetting() }
+
+        }
+
+        LocalSettings(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            paddingValues = innerPadding,
-            style = CSBStyle.Unspecified(isSystemInDarkTheme())
+                .padding(innerPadding),
+            paddingValues = PaddingValues(16.dp),
+            localController = localController
         )
     }
 }

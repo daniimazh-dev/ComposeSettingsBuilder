@@ -605,5 +605,7 @@ fun SettingBuilder.createColorPicker(
     id: String,
     builder: ColorPicker.ColorPickerBuilderScope.() -> Unit = { defaultValue = Color.Blue }
 ): ColorPicker {
-    return ColorPicker.Builder(id, builder).create()
+    val setting = ColorPicker.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

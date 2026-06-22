@@ -28,7 +28,7 @@ object CSBStyle {
         horizontalPadding = 16.dp,
         verticalPadding = 12.dp,
         minHeight = 52.dp,
-        itemSpacing = 8.dp,
+        itemSpacing = 4.dp,
         cardElevation = 2.dp,
     )
 
@@ -51,7 +51,7 @@ object CSBStyle {
         horizontalPadding = 16.dp,
         verticalPadding = 12.dp,
         minHeight = 52.dp,
-        itemSpacing = 8.dp,
+        itemSpacing = 4.dp,
         cardElevation = 0.dp,
     )
 }

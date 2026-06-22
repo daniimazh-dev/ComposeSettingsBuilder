@@ -2,6 +2,7 @@ package com.daniil.csb.local
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,7 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.classes.ComposeGroup
+
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.settingui.styles.CSBStyle
@@ -31,52 +32,17 @@ fun LocalSettings(
     paddingValues: PaddingValues = PaddingValues.Zero,
     style: SettingsStyle = CSBStyle.Material3(),
     localController: LocalSettingsController,
-
-    ) {
+) {
     val customScreen = localController.customScreen
     CompositionLocalProvider(LocalSettingsStyle provides style) {
-        Box(
-            modifier = Modifier
+        Column(
+            modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .then(customScreen.paddingValues?.let { Modifier.padding(it) } ?: Modifier)
-                .then(customScreen.modifier ?: modifier)
+                .padding(customScreen.paddingValues)
+                .then(customScreen.modifier)
         ) {
-            val settingsScreenModel = customScreen.settingsScreenModel
-            val settings by settingsScreenModel.settings.collectAsState()
-
-            val scrollFocusIndex by settingsScreenModel.scrollFocusIndex.collectAsState()
-            LaunchedEffect(scrollFocusIndex) {
-                if (scrollFocusIndex != null) {
-                    settingsScreenModel.lazyListState.animateScrollToItem(scrollFocusIndex!!)
-                }
-            }
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                state = settingsScreenModel.lazyListState
-            ) {
-                settings.keys.forEach { group ->
-                    if (!group.hide) {
-                        val groupItems = settings[group] ?: return@forEach
-                        items(items = groupItems, key = { it.id }) { setting ->
-                            val groupWithoutTitle = groupItems.filterNot { it is ComposeGroup }
-                            val first = groupWithoutTitle.first().id
-                            val last = groupWithoutTitle.last().id
-                            val groupPosition = when {
-                                last == first -> GroupItemClip.Full
-                                setting.id == last -> GroupItemClip.Last
-                                setting.id == first -> GroupItemClip.First
-                                else -> GroupItemClip.None
-                            }
-                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                setting.UI(modifier = Modifier.animateItem())
-                            }
-                        }
-                    }
-                }
-            }
+            customScreen.Render()
         }
     }
 }

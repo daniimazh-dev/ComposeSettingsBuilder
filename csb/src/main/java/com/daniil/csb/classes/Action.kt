@@ -142,5 +142,8 @@ fun SettingBuilder.createAction(
     id: String,
     builder: Action.ActionBuilderScope.() -> Unit = { }
 ): Action {
-    return Action.Builder(id, builder).create()
+
+    val setting = Action.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

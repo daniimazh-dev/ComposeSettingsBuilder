@@ -172,5 +172,7 @@ fun SettingBuilder.createSlider(
     id: String,
     builder: Slider.SliderBuilderScope.() -> Unit = {}
 ): Slider {
-    return Slider.Builder(id, builder).create()
+    val setting = Slider.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

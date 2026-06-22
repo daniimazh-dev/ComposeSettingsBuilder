@@ -1,20 +1,11 @@
 package com.daniil.csb.classes.utils
 
-import com.daniil.csb.CSB
-import com.daniil.csb.screens.Screen
+import com.daniil.csb.classes.ComposeSetting
 
 
-class SettingBuilder {
-    suspend fun build(
-        vararg screens: Screen
-    ) {
-        CSB.navigationModel.setScreensHeap(*screens)
-        CSB.loadData()
-    }
-    suspend fun build(
-        screens: List<Screen>
-    ) {
-        CSB.navigationModel.setScreensHeap(*screens.toTypedArray())
-        CSB.loadData()
+open class SettingBuilder {
+    val settings: MutableList<ComposeSetting<*>> = mutableListOf()
+    fun ComposeSetting<*>.addToHeap() {
+        settings.add(this)
     }
 }

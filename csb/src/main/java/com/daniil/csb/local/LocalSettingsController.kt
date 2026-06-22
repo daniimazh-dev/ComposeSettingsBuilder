@@ -4,23 +4,25 @@ import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.screens.CreateCustomScreenScope
 import com.daniil.csb.screens.CustomScreen
-import com.daniil.csb.screens.createCustomScreen
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
 
-class LocalScreenBuilderScope(val localSettingBuilder: SettingBuilder = SettingBuilder()): CreateCustomScreenScope()
+class LocalScreenBuilderScope(
+    val localController: LocalSettingsController
+): CreateCustomScreenScope()
 open class LocalSettingsController(
-    val builder: SettingBuilder,
+    localScreenBuilder: LocalScreenBuilderScope.() -> Unit
 ) {
-    lateinit var customScreen: CustomScreen
-    fun setScreen(localScreenBuilder: LocalScreenBuilderScope.() -> Unit) {
-        customScreen = builder.createLocalScreen(id = UUID.randomUUID().toString(), scope = localScreenBuilder)
+
+    var customScreen: CustomScreen
+    init {
+        customScreen = createLocalScreen(id = UUID.randomUUID().toString(), scope = localScreenBuilder)
     }
-    private fun SettingBuilder.createLocalScreen(
+    private fun createLocalScreen(
         id: String,
         scope: LocalScreenBuilderScope.() -> Unit
     ): CustomScreen {
-        val data = LocalScreenBuilderScope().apply(scope)
+        val data = LocalScreenBuilderScope(this).apply(scope)
 
         val screen = CustomScreen.Builder(id).setTitle(data.title)
                 .setModifier(data.modifier)
@@ -30,7 +32,6 @@ open class LocalSettingsController(
     }
 
     fun findById(id: String): ComposeSetting<*> {
-        if (!::customScreen.isInitialized) error("Screen must be initialize. Use \"setScreen\"")
         return customScreen.settingsScreenModel.findSettingById(id)
     }
 
@@ -45,7 +46,6 @@ open class LocalSettingsController(
 
     inline fun <reified T> setValue(id: String, newValue: T) {
         val setting = findById(id)
-
         @Suppress("UNCHECKED_CAST")
         val target = setting as? ComposeSetting<T>
         target?.changeValue(newValue) ?: error("Type mismatch $id")
@@ -67,12 +67,10 @@ open class LocalSettingsController(
     }
 
     fun focusToSetting(id: String) {
-        if (!::customScreen.isInitialized) error("Screen must be initialize. Use \"setScreen\"")
         customScreen.settingsScreenModel.focusToSetting(id)
     }
 
     fun hideGroup(id: String, hide: Boolean) {
-        if (!::customScreen.isInitialized) error("Screen must be initialize. Use \"setScreen\"")
         customScreen.settingsScreenModel.hideGroup(id, hide)
     }
 }

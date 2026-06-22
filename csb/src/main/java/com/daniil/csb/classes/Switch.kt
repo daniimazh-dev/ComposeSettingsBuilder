@@ -103,5 +103,7 @@ fun SettingBuilder.createSwitch(
     id: String,
     builder: Switch.SwitchBuilderScope.() -> Unit = { defaultValue = false }
 ): Switch {
-    return Switch.Builder(id, builder).create()
+    val setting = Switch.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

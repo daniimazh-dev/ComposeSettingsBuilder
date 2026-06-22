@@ -17,9 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.lifecycleScope
 import com.daniil.csb.CSB
 import com.daniil.csb.R
+import com.daniil.csb.SettingsScreen
 import com.daniil.csb.classes.MultiplySelect
 import com.daniil.csb.classes.Select
 import com.daniil.csb.classes.createColorPicker
@@ -31,14 +32,14 @@ import com.daniil.csb.classes.createSelect
 import com.daniil.csb.classes.createSlider
 import com.daniil.csb.classes.createStringData
 import com.daniil.csb.classes.createSwitch
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.classes.utils.registerSettingScreens
 import com.daniil.csb.local.LocalSettings
 import com.daniil.csb.local.rememberLocalSettingsController
 import com.daniil.csb.screens.createAbstractScreen
 import com.daniil.csb.screens.createCustomScreen
 import com.daniil.csb.screens.createScreen
 import com.daniil.csb.ui.theme.ComposeSettingsBuilderTheme
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 
 class MainActivity : ComponentActivity() {
 
@@ -47,7 +48,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        initSettings()
+        initSettings(lifecycleScope)
 
         setContent {
             ComposeSettingsBuilderTheme {
@@ -61,27 +62,11 @@ class MainActivity : ComponentActivity() {
                     },
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
-                    val localController = rememberLocalSettingsController()
-                    localController.setScreen {
-                        val ls = localSettingBuilder
-                        register(
-                            ls.createSwitch("test"),
-                            ls.createSwitch("test2") {
-                                onChangeValue = {
-                                    localController.enable("test", it)
-                                }
-                            },
-                        )
-
-                        content = {
-                            RegisteredSetting("test")
-                            RegisteredSetting("test2")
-                        }
-                    }
-                    LocalSettings(
-                        modifier = Modifier.fillMaxSize().padding(innerPadding),
-                        paddingValues = PaddingValues(16.dp),
-                        localController = localController
+                    SettingsScreen(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize(),
+                        paddingValues = PaddingValues(16.dp)
                     )
                 }
             }
@@ -89,72 +74,25 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun initSettings() = with(SettingBuilder()){
-    val secondScreen = createScreen("RedirectTest") {
-
-        title = "Redirect test"
-        newGroup(
-            createSwitch("switch2") {
-                defaultValue = false
-                title = "Switch 2"
-                description = "This is test switch 2 ui"
-                onChangeValue = {
-                    CSB.hideGroup("sliderGroup", !it)
-                }
-            },
-
-            )
-        newGroup(
-            "sliderGroup",
-            createGroupTitle("groupSliderTitle") { hide = true },
-            createSlider("slider") {
-                description = "This is test slider"
-                startPointRange = "Slow"
-                endPointRange = "Fast"
-                steps = 0
-                defaultValue = 3f
-                range = 0f..1f
-            },
-//            sb.createAction("action") {
-//                title = "Go to switch"
-//                requestAlert = true
-//                description = "Enable switch to activate slider"
-//                action = { CSB.navigateToSetting("switch2") }
-//
-//            },
-
-        )
-        newGroup(
-            createInfo("info") {
-                title = ""
-                description = "Enable switch and switch 2 to activate"
-                onClick = {
-                    CSB.navigateToSetting("Main Screen tittle")
-                    CSB.navigateToSetting("switch")
-                }
-            }
-        )
-
-
-    }
-
-    val mainScreen = createScreen("Main") {
+fun initSettings(coroutineScope: CoroutineScope) = registerSettingScreens(coroutineScope) {
+    createScreen("Main") {
+        title = null
 //            modifier = Modifier.fillMaxSize().padding(16.dp)
 //            title = "Settings"
-        newGroup(
-            createGroupTitle("Main Screen tittle"),
+        group {
+            createGroupTitle("Main Screen tittle")
             createRedirect("redirect") {
                 title = "Redirect"
                 description = "This is text redirect"
                 focus = "color2"
                 redirectToId = "customScreen"
-            },
+            }
             createRedirect("redirect2") {
                 title = "Redirect 2"
                 description = "This is text redirect"
                 focus = "info"
                 redirectToId = "RedirectTest"
-            },
+            }
             createMultiplySelect("multiply_select") {
                 val options = listOf(
                     MultiplySelect.Option(id = "1", title = "Item 1"),
@@ -165,7 +103,7 @@ fun initSettings() = with(SettingBuilder()){
                 defaultValue = options
                 this.options = options
 
-            },
+            }
             createSelect("select") {
                 val options = listOf(
                     Select.Option(id = "1", title = "Item 1"),
@@ -175,7 +113,7 @@ fun initSettings() = with(SettingBuilder()){
                 )
                 defaultValue = options[0]
                 this.options = options
-            },
+            }
             createSwitch("switch") {
                 defaultValue = true
                 title = "Switch"
@@ -184,30 +122,83 @@ fun initSettings() = with(SettingBuilder()){
                     CSB.enable("slider", state)
                 }
                 description = "This is test switch ui"
-            },
+            }
             createColorPicker("color") {
                 defaultValue = Color.Blue
-            },
+            }
             createStringData("stringData") {
                 label = { Text("Test") }
             }
-        )
+        }
     }
-    val abstract = createAbstractScreen("Abstract",
-        createSwitch("switch3") { defaultValue = true }
-    )
+    createScreen("RedirectTest") {
 
-    val customScreen = createCustomScreen("customScreen") {
+        title = "Redirect test"
+        group {
+            createSwitch("switch2") {
+                defaultValue = false
+                title = "Switch 2"
+                description = "This is test switch 2 ui"
+                onChangeValue = {
+                    CSB.hideGroup("sliderGroup", !it)
+                }
+            }
+
+        }
+        group("sliderGroup") {
+            createGroupTitle("groupSliderTitle")
+            createSlider("slider") {
+                description = "This is test slider"
+                startPointRange = "Slow"
+                endPointRange = "Fast"
+                steps = 0
+                defaultValue = 3f
+                range = 0f..1f
+            }
+//            sb.createAction("action") {
+//                title = "Go to switch"
+//                requestAlert = true
+//                description = "Enable switch to activate slider"
+//                action = { CSB.navigateToSetting("switch2") }
+//
+//            },
+
+        }
+        group {
+            createInfo("info") {
+                title = ""
+                description = "Enable switch and switch 2 to activate"
+                onClick = {
+                    CSB.navigateToSetting("Main Screen tittle")
+                    CSB.navigateToSetting("switch")
+                }
+            }
+        }
+
+
+    }
+    createAbstractScreen("Abstract") {
+        createSwitch("switch3") { defaultValue = true }
+    }
+
+
+
+    createCustomScreen("customScreen") {
         title = "Custom Screen"
 
-        register(createColorPicker("color2"))
+        register {
+            createColorPicker("color2")
+        }
         content = {
             Column(
                 modifier = Modifier
             ) {
                 ScreenTopBar(
                     actions = {
-                        Icon(painter = painterResource(R.drawable.palette_icon), contentDescription = null)
+                        Icon(
+                            painter = painterResource(R.drawable.palette_icon),
+                            contentDescription = null
+                        )
                     }
                 )
                 Text("This is custom screen")
@@ -217,8 +208,6 @@ fun initSettings() = with(SettingBuilder()){
 
         }
     }
-    CSB.navigationModel.viewModelScope.launch {
-        build(mainScreen, secondScreen, abstract, customScreen)
-    }
 }
+
 

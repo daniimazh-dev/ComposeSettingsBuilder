@@ -285,5 +285,7 @@ fun SettingBuilder.createMultiplySelect(
         options = listOf()
     }
 ): MultiplySelect {
-    return MultiplySelect.Builder(id, builder).create()
+    val setting = MultiplySelect.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

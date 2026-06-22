@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.classes.utils.GroupItemClip
@@ -35,14 +36,13 @@ fun DefaultSettingUI(
     description: @Composable () -> Unit = {},
     display: @Composable () -> Unit,
     onClick: () -> Unit
-) {
-    val style = LocalSettingsStyle.current
-    val groupPosition = groupItemClip ?: LocalGroupPosition.current
+) { val style = LocalSettingsStyle.current
+
     
     DefaultContainer(
         modifier = modifier,
         isFocused = isFocused,
-        groupItemClip = groupPosition,
+        groupItemClip = groupItemClip,
         enabled = enabled,
         onClick = onClick
     ) {
@@ -61,7 +61,7 @@ fun DefaultSettingUI(
             ) {
                 icon?.let {
                     it()
-                    Spacer(modifier = Modifier.width(style.itemSpacing))
+                    Spacer(modifier = Modifier.width(4.dp))
                 }
                 Column {
                     CompositionLocalProvider(LocalTextStyle provides style.titleStyle) {
@@ -72,7 +72,7 @@ fun DefaultSettingUI(
                     }
                 }
             }
-            Spacer(modifier = Modifier.width(style.itemSpacing))
+            Spacer(modifier = Modifier.width(4.dp))
             display()
         }
 

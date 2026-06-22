@@ -1,5 +1,6 @@
 package com.daniil.csb.classes
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -46,7 +47,12 @@ class Redirect(
         navigationModel: SettingsNavigationModel = CSB.navigationModel,
         isSaveSetting: Boolean
     ): this(id,redirectTo.id,  focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
-    override val value = MutableStateFlow(Screen(id = "", settings = mapOf(),))
+    override val value = MutableStateFlow(Screen(
+        id = "", settings = mapOf(),
+        title = "",
+        modifier = Modifier,
+        paddingValues = PaddingValues.Zero,
+    ))
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
@@ -133,5 +139,7 @@ fun SettingBuilder.createRedirect(
     id: String,
     builder: Redirect.RedirectBuilderScope.() -> Unit
 ): Redirect {
-    return Redirect.Builder(id, builder).create()
+    val setting = Redirect.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

@@ -276,5 +276,7 @@ fun SettingBuilder.createSelect(
         options = listOf()
     }
 ): Select {
-    return Select.Builder(id, builder).create()
+    val setting = Select.Builder(id, builder).create()
+    setting.addToHeap()
+    return setting
 }

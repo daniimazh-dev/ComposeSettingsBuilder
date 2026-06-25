@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.apply
 
-class Switch(
+class Switch internal constructor(
     override var id: String,
     val defaultValue: Boolean,
     override val title: String,
@@ -71,7 +71,10 @@ class Switch(
 
     override val focusState = MutableStateFlow(false)
     @Composable
-    override fun UI(modifier: Modifier, position: GroupItemClip?) {
+    override fun UI(
+        modifier: Modifier,
+        position: GroupItemClip?,
+    ) {
         val enabled by this.enabled.collectAsState()
         val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()

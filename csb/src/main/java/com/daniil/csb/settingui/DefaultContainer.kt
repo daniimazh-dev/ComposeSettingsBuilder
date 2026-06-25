@@ -3,17 +3,25 @@ package com.daniil.csb.settingui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import com.daniil.csb.classes.utils.LocalGroupPosition
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.daniil.csb.LocalDebugData
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.classes.utils.LocalGroupPosition
+import com.daniil.csb.screens.Screen
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 
 @Composable
@@ -26,41 +34,65 @@ fun DefaultContainer(
     content: @Composable () -> Unit
 ) {
     val style = LocalSettingsStyle.current
+    val debagData = LocalDebugData.current
     val groupPosition = LocalGroupPosition.current
 
     val baseShape = style.containerShape as RoundedCornerShape
     val gcs = style.groupCornerShape
-    
+
     val groupClip = when (groupItemClip ?: groupPosition) {
         GroupItemClip.First -> baseShape.copy(
             bottomEnd = CornerSize(gcs),
             bottomStart = CornerSize(gcs),
         )
+
         GroupItemClip.None -> baseShape.copy(
             topStart = CornerSize(gcs),
             topEnd = CornerSize(gcs),
             bottomEnd = CornerSize(gcs),
             bottomStart = CornerSize(gcs),
         )
+
         GroupItemClip.Last -> baseShape.copy(
             topStart = CornerSize(gcs),
             topEnd = CornerSize(gcs),
         )
+
         GroupItemClip.Full -> baseShape
     }
-    
+
     val defaultColor = style.backgroundColor
     val focusColor = style.focusColor
+
 
     Box(
         modifier = Modifier
             .shadow(elevation = style.cardElevation, shape = style.containerShape, clip = false)
             .clip(groupClip)
             .background(if (isFocused) focusColor else defaultColor)
-            .then(if (enabled) modifier.clickable { onClick() }
-            else modifier.alpha(0.5f))
-
+            .then(
+                if (enabled) modifier.clickable(onClick = onClick)
+                else modifier.alpha(0.5f)
+            )
     ) {
-        content()
+        Box(
+            contentAlignment = Alignment.TopEnd
+        ) {
+            content()
+            if (debagData != null) {
+                Box(
+                    modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    val value by debagData.currentValue.collectAsStateWithLifecycle()
+                    Text(
+                        text = "${debagData.settingSimpleName} " +
+                                "id: ${debagData.settingId} | " +
+                                "value: ${if (value is Screen) (value as Screen).id else value}",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+        }
     }
+
 }

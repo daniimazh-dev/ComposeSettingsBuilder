@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import com.daniil.csb.classes.ComposeSetting
+import com.daniil.csb.screens.ScreenAttribute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,7 +30,6 @@ object CSB {
         if (_applicationContext != null) return
         val app = context.applicationContext as Application
         _applicationContext = app
-        navigationModel.initialize(app)
 
         app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityPaused(activity: Activity) {
@@ -120,14 +120,14 @@ object CSB {
         if (!patch.exists()) {
             patch.mkdir()
         }
-
-        navigationModel.screenHeap.value.forEach { screenInstance ->
-            val file = File(patch, "csb_${screenInstance.id}")
+        for (screen in navigationModel.screenHeap.value) {
+            if (screen.attribute?.contains(ScreenAttribute.Unstored) == true) continue
+            val file = File(patch, "csb_${screen.id}")
             if (!file.exists()) {
                 file.createNewFile()
             }
 
-            val jsonPackageList: List<SaveSettingPackage> = screenInstance.settings.values
+            val jsonPackageList: List<SaveSettingPackage> = screen.settings.values
                 .flatten()
                 .mapNotNull { it.saveLogic() }
 

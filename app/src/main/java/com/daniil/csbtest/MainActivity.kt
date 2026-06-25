@@ -33,12 +33,12 @@ import com.daniil.csb.classes.createSlider
 import com.daniil.csb.classes.createStringData
 import com.daniil.csb.classes.createSwitch
 import com.daniil.csb.classes.utils.registerSettingScreens
-import com.daniil.csb.local.LocalSettings
-import com.daniil.csb.local.rememberLocalSettingsController
+import com.daniil.csb.screens.Screen
+import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.createAbstractScreen
 import com.daniil.csb.screens.createCustomScreen
 import com.daniil.csb.screens.createScreen
-import com.daniil.csb.ui.theme.ComposeSettingsBuilderTheme
+import com.daniil.csbtest.ui.theme.ComposeSettingsBuilderTheme
 import kotlinx.coroutines.CoroutineScope
 
 class MainActivity : ComponentActivity() {
@@ -85,6 +85,7 @@ fun initSettings(coroutineScope: CoroutineScope) = registerSettingScreens(corout
                 title = "Redirect"
                 description = "This is text redirect"
                 focus = "color2"
+                title = "Redirect"
                 redirectToId = "customScreen"
             }
             createRedirect("redirect2") {

@@ -48,7 +48,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 
 
-class MultiplySelect(
+class MultiplySelect internal constructor(
     override var id: String,
     val options: List<Option>,
     val defaultValue: List<Option>,
@@ -109,7 +109,9 @@ class MultiplySelect(
     data class Option(
         val id: String,
         val title: String,
-    )
+    ) {
+        override fun toString(): String = id
+    }
 
     class MultiplySelectBuilderScope() {
         lateinit var defaultValue: List<MultiplySelect.Option>

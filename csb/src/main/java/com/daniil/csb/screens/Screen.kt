@@ -16,6 +16,7 @@ open class Screen internal constructor(
     open var title: String? = id,
     open var modifier: Modifier,
     open var paddingValues: PaddingValues,
+    open var attribute: List<ScreenAttribute>? = null,
     open val settings: Map<Group, List<ComposeSetting<*>>> = emptyMap(),
 ) {
     internal val settingsScreenModel: SettingsScreenModel by lazy { SettingsScreenModel(this) }
@@ -44,6 +45,7 @@ open class Screen internal constructor(
         private var title: String? = id
         private var modifier: Modifier? = null
         private var paddingValues: PaddingValues? = null
+        private var attribute: List<ScreenAttribute>? = null
         private lateinit var settings: Map<Group, List<ComposeSetting<*>>>
 
 
@@ -56,6 +58,8 @@ open class Screen internal constructor(
         fun setModifier(modifier: Modifier?) = apply { this.modifier = modifier }
         fun setPaddingValues(paddingValues: PaddingValues?) = apply { this.paddingValues = paddingValues }
 
+        fun setAttribute(screenAttribute: List<ScreenAttribute>?) = apply { this.attribute = screenAttribute }
+
         fun setGroupedContent(scope: SettingsContentScope.() -> Unit) = apply {
             val settings = SettingsContentScope().apply(scope)
             this.settings = settings.groups
@@ -65,7 +69,7 @@ open class Screen internal constructor(
             this.settings = settings
         }
 
-        fun build() = Screen(id, title, modifier ?: Modifier, paddingValues ?: PaddingValues.Zero, settings)
+        fun build() = Screen(id, title, modifier ?: Modifier, paddingValues ?: PaddingValues.Zero, attribute, settings)
     }
 }
 
@@ -119,10 +123,12 @@ class CreateScreenScope() {
         return groupContent
     }
 }
+
 class GroupScope(): SettingBuilder()
 
 fun ScreenBuilder.createScreen(
     id: String,
+    screenAttribute: List<ScreenAttribute>? = null,
     scope: CreateScreenScope.() -> Unit
 ): Screen {
     val data = CreateScreenScope().apply(scope)
@@ -132,6 +138,7 @@ fun ScreenBuilder.createScreen(
         .setModifier(data.modifier)
         .setPaddingValues(data.paddingValues)
         .setGroupedContent(content.groups)
+        .setAttribute(screenAttribute)
         .build()
     screen.addToHeap()
     return screen

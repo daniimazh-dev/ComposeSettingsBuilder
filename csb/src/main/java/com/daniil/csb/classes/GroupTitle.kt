@@ -10,20 +10,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.screens.GroupScope
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 
-class GroupTitle(
+class GroupTitle internal constructor(
     override val id: String,
     override val title: String,
     override val description: String?,
     val content: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
-) : ComposeSetting<Unit>(independedObject = true) {
+) : ComposeSetting<Unit>(independentObject = true) {
     private var _value = MutableStateFlow<Unit>(Unit)
     override val value = _value.asStateFlow()
     override var isSaveSetting: Boolean = true

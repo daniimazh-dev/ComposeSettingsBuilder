@@ -73,7 +73,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import android.graphics.Color as AndroidColor
 
-class ColorPicker(
+class ColorPicker internal constructor(
     override var id: String,
     val defaultValue: Color,
     override val title: String,
@@ -82,7 +82,7 @@ class ColorPicker(
     var onChangeValue: (Color) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Color>() {
-    constructor(
+    internal constructor(
         id: String,
         defaultValueInt: Int,
         title: String,

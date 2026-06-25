@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.String
 
-class Action(
+class Action internal constructor(
     override var id: String,
     var requestAlert: Boolean,
     var action: (Boolean) -> Unit,

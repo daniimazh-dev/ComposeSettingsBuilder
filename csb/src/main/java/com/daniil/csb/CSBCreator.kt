@@ -47,8 +47,8 @@ class SettingViewModel(
 
     private fun loadData() {
         viewModelScope.launch {
-            val context = getApplication<Application>().applicationContext
-            navigationSettingViewModel?.initialize(context)
+//            val context = getApplication<Application>().applicationContext
+//            navigationSettingViewModel?.initialize()
         }
     }
 
@@ -57,7 +57,7 @@ class SettingViewModel(
         settingViewModel: SettingsNavigationModel,
         coroutineScope: CoroutineScope
     ) {
-        settingViewModel.initialize(context)
+//        settingViewModel.initialize(context)
     }
 }
 

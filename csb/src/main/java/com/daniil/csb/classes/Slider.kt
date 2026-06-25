@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
-class Slider(
+class Slider internal constructor(
     override var id: String,
     val defaultValue: Float,
     val range: ClosedFloatingPointRange<Float>,

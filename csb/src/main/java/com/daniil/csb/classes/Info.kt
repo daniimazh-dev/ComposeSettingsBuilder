@@ -15,7 +15,7 @@ import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class Info(
+class Info internal constructor(
     override val id: String,
     override val title: String,
     override val description: String?,

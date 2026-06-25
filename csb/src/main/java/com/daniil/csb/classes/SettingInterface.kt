@@ -39,5 +39,8 @@ interface SettingInterface <T> {
         if (isSaveSetting) changeValue(pack.value as T) // Set value
     }
     @Composable
-    fun UI(modifier: Modifier = Modifier, position: GroupItemClip? = null)
+    fun UI(
+        modifier: Modifier = Modifier,
+        position: GroupItemClip? = null,
+    )
 }

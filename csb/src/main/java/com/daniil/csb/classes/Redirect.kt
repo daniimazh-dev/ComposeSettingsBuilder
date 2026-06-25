@@ -22,10 +22,11 @@ import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 
-class Redirect(
+class Redirect internal constructor(
     override var id: String,
-    val redirectToId: String,
+    var redirectToId: String,
     val focus: String? = null,
     var showArrow: Boolean = true,
     override val title: String,
@@ -35,7 +36,7 @@ class Redirect(
     val navigationModel: SettingsNavigationModel = CSB.navigationModel,
     override var isSaveSetting: Boolean
 ): ComposeSetting<Screen>() {
-    constructor(
+    internal constructor(
         id: String,
         redirectTo: Screen,
         focus: String? = null,
@@ -47,19 +48,22 @@ class Redirect(
         navigationModel: SettingsNavigationModel = CSB.navigationModel,
         isSaveSetting: Boolean
     ): this(id,redirectTo.id,  focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
-    override val value = MutableStateFlow(Screen(
+    private val _value = MutableStateFlow(Screen(
         id = "", settings = mapOf(),
         title = "",
         modifier = Modifier,
         paddingValues = PaddingValues.Zero,
     ))
+    override val value = _value.asStateFlow()
+
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
 
     override fun enabled(state: Boolean) { _enable.value = state }
-    override fun changeValue(newValue: Screen) { error("Cannot change redirect value") }
-    override fun fetchValue(): StateFlow<Screen> { error("Cannot get redirect value") }
+    override fun changeValue(newValue: Screen) { redirectToId = newValue.id }
+    fun changeValue(newValue: String) { redirectToId = newValue }
+    override fun fetchValue(): StateFlow<Screen> = MutableStateFlow(navigationModel.findScreenById(redirectToId))
     override fun resetToDefault() {}
 
     override fun loadLogic(pack: SaveSettingPackage?) {

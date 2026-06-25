@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.Screen
+import com.daniil.csb.screens.ScreenAttribute
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,21 +26,14 @@ class SettingsNavigationModel : ViewModel() {
     ) {
         _screenHeap.value = screen.toList()
         if (screenStack.value.isEmpty()) {
-            _screenStack.value.add(screen[0])
-            _currentScreen.value = screen[0]
+            val primary = _screenHeap.value.firstOrNull { it.attribute?.contains(ScreenAttribute.Primary) == true }
+            _screenStack.value.add(primary ?: screen[0])
+            _currentScreen.value = primary ?: screen[0]
         }
-    }
-    lateinit var config: CSBConfig
-
-    fun initialize(context: Context) {
-        val json = context.assets.open("csb/csb_config.json").bufferedReader().use { it.readText() }
-        val config = Json.decodeFromString<CSBConfig>(json)
-        this.config = config
     }
 
     private val _screenStack = MutableStateFlow(mutableStateListOf<Screen>())
     val screenStack = _screenStack.asStateFlow()
-
 
 
     private var _currentScreen = MutableStateFlow<Screen?>(null)
@@ -83,6 +77,7 @@ class SettingsNavigationModel : ViewModel() {
 
     fun goToScreen(screen: Screen) {
         if (screen is AbstractScreen) error("Cannot go to abstract screen")
+        if (screen.attribute?.contains(ScreenAttribute.NonRedirectable) == true) return
         val indexInStack = screenStack.value.indexOfFirst { it.id == screen.id }
         val isInStack = indexInStack != -1
 

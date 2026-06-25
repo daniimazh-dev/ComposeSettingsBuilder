@@ -102,7 +102,9 @@ class Select(
     data class Option(
         val id: String,
         val title: String,
-    )
+    ) {
+        override fun toString(): String = id
+    }
 
     class SelectBuilderScope() {
         lateinit var defaultValue: Select.Option

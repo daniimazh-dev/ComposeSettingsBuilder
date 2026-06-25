@@ -1,27 +1,33 @@
 package com.daniil.csb.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.CSB
+import com.daniil.csb.DebugData
+import com.daniil.csb.LocalDebugData
 import com.daniil.csb.R
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.classes.ComposeSetting
@@ -37,14 +43,15 @@ open class CustomScreen internal constructor(
     settings: List<ComposeSetting<*>>,
     override var modifier: Modifier,
     override var paddingValues: PaddingValues,
-    var content: @Composable CustomScreenScope.() -> Unit
+    var content: @Composable CustomScreenScope.() -> Unit,
+    override var attribute: List<ScreenAttribute>? = null,
 ) : Screen(id, title, modifier, paddingValues) {
 
 
     private var registeredSettings: MutableList<ComposeSetting<*>> = settings.toMutableList()
 
     override var settings: Map<Group, List<ComposeSetting<*>>>
-        get() = mapOf(Screen.Group(id, false) to registeredSettings)
+        get() = mapOf(Group(id, false) to registeredSettings)
         set(value) {}
 
     inner class CustomScreenScope {
@@ -63,7 +70,7 @@ open class CustomScreen internal constructor(
                         setting.id == last -> GroupItemClip.Last
                         else -> GroupItemClip.None
                     }
-                    setting.UI(position = groupPosition)
+                    RegisteredSetting(setting, groupPosition)
                 }
             }
 
@@ -74,8 +81,8 @@ open class CustomScreen internal constructor(
             index: Int,
             groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
-            val setting = registeredSettings.getOrNull(index)
-            setting?.UI(position = groupItemClip)
+            val setting = registeredSettings.getOrNull(index) ?: return
+            RegisteredSetting(setting, groupItemClip)
         }
 
         @Composable
@@ -83,7 +90,16 @@ open class CustomScreen internal constructor(
             setting: ComposeSetting<*>,
             groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
-            setting.UI(position = groupItemClip)
+
+            val debagData = DebugData(
+                settingSimpleName = setting::class.simpleName,
+                settingId = setting.id,
+                currentValue = setting.value
+            ).takeIf { attribute?.contains(ScreenAttribute.Debag) == true }
+            CompositionLocalProvider(LocalDebugData provides debagData) {
+                setting.UI(position = groupItemClip)
+            }
+
         }
 
         @Composable
@@ -91,7 +107,7 @@ open class CustomScreen internal constructor(
             id: String,
             groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
-            registeredSettings.find { it.id == id }?.UI(position = groupItemClip)
+            RegisteredSetting(registeredSettings.find { it.id == id } ?: return, groupItemClip)
         }
 
         @Composable
@@ -127,6 +143,8 @@ open class CustomScreen internal constructor(
                     text = title.orEmpty(),
                     style = MaterialTheme.typography.titleLarge
                 )
+
+
                 Spacer(modifier = Modifier.weight(1f))
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp)
@@ -143,9 +161,10 @@ open class CustomScreen internal constructor(
     class Builder(val id: String) {
         private val builderSettings = mutableListOf<ComposeSetting<*>>()
         private lateinit var content: @Composable CustomScreenScope.() -> Unit
-        var paddingValues = PaddingValues.Zero
-        var title: String = id
-        var modifier: Modifier = Modifier
+        private var paddingValues = PaddingValues.Zero
+        private var attribute: List<ScreenAttribute>? = null
+        private var title: String = id
+        private var modifier: Modifier = Modifier
 
         fun registerSettings(vararg items: ComposeSetting<*>) = apply {
             this.builderSettings.addAll(items)
@@ -156,17 +175,27 @@ open class CustomScreen internal constructor(
         fun setContent(content: @Composable CustomScreenScope.() -> Unit) = apply {
             this.content = content
         }
-
+        fun setAttribute(screenAttribute: List<ScreenAttribute>?) = apply { this.attribute = screenAttribute }
         fun build(): CustomScreen {
             val instance =
-                CustomScreen(id, title, builderSettings, modifier, paddingValues, content)
+                CustomScreen(id, title, builderSettings, modifier, paddingValues, content, attribute)
             return instance
         }
     }
 
     @Composable
-    fun Render() {
+    internal fun Render() {
         val scope = remember { CustomScreenScope() }
+        if (attribute?.contains(ScreenAttribute.Debag) == true) {
+            Box(
+                modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+            ) {
+                Text(
+                    text = "Custom screen id: $id",
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
         scope.content()
     }
 }
@@ -188,6 +217,7 @@ class RegisterScope() : SettingBuilder()
 
 fun ScreenBuilder.createCustomScreen(
     id: String,
+    screenAttribute: List<ScreenAttribute>? = null,
     scope: CreateCustomScreenScope.() -> Unit
 ): CustomScreen {
     val data = CreateCustomScreenScope().apply(scope)
@@ -196,7 +226,9 @@ fun ScreenBuilder.createCustomScreen(
         CustomScreen.Builder(id).setTitle(data.title)
             .setModifier(data.modifier)
             .registerSettings(*data.registeredSettings.toTypedArray())
-            .setContent(data.content).build()
+            .setContent(data.content)
+            .setAttribute(screenAttribute)
+            .build()
     screen.addToHeap()
     return screen
 }

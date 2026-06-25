@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 
-class StringData(
+class StringData internal constructor(
     override var id: String,
     val defaultValue: String,
     override val title: String,

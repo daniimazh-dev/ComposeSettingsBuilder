@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -39,9 +41,11 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.screens.CustomScreen
+import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.settingui.styles.CSBStyle
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import com.daniil.csb.settingui.styles.SettingsStyle
+import kotlinx.coroutines.flow.StateFlow
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,6 +95,9 @@ fun SettingsScreen(
                 val title by settingsScreenModel.title.collectAsState()
                 val settings by settingsScreenModel.settings.collectAsState()
 
+                val isDebugModeEnable =
+                    remember(currentScreen) { currentScreen.attribute?.contains(ScreenAttribute.Debag) == true }
+
                 val scrollFocusIndex by settingsScreenModel.scrollFocusIndex.collectAsState()
                 LaunchedEffect(scrollFocusIndex) {
                     if (scrollFocusIndex != null) {
@@ -98,10 +105,21 @@ fun SettingsScreen(
                     }
                 }
 
+                if (isDebugModeEnable) {
+                    Box(
+                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                    ) {
+                        Text(
+                            text = "${currentScreen::class.simpleName} id: ${currentScreen.id}",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    state = settingsScreenModel.lazyListState
+                    verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
+                    state = settingsScreenModel.lazyListState,
                 ) {
                     title?.let { title ->
                         item {
@@ -115,9 +133,7 @@ fun SettingsScreen(
                                     remember(currentScreen.id) { screenStack.size > 1 }
                                 if (showNavigation) {
                                     IconButton(
-                                        onClick = {
-                                            navigationModel.goBack()
-                                        }
+                                        onClick = navigationModel::goBack
                                     ) {
                                         Icon(
                                             painter = painterResource(R.drawable.arrow_back_icon),
@@ -130,17 +146,30 @@ fun SettingsScreen(
                                     text = title,
                                     style = MaterialTheme.typography.titleLarge
                                 )
-
                             }
                             Spacer(Modifier.height(style.itemSpacing))
                         }
                     }
 
                     settings.keys.forEach { group ->
+                        if (isDebugModeEnable) {
+                            item {
+                                Box(
+                                    modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                                ) {
+                                    Text(
+                                        text = "Group id: ${group.id} | isHide: ${group.hide}",
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+                            }
+                        }
                         if (!group.hide) {
                             val groupItems = settings[group] ?: return@forEach
+
                             items(items = groupItems, key = { it.id }) { setting ->
-                                val groupWithoutTitle = groupItems.filterNot { it.independedObject }
+
+                                val groupWithoutTitle = groupItems.filterNot { it.independentObject }
                                 val first = groupWithoutTitle.firstOrNull()?.id ?: return@items
                                 val last = groupWithoutTitle.last().id
                                 val groupPosition = when {
@@ -149,8 +178,15 @@ fun SettingsScreen(
                                     setting.id == first -> GroupItemClip.First
                                     else -> GroupItemClip.None
                                 }
+                                val debugData = DebugData(
+                                    settingSimpleName = setting::class.simpleName,
+                                    settingId = setting.id,
+                                    currentValue = setting.value
+                                ).takeIf { isDebugModeEnable }
                                 CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                    setting.UI(modifier = Modifier.animateItem())
+                                    CompositionLocalProvider(LocalDebugData provides debugData) {
+                                        setting.UI(modifier = Modifier.animateItem())
+                                    }
                                 }
                             }
                         }
@@ -161,3 +197,10 @@ fun SettingsScreen(
     }
 }
 
+internal val LocalDebugData = compositionLocalOf<DebugData?> { null }
+
+internal data class DebugData(
+    val settingSimpleName: String?,
+    val settingId: String,
+    val currentValue: StateFlow<*>
+)

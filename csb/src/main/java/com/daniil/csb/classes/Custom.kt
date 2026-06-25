@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.reflect.KClass
 
-class Custom<T : Any>(
+class Custom<T : Any> internal constructor(
     override var id: String,
     val defaultValue: T,
     override val title: String,
@@ -86,7 +86,7 @@ class Custom<T : Any>(
             modifier = modifier.fillMaxWidth(),
             isFocused = focusState,
             enabled = enabled,
-            groupItemClip = groupClip,
+            groupItemClip = position ?: groupClip,
             onClick = onClick
         ) {
             content()

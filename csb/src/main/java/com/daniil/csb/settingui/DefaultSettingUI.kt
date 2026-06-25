@@ -36,8 +36,8 @@ fun DefaultSettingUI(
     description: @Composable () -> Unit = {},
     display: @Composable () -> Unit,
     onClick: () -> Unit
-) { val style = LocalSettingsStyle.current
-
+) {
+    val style = LocalSettingsStyle.current
     
     DefaultContainer(
         modifier = modifier,

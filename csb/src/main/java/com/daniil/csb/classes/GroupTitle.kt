@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 class GroupTitle internal constructor(
     override val id: String,
     override val title: String,
-    override val description: String?,
     val content: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
 ) : ComposeSetting<Unit>(independentObject = true) {
@@ -32,15 +31,13 @@ class GroupTitle internal constructor(
     override fun enabled(state: Boolean) {
         _enable.value = state
     }
-
+    override val description: String = "Group tittle"
     override fun changeValue(newValue: Unit) {}
 
     override val defaultValue: Unit = Unit
     class GroupTitleBuilderScope() {
         var title: String? = null
-        var description: String? = null
         var content: (@Composable () -> Unit)? = null
-        var isSaveSetting = false
     }
 
     class Builder(
@@ -49,7 +46,7 @@ class GroupTitle internal constructor(
     ) {
         val scope = GroupTitleBuilderScope().apply(builderScope)
         fun create(): GroupTitle = with(scope) {
-            return GroupTitle(id, title ?: id, description, content)
+            return GroupTitle(id, title ?: id,  content)
         }
     }
 

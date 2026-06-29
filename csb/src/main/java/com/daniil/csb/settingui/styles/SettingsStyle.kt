@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.sp
 
 data class SettingsStyle(
     val backgroundColor: Color = Color.Transparent,
+    val containerColor: Color = Color.Transparent,
     val focusColor: Color = Color.Transparent,
     val titleStyle: TextStyle = TextStyle.Default,
     val labelStyle: TextStyle = TextStyle.Default.copy(fontSize = 8.sp),

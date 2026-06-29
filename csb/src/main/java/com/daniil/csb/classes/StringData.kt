@@ -33,6 +33,7 @@ import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -108,6 +109,7 @@ class StringData internal constructor(
     override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
+        val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -136,7 +138,7 @@ class StringData internal constructor(
                     FilledIconButton(
                         enabled = enabled,
                         colors = IconButtonDefaults.iconButtonColors()
-                            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            .copy(containerColor = style.containerColor),
                         onClick = {
                             alertOpen = true
                         }

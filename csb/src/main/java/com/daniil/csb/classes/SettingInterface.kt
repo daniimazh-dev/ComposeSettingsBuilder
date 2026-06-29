@@ -6,6 +6,8 @@ import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.GroupItemClip
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.Json
 
 interface SettingInterface <T> {
     val id: String
@@ -28,6 +30,7 @@ interface SettingInterface <T> {
     fun changeValue(newValue: T)
     fun fetchValue(): StateFlow<T> = value
     fun resetToDefault() { changeValue(defaultValue) }
+
     fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.UnitPackage(id, enabled.value)

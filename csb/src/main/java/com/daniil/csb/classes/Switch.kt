@@ -1,6 +1,7 @@
 package com.daniil.csb.classes
 
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -10,6 +11,7 @@ import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.apply
@@ -74,6 +76,7 @@ class Switch internal constructor(
         modifier: Modifier,
         position: GroupItemClip?,
     ) {
+        val style = LocalSettingsStyle.current
         val enabled by this.enabled.collectAsState()
         val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()
@@ -91,6 +94,7 @@ class Switch internal constructor(
                     onCheckedChange = {
                         changeValue(it)
                     },
+                    colors = SwitchDefaults.colors(),
                     enabled = enabled
                 )
             },

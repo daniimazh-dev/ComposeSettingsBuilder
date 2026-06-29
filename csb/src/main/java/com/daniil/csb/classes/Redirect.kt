@@ -19,6 +19,7 @@ import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -103,6 +104,7 @@ class Redirect internal constructor(
     override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
+        val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         fun execute() {
@@ -124,7 +126,7 @@ class Redirect internal constructor(
                 if (showArrow) {
                     FilledIconButton(
                         enabled = enabled,
-                        colors = IconButtonDefaults.iconButtonColors().copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        colors = IconButtonDefaults.iconButtonColors().copy(containerColor = style.containerColor),
                         onClick = { execute() }
                     ) {
                         Icon(

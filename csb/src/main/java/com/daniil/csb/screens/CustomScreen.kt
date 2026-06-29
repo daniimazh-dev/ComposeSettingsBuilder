@@ -90,7 +90,6 @@ open class CustomScreen internal constructor(
             setting: ComposeSetting<*>,
             groupItemClip: GroupItemClip = GroupItemClip.Full
         ) {
-
             val debagData = DebugData(
                 settingSimpleName = setting::class.simpleName,
                 settingId = setting.id,

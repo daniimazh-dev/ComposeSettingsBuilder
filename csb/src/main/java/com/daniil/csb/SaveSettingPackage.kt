@@ -44,6 +44,7 @@ sealed class SaveSettingPackage {
         override val value: List<String>
     ) : SaveSettingPackage()
 
+    @Serializable
     data class IntListPackage(
         override val id: String,
         override val enable: Boolean,
@@ -51,6 +52,7 @@ sealed class SaveSettingPackage {
     ) : SaveSettingPackage()
 
 
+    @Serializable
     data class JsonPackage(
         override val id: String,
         override val enable: Boolean,

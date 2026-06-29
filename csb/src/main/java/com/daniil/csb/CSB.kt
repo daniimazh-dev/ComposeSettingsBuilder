@@ -132,6 +132,11 @@ object CSB {
                 .mapNotNull { it.saveLogic() }
 
             if (jsonPackageList.isNotEmpty()) {
+                jsonPackageList.map {
+                    if(it is SaveSettingPackage.JsonPackage) {
+
+                    }
+                }
                 val json = Json.encodeToString(jsonPackageList)
                 file.writeText(json)
             }

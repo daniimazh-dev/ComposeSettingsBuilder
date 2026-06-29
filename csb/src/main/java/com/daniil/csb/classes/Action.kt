@@ -45,9 +45,9 @@ class Action internal constructor(
 
     class ActionBuilderScope() {
         var requestAlert = false
-        var action: (Boolean) -> Unit = {}
+        var action: (result: Boolean) -> Unit = {}
         var icon: (@Composable () -> Unit)? = null
-        val text: String? = null
+        var alertText: String? = null
         var alertTitle: String? = null
         var title: String? = null
         var description: String? = null
@@ -67,7 +67,7 @@ class Action internal constructor(
                 action,
                 alertTitle,
                 icon,
-                text,
+                alertText,
                 title ?: id,
                 description,
                 enabled,

@@ -43,6 +43,7 @@ import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
@@ -105,8 +106,8 @@ class Select(
     }
 
     class SelectBuilderScope() {
-        lateinit var defaultValue: Select.Option
-        lateinit var options: List<Select.Option>
+        lateinit var options: List<Pair<String, String>>
+        var defaultValueId: String? = null
         var title: String? = null
         var onChangeValue: (Option) -> Unit = {}
         var alertTitle = "Select item"
@@ -123,8 +124,8 @@ class Select(
         fun create(): Select = with(scope) {
             return Select(
                 id,
-                options,
-                defaultValue,
+                options.map { Option(it.first, it.second) },
+                defaultValue = options.first { it.first == (defaultValueId ?: options[0].first) }.let { Option(it.first, it.second) },
                 title ?: id,
                 alertTitle,
                 description,
@@ -138,6 +139,7 @@ class Select(
     override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
+        val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -161,13 +163,14 @@ class Select(
                             .widthIn(max = 112.dp),
                         text = value.title,
                         overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
+                        maxLines = 1,
+                        style = style.titleStyle
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     FilledIconButton(
                         enabled = enabled,
                         colors = IconButtonDefaults.iconButtonColors()
-                            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            .copy(style.containerColor),
                         onClick = {
                             alertOpen = true
                         }
@@ -271,10 +274,7 @@ class Select(
 
 fun SettingBuilder.createSelect(
     id: String,
-    builder: Select.SelectBuilderScope.() -> Unit = {
-        defaultValue = Select.Option("", "")
-        options = listOf()
-    }
+    builder: Select.SelectBuilderScope.() -> Unit
 ): Select {
     val setting = Select.Builder(id, builder).create()
     setting.addToHeap()

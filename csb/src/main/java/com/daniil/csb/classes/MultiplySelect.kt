@@ -43,6 +43,7 @@ import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
@@ -112,8 +113,8 @@ class MultiplySelect internal constructor(
     }
 
     class MultiplySelectBuilderScope() {
-        lateinit var defaultValue: List<MultiplySelect.Option>
-        lateinit var options: List<MultiplySelect.Option>
+        var defaultValue: List<String> = emptyList()
+        lateinit var options: List<Pair<String, String>>
         var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {}
         var title: String? = null
         var alertTitle = "Select multiple"
@@ -128,10 +129,11 @@ class MultiplySelect internal constructor(
     ) {
         val scope = MultiplySelectBuilderScope().apply(builderScope)
         fun create(): MultiplySelect = with(scope) {
+            val optionData =  options.map { Option(it.first, it.second) }
             return MultiplySelect(
                 id,
-                options,
-                defaultValue,
+                options = optionData,
+                defaultValue = optionData.filter { it.id in defaultValue },
                 title ?: id,
                 alertTitle,
                 description,
@@ -145,6 +147,7 @@ class MultiplySelect internal constructor(
     override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
+        val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
@@ -165,7 +168,7 @@ class MultiplySelect internal constructor(
                     FilledIconButton(
                         enabled = enabled,
                         colors = IconButtonDefaults.iconButtonColors()
-                            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                            .copy(style.containerColor),
                         onClick = {
                             alertOpen = true
                         }

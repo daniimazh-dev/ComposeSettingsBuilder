@@ -24,10 +24,11 @@ fun CSBStyle.Material3() = SettingsStyle(
     edgeGroupCorner = MaterialTheme.shapes.medium,
     containerCornerShape = 4.dp,
     backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
     horizontalPadding = 16.dp,
     verticalPadding = 12.dp,
-    minHeight = 52.dp,
+    minHeight = 68.dp,
     itemSpacing = 4.dp,
     cardElevation = 2.dp,
 )
@@ -59,7 +60,7 @@ val CSBStyle.ClassicLight: SettingsStyle
 
 val CSBStyle.ClassicDark
     get() = ClassicLight.copy(
-        backgroundColor = Color.Gray
+        backgroundColor = Color.DarkGray
     )
 @SuppressLint("ComposableNaming")
 @Composable
@@ -76,6 +77,7 @@ fun CSBStyle.Bobble() = SettingsStyle(
         color = MaterialTheme.colorScheme.outline
     ),
     backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
     minHeight = 52.dp,
 )

@@ -75,7 +75,7 @@ import android.graphics.Color as AndroidColor
 
 class ColorPicker internal constructor(
     override var id: String,
-    val defaultValue: Color,
+    override val defaultValue: Color,
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
@@ -108,8 +108,6 @@ class ColorPicker internal constructor(
         _value.value = newValue
     }
 
-    override fun resetToDefault() { changeValue(this@ColorPicker.defaultValue) }
-
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.IntPackage(
@@ -119,10 +117,11 @@ class ColorPicker internal constructor(
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage?) {
+    override fun loadLogic(pack: SaveSettingPackage) {
         if (pack == null) return
         val data = pack.value as Int
-        changeValue(Color(data))
+        enabled(pack.enable) // Enable
+        if (isSaveSetting) changeValue(Color(data))
     }
 
     class ColorPickerBuilderScope() {

@@ -11,6 +11,7 @@ interface SettingInterface <T> {
     val id: String
     val title: String
     val description: String?
+    val defaultValue: T
     val value: StateFlow<T>
     val enabled: StateFlow<Boolean>
     var isSaveSetting: Boolean
@@ -26,12 +27,12 @@ interface SettingInterface <T> {
 
     fun changeValue(newValue: T)
     fun fetchValue(): StateFlow<T> = value
-    fun resetToDefault()
+    fun resetToDefault() { changeValue(defaultValue) }
     fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.UnitPackage(id, enabled.value)
     }
-    fun loadLogic(pack: SaveSettingPackage?) {
+    fun loadLogic(pack: SaveSettingPackage) {
         if (pack == null) return // Not found save data
         enabled(pack.enable) // Enable
         if (pack is SaveSettingPackage.UnitPackage) return // Pack is unit

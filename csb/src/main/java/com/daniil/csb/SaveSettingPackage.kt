@@ -51,6 +51,12 @@ sealed class SaveSettingPackage {
     ) : SaveSettingPackage()
 
 
+    data class JsonPackage(
+        override val id: String,
+        override val enable: Boolean,
+        override val value: String
+    ) : SaveSettingPackage()
+
     // Other
     @Serializable
     data class UnitPackage(

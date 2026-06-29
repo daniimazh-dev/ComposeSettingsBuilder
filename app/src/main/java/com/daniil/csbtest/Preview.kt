@@ -11,9 +11,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.classes.createColorPicker
+import com.daniil.csb.classes.createRedirect
 import com.daniil.csb.classes.createSwitch
 import com.daniil.csb.local.LocalSettings
 import com.daniil.csb.local.rememberLocalSettingsController
+import com.daniil.csb.settingui.styles.CSBStyle
+import com.daniil.csb.settingui.styles.Bobble
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
@@ -32,9 +36,12 @@ private fun Preview() {
     ) { innerPadding ->
         val localController = rememberLocalSettingsController {
             register {
-                createSwitch("test")
-                createSwitch("test3")
+                createRedirect("wdwd") {
+                    redirectToId = ""
+                }
+                createColorPicker("color")
                 createSwitch("test2") {
+                    description = "dfwfokfwwfokfw"
                     onChangeValue = {
                         localController.enable("test", it)
                     }
@@ -49,7 +56,8 @@ private fun Preview() {
                 .fillMaxSize()
                 .padding(innerPadding),
             paddingValues = PaddingValues(16.dp),
-            localController = localController
+            localController = localController,
+            style = CSBStyle.Bobble()
         )
     }
 }

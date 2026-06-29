@@ -51,7 +51,7 @@ import kotlinx.serialization.Serializable
 class MultiplySelect internal constructor(
     override var id: String,
     val options: List<Option>,
-    val defaultValue: List<Option>,
+    override val defaultValue: List<Option>,
     override val title: String,
     val alertTitle: String,
     override val description: String?,
@@ -86,8 +86,6 @@ class MultiplySelect internal constructor(
     }
 
 
-    override fun resetToDefault() { changeValue(this@MultiplySelect.defaultValue) }
-
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.StringListPackage(
@@ -97,9 +95,9 @@ class MultiplySelect internal constructor(
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage?) {
+    override fun loadLogic(pack: SaveSettingPackage) {
         if (pack == null) return
-        changeValue(options.filter { it.id in pack.value as List<*> })
+        if (isSaveSetting) changeValue(options.filter { it.id in pack.value as List<*> })
         enabled(pack.enable)
     }
 

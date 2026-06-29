@@ -44,6 +44,7 @@ import com.daniil.csb.screens.CustomScreen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.settingui.styles.CSBStyle
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.styles.Material3
 import com.daniil.csb.settingui.styles.SettingsStyle
 import kotlinx.coroutines.flow.StateFlow
 

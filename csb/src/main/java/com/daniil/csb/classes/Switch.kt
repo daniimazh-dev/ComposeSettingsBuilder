@@ -16,14 +16,14 @@ import kotlin.apply
 
 class Switch internal constructor(
     override var id: String,
-    val defaultValue: Boolean,
+    override val defaultValue: Boolean,
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
     var onChangeValue: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Boolean>() {
-    private var _value = MutableStateFlow(this@Switch.defaultValue)
+    private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
     private var _enable = MutableStateFlow(enabled)
@@ -40,7 +40,6 @@ class Switch internal constructor(
         _value.value = newValue
     }
 
-    override fun resetToDefault() { changeValue(this@Switch.defaultValue) }
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.BooleanPackage(

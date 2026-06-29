@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        initSettings(lifecycleScope)
+        initSettings()
 
         setContent {
             ComposeSettingsBuilderTheme {
@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun initSettings(coroutineScope: CoroutineScope) = registerSettingScreens(coroutineScope) {
+fun initSettings() = registerSettingScreens {
     createScreen("Main") {
         title = null
 //            modifier = Modifier.fillMaxSize().padding(16.dp)
@@ -191,23 +191,19 @@ fun initSettings(coroutineScope: CoroutineScope) = registerSettingScreens(corout
             createColorPicker("color2")
         }
         content = {
-            Column(
-                modifier = Modifier
-            ) {
-                ScreenTopBar(
-                    actions = {
-                        Icon(
-                            painter = painterResource(R.drawable.palette_icon),
-                            contentDescription = null
-                        )
-                    }
-                )
-                Text("This is custom screen")
-                RegisteredSetting("color2")
-                Text("hello")
-            }
-
+            ScreenTopBar(
+                actions = {
+                    Icon(
+                        painter = painterResource(R.drawable.palette_icon),
+                        contentDescription = null
+                    )
+                }
+            )
+            Text("This is custom screen")
+            RegisteredSetting("color2")
+            Text("hello")
         }
+
     }
 }
 

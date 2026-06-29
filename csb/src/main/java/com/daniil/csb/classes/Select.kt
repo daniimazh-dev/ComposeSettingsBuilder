@@ -50,7 +50,7 @@ import kotlinx.serialization.Serializable
 class Select(
     override var id: String,
     val options: List<Option>,
-    val defaultValue: Option,
+    override val defaultValue: Option,
     override val title: String,
     val alertTitle: String,
     override val description: String?,
@@ -58,7 +58,7 @@ class Select(
     var onChangeValue: (Option) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<Select.Option>() {
-    private var _value = MutableStateFlow(this@Select.defaultValue)
+    private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
     private var _enable = MutableStateFlow(enabled)
@@ -79,8 +79,6 @@ class Select(
         _value.value = option
     }
 
-    override fun resetToDefault() { changeValue(this@Select.defaultValue) }
-
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.StringPackage(
@@ -90,9 +88,9 @@ class Select(
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage?) {
+    override fun loadLogic(pack: SaveSettingPackage) {
         if (pack == null) return
-        changeValue(pack.value as String)
+        if (isSaveSetting) changeValue(pack.value as String)
         enabled(pack.enable)
     }
 

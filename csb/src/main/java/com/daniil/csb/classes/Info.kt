@@ -33,8 +33,6 @@ class Info internal constructor(
     override fun enabled(state: Boolean) { _enable.value = state }
 
     override fun changeValue(newValue: Unit) {}
-    override fun resetToDefault() {}
-
     class InfoBuilderScope() {
         var title: String? = null
         var description: String? = null
@@ -51,6 +49,8 @@ class Info internal constructor(
             return Info(id, title ?: id, description, enabled, onClick)
         }
     }
+
+    override val defaultValue: Unit = Unit
 
     override val focusState = MutableStateFlow(false)
     @Composable

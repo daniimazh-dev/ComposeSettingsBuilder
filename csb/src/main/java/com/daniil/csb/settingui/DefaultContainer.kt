@@ -9,14 +9,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.daniil.csb.LocalDebugData
 import com.daniil.csb.classes.utils.GroupItemClip
@@ -37,8 +34,8 @@ fun DefaultContainer(
     val debagData = LocalDebugData.current
     val groupPosition = LocalGroupPosition.current
 
-    val baseShape = style.containerShape as RoundedCornerShape
-    val gcs = style.groupCornerShape
+    val baseShape = style.edgeGroupCorner as RoundedCornerShape
+    val gcs = style.containerCornerShape
 
     val groupClip = when (groupItemClip ?: groupPosition) {
         GroupItemClip.First -> baseShape.copy(
@@ -67,7 +64,7 @@ fun DefaultContainer(
 
     Box(
         modifier = Modifier
-            .shadow(elevation = style.cardElevation, shape = style.containerShape, clip = false)
+            .shadow(elevation = style.cardElevation, shape = style.edgeGroupCorner, clip = false)
             .clip(groupClip)
             .background(if (isFocused) focusColor else defaultColor)
             .then(

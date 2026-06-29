@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 @OptIn(ExperimentalMaterial3Api::class)
 class Slider internal constructor(
     override var id: String,
-    val defaultValue: Float,
+    override val defaultValue: Float,
     val range: ClosedFloatingPointRange<Float>,
     val steps: Int,
     val startPointRange: String? = range.start.toString(),
@@ -72,7 +72,6 @@ class Slider internal constructor(
             onValueChangeFinished = { _value.value = sliderState.value.value }
         )
     }
-    override fun resetToDefault() { changeValue(defaultValue) }
 
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null

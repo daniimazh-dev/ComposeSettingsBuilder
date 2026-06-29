@@ -41,7 +41,7 @@ class Action internal constructor(
 
     override fun changeValue(newValue: Unit) {}
 
-    override fun resetToDefault() {}
+    override val defaultValue: Unit = Unit
 
     class ActionBuilderScope() {
         var requestAlert = false

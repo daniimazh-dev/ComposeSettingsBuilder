@@ -4,36 +4,38 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
-@SuppressLint("ComposableNaming")
-object CSBStyle {
-    // Default
-    @Composable
-    fun Material3() = SettingsStyle(
-        titleStyle = MaterialTheme.typography.titleMedium,
-        labelStyle = MaterialTheme.typography.labelSmall,
-        descriptionStyle = MaterialTheme.typography.bodySmall.copy(
-            color = MaterialTheme.colorScheme.outline
-        ),
-        containerShape = MaterialTheme.shapes.medium,
-        groupCornerShape = 4.dp,
-        backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
-        focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-        horizontalPadding = 16.dp,
-        verticalPadding = 12.dp,
-        minHeight = 52.dp,
-        itemSpacing = 4.dp,
-        cardElevation = 2.dp,
-    )
+object CSBStyle
 
-    // Without material theme
-    fun Unspecified(isDarkTheme: Boolean) = SettingsStyle(
+// Default
+@SuppressLint("ComposableNaming")
+@Composable
+fun CSBStyle.Material3() = SettingsStyle(
+    titleStyle = MaterialTheme.typography.titleMedium,
+    labelStyle = MaterialTheme.typography.labelSmall,
+    descriptionStyle = MaterialTheme.typography.bodySmall.copy(
+        color = MaterialTheme.colorScheme.outline
+    ),
+    edgeGroupCorner = MaterialTheme.shapes.medium,
+    containerCornerShape = 4.dp,
+    backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
+    focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    horizontalPadding = 16.dp,
+    verticalPadding = 12.dp,
+    minHeight = 52.dp,
+    itemSpacing = 4.dp,
+    cardElevation = 2.dp,
+)
+
+
+// Without material theme
+val CSBStyle.ClassicLight: SettingsStyle
+    get() = SettingsStyle(
         titleStyle = TextStyle.Default.copy(
             fontSize = 16.sp
         ),
@@ -44,14 +46,36 @@ object CSBStyle {
             fontSize = 12.sp,
             color = Color.Gray
         ),
-        containerShape = RoundedCornerShape(12.dp),
-        groupCornerShape = 4.dp,
-        backgroundColor = if (isDarkTheme) Color.Gray.copy(alpha = 0.1f) else Color.White,
+        edgeGroupCorner = RoundedCornerShape(6.dp),
+        containerCornerShape = 0.dp,
+        backgroundColor = Color.White,
         focusColor = Color.Gray.copy(alpha = 0.4f),
-        horizontalPadding = 16.dp,
-        verticalPadding = 12.dp,
+        horizontalPadding = 12.dp,
+        verticalPadding = 10.dp,
         minHeight = 52.dp,
-        itemSpacing = 4.dp,
+        itemSpacing = 2.dp,
         cardElevation = 0.dp,
     )
-}
+
+val CSBStyle.ClassicDark
+    get() = ClassicLight.copy(
+        backgroundColor = Color.Gray
+    )
+@SuppressLint("ComposableNaming")
+@Composable
+fun CSBStyle.Bobble() = SettingsStyle(
+    containerCornerShape = 12.dp,
+    edgeGroupCorner = MaterialTheme.shapes.extraLarge,
+    cardElevation = 4.dp,
+    itemSpacing = 6.dp,
+    horizontalPadding = 18.dp,
+    verticalPadding = 14.dp,
+    titleStyle = MaterialTheme.typography.titleMedium,
+    labelStyle = MaterialTheme.typography.labelSmall,
+    descriptionStyle = MaterialTheme.typography.bodySmall.copy(
+        color = MaterialTheme.colorScheme.outline
+    ),
+    backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
+    focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    minHeight = 52.dp,
+)

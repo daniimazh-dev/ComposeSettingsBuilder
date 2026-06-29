@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class StringData internal constructor(
     override var id: String,
-    val defaultValue: String,
+    override val defaultValue: String,
     override val title: String,
     val alertTitle: String,
     val label: (@Composable () -> Unit)?,
@@ -62,7 +62,7 @@ class StringData internal constructor(
         onChangeValue(newValue)
         _value.value = newValue
     }
-    override fun resetToDefault() { changeValue(this@StringData.defaultValue) }
+
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.StringPackage(

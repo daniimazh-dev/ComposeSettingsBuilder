@@ -22,7 +22,6 @@ import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
 
 class Redirect internal constructor(
     override var id: String,
@@ -48,12 +47,14 @@ class Redirect internal constructor(
         navigationModel: SettingsNavigationModel = CSB.navigationModel,
         isSaveSetting: Boolean
     ): this(id,redirectTo.id,  focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
-    private val _value = MutableStateFlow(Screen(
+
+    override val defaultValue: Screen = Screen(
         id = "", settings = mapOf(),
         title = "",
         modifier = Modifier,
         paddingValues = PaddingValues.Zero,
-    ))
+    )
+    private val _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
 
@@ -64,9 +65,8 @@ class Redirect internal constructor(
     override fun changeValue(newValue: Screen) { redirectToId = newValue.id }
     fun changeValue(newValue: String) { redirectToId = newValue }
     override fun fetchValue(): StateFlow<Screen> = MutableStateFlow(navigationModel.findScreenById(redirectToId))
-    override fun resetToDefault() {}
 
-    override fun loadLogic(pack: SaveSettingPackage?) {
+    override fun loadLogic(pack: SaveSettingPackage) {
         if (pack == null) return
         enabled(pack.enable)
     }

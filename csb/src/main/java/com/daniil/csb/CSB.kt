@@ -19,14 +19,14 @@ import java.io.File
 
 object CSB {
     private var _applicationContext: Context? = null
-    val context: Context get() = _applicationContext ?: error("CSB is not initialized. Ensure CSBInitializer is in your Manifest or call CSB.init(context).")
+    private val context: Context get() = _applicationContext ?: error("CSB is not initialized. Ensure CSBInitializer is in your Manifest or call CSB.init(context).")
 
     private val globalScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val navigationModel: SettingsNavigationModel by lazy {
         SettingsNavigationModel()
     }
-    fun init(context: Context) {
+    internal fun init(context: Context) {
         if (_applicationContext != null) return
         val app = context.applicationContext as Application
         _applicationContext = app
@@ -75,7 +75,7 @@ object CSB {
         setting.resetToDefault()
     }
 
-    fun saveState(id: String, state: Boolean) {
+    fun storedMode(id: String, state: Boolean) {
         val setting = findById(id)
         if (state) setting.saveOn() else setting.saveOff()
     }
@@ -88,7 +88,7 @@ object CSB {
         navigationModel.hideGroup(id, hide)
     }
 
-    suspend fun loadData() = withContext(Dispatchers.IO) {
+    internal suspend fun loadData() = withContext(Dispatchers.IO) {
         val patch = File(context.filesDir, PATH_DIRECTION)
         if (!patch.exists()) {
             patch.mkdir()
@@ -115,7 +115,7 @@ object CSB {
         }
     }
 
-    suspend fun saveData() = withContext(Dispatchers.IO) {
+    internal suspend fun saveData() = withContext(Dispatchers.IO) {
         val patch = File(context.filesDir, PATH_DIRECTION)
         if (!patch.exists()) {
             patch.mkdir()

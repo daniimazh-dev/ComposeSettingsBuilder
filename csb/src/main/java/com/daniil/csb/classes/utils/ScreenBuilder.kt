@@ -1,5 +1,6 @@
 package com.daniil.csb.classes.utils
 
+import androidx.lifecycle.viewModelScope
 import com.daniil.csb.CSB
 import com.daniil.csb.screens.Screen
 import kotlinx.coroutines.CoroutineScope
@@ -13,11 +14,10 @@ open class ScreenBuilder() {
 }
 
 fun registerSettingScreens(
-    coroutineScope: CoroutineScope,
     screenBuilderScope: ScreenBuilder.() -> Unit
 ) {
     val data = ScreenBuilder().apply(screenBuilderScope)
     CSB.navigationModel.setScreensHeap(*data.screenHeap.toTypedArray())
-    coroutineScope.launch { CSB.loadData() }
+    CSB.navigationModel.viewModelScope.launch{ CSB.loadData() }
 }
 

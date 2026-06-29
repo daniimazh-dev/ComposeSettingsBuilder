@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 
 class Custom<T : Any> internal constructor(
     override var id: String,
-    val defaultValue: T,
+    override val defaultValue: T,
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
@@ -38,8 +38,6 @@ class Custom<T : Any> internal constructor(
     override fun changeValue(newValue: T) {
         _value.value = newValue
     }
-
-    override fun resetToDefault() { changeValue(this@Custom.defaultValue) }
 
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null

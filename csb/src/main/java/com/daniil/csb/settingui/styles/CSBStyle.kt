@@ -60,7 +60,7 @@ val CSBStyle.ClassicLight: SettingsStyle
 
 val CSBStyle.ClassicDark
     get() = ClassicLight.copy(
-        backgroundColor = Color.DarkGray
+        backgroundColor = Color(0xFF151515)
     )
 @SuppressLint("ComposableNaming")
 @Composable

@@ -1,19 +1,15 @@
 package com.daniil.csb
 
-import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.daniil.csb.classes.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import kotlin.error
 
 class SettingsNavigationModel : ViewModel() {
@@ -26,9 +22,20 @@ class SettingsNavigationModel : ViewModel() {
     ) {
         _screenHeap.value = screen.toList()
         if (screenStack.value.isEmpty()) {
-            val primary = _screenHeap.value.firstOrNull { it.attribute?.contains(ScreenAttribute.Primary) == true }
-            _screenStack.value.add(primary ?: screen[0])
-            _currentScreen.value = primary ?: screen[0]
+            val primary = screenHeap.value.firstOrNull { it.attribute?.contains(ScreenAttribute.Primary) == true }
+            if (primary == null) {
+                val index = screenHeap.value.indexOfFirst { it !is AbstractScreen }
+                if (index != -1) {
+                    val targetScreen = screen[index]
+                    val attribute = targetScreen.attribute ?: listOf()
+                    targetScreen.attribute = attribute + listOf(ScreenAttribute.Primary)
+                    _screenStack.value.add(targetScreen)
+                    _currentScreen.value = targetScreen
+                } else error("Not found primary screen")
+            } else {
+                _screenStack.value.add(primary)
+                _currentScreen.value = primary
+            }
         }
     }
 
@@ -52,6 +59,10 @@ class SettingsNavigationModel : ViewModel() {
         val screen = screenHeap.value.find { it.settings.values.flatten().find { it.id == id } != null }
         return screen ?: error("Setting $id not found")
     }
+    fun findScreenByGroup(id: String): Screen {
+        val screen = screenHeap.value.find { it.settings.keys.find { it.id == id  } != null }
+        return screen ?: error("Setting $id not found")
+    }
     fun findSettingById(id: String): ComposeSetting<*> {
         val settingsHeap = screenHeap.value.flatMap { it.settings.values }.flatten()
         val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found")
@@ -69,10 +80,21 @@ class SettingsNavigationModel : ViewModel() {
         if (currentScreen != screen) goToScreen(screen)
         screen.settingsScreenModel.focusToSetting(setting.id)
     }
+    fun navigateToGroup(groupId: String) {
+        val group = findGroupById(groupId)
+        val screen = findScreenByGroup(group.id)
+        if (currentScreen != screen) goToScreen(screen)
+        screen.settingsScreenModel.focusToGroup(group.id)
+    }
 
-    fun hideGroup(id: String, hide: Boolean) {
-        val group = findGroupById(id)
-        if (hide) group.hide() else group.show()
+    fun hideGroup(screenId: String = currentScreen.value!!.id, groupId: String, isHide: Boolean) {
+        val screen = findScreenById(screenId)
+        screen.settingsScreenModel.hideGroup(groupId, isHide)
+    }
+
+    fun disableGroup(screenId: String = currentScreen.value!!.id, groupId: String, isDisable: Boolean) {
+        val screen = findScreenById(screenId)
+        screen.settingsScreenModel.disableGroup(groupId, isDisable)
     }
 
     fun goToScreen(screen: Screen) {

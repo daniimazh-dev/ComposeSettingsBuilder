@@ -44,12 +44,15 @@ object CSB {
         })
     }
     private var PATH_DIRECTION = "csb"
-    fun findById(id: String): ComposeSetting<*> {
+    fun findSettingById(id: String): ComposeSetting<*> {
         return navigationModel.findSettingById(id)
+    }
+    fun getAllSettings(): List<ComposeSetting<*>> {
+        return navigationModel.screenHeap.value.flatMap { it.settings.values.flatten() }
     }
 
     inline fun <reified T> getValue(id: String): StateFlow<T> {
-        val setting = findById(id)
+        val setting = findSettingById(id)
         if (setting.value.value is T) {
             @Suppress("UNCHECKED_CAST")
             return setting.value as StateFlow<T>
@@ -58,7 +61,7 @@ object CSB {
     }
 
     inline fun <reified T> setValue(id: String, newValue: T) {
-        val setting = findById(id)
+        val setting = findSettingById(id)
 
         @Suppress("UNCHECKED_CAST")
         val target = setting as? ComposeSetting<T>
@@ -66,26 +69,46 @@ object CSB {
     }
 
     fun enable(id: String, state: Boolean) {
-        val setting = findById(id)
+        val setting = findSettingById(id)
         setting.enabled(state)
     }
 
     fun resetToDefault(id: String) {
-        val setting = findById(id)
+        val setting = findSettingById(id)
         setting.resetToDefault()
+    }
+    fun resetAllToDefault() {
+        getAllSettings().forEach { it.resetToDefault() }
     }
 
     fun storedMode(id: String, state: Boolean) {
-        val setting = findById(id)
+        val setting = findSettingById(id)
         if (state) setting.saveOn() else setting.saveOff()
     }
 
     fun navigateToSetting(id: String) {
         navigationModel.navigateToSetting(id)
     }
+    fun navigateToGroup(groupId: String) {
+        navigationModel.navigateToGroup(groupId)
+    }
+    fun navigateToScreen(screenId: String) {
+        navigationModel.goToScreen(screenId)
+    }
 
-    fun hideGroup(id: String, hide: Boolean) {
-        navigationModel.hideGroup(id, hide)
+    fun hideGroup(screenId: String, groupId: String, isHide: Boolean) {
+        navigationModel.hideGroup(screenId, groupId, isHide)
+    }
+    fun hideGroup(groupId: String, isHide: Boolean) {
+        val screenId = CSB.navigationModel.currentScreen.value?.id ?: error("Screen not yet initialized")
+        navigationModel.hideGroup(screenId, groupId, isHide)
+    }
+    fun disableGroup(screenId: String, groupId: String, isDisable: Boolean) {
+        navigationModel.disableGroup(screenId, groupId, isDisable)
+    }
+    fun disableGroup(groupId: String, isDisable: Boolean) {
+        val screenId = CSB.navigationModel.currentScreen.value?.id ?: error("Screen not yet initialized")
+        navigationModel.disableGroup(screenId, groupId, isDisable)
     }
 
     internal suspend fun loadData() = withContext(Dispatchers.IO) {
@@ -108,7 +131,7 @@ object CSB {
 
             packages.forEach { pack ->
                 try {
-                    val setting = findById(pack.id)
+                    val setting = findSettingById(pack.id)
                     setting.loadLogic(pack)
                 } catch (_: Exception) {}
             }
@@ -132,11 +155,6 @@ object CSB {
                 .mapNotNull { it.saveLogic() }
 
             if (jsonPackageList.isNotEmpty()) {
-                jsonPackageList.map {
-                    if(it is SaveSettingPackage.JsonPackage) {
-
-                    }
-                }
                 val json = Json.encodeToString(jsonPackageList)
                 file.writeText(json)
             }

@@ -66,9 +66,9 @@ class Redirect internal constructor(
     override fun changeValue(newValue: Screen) { redirectToId = newValue.id }
     fun changeValue(newValue: String) { redirectToId = newValue }
     override fun fetchValue(): StateFlow<Screen> = MutableStateFlow(navigationModel.findScreenById(redirectToId))
+    override fun resetToDefault() {}
 
     override fun loadLogic(pack: SaveSettingPackage) {
-        if (pack == null) return
         enabled(pack.enable)
     }
 

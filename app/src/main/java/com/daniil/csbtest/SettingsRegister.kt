@@ -1,16 +1,13 @@
 package com.daniil.csbtest
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.R
+import com.daniil.csb.CSB
 import com.daniil.csb.classes.createAction
 import com.daniil.csb.classes.createColorPicker
 import com.daniil.csb.classes.createCustomSetting
@@ -30,10 +27,20 @@ import com.daniil.csb.screens.createCustomScreen
 import com.daniil.csb.screens.createScreen
 
 fun initSettings() = registerSettingScreens {
-    createScreen("Main", screenAttribute = listOf(ScreenAttribute.Primary)) {
-        title = null
+    createAbstractScreen("abstract_test") {}
+    createScreen("Main") {
+        title = "CSB Preview"
+
         group {
-            createGroupTitle("Setting preview") {}
+            createGroupTitle("Preview settings")
+            createRedirect("redirect_preview_setting") {
+                title = "Preview setting"
+                description = "Settings that show the library`s capabilities"
+                redirectToId = "preview_setting"
+            }
+        }
+        group("preview") {
+            createGroupTitle("CSB Preview") {}
             createRedirect("redirect") {
                 title = "Redirect"
                 description = "Go to another page"
@@ -46,11 +53,12 @@ fun initSettings() = registerSettingScreens {
                 onChangeValue = { state -> }
             }
             createSlider("slider") {
-                description = "This is test slider"
-                startPointRange = "Slow"
-                endPointRange = "Fast"
+                title = "Slider"
+                description = "Slider with range 0 -> 1"
+                startPointRange = "Slow 0"
+                endPointRange = "Fast 1"
                 steps = 0
-                defaultValue = 3f
+                defaultValue = 0.5f
                 range = 0f..1f
             }
             createMultiplySelect("multiply_select") {
@@ -103,7 +111,7 @@ fun initSettings() = registerSettingScreens {
                 alertTitle = "Confirmation alert"
                 alertText = "The selection result is output to the lambda with result parameter true/false"
                 action = { result ->
-                    
+
                 }
             }
             createCustomSetting<Unit>("custom") {
@@ -127,28 +135,67 @@ fun initSettings() = registerSettingScreens {
             }
         }
     }
+    createScreen("preview_setting") {
+        group {
+            title = "Preview setting"
+            createSelect("theme_select") {
+                title = "Settings theme"
+                description = "Change settings theme asset"
+                defaultValueId = "material"
+                options = listOf(
+                    "material" to "Material3",
+                    "bobble" to "Bobble",
+                    "classic" to "Classic",
+                )
+            }
+            createSwitch("hide_preview") {
+                title = "Hide preview"
+                description = "Hide group \"CSB preview\""
+                defaultValue = false
+                onChangeValue = { state ->
+                    CSB.hideGroup("Main", "preview", state)
+                }
+            }
+            createSwitch("disable_preview") {
+                title = "Disable preview"
+                description = "Disable all setting in group \"CSB preview\""
+                defaultValue = false
+                onChangeValue = { state ->
+                    CSB.disableGroup("Main","preview", !state)
+                }
+            }
+            createAction("reset_to_default") {
+                title = "Reset to default"
+                description = "Reset all preview settings to default value"
+                requestAlert = true
+                alertTitle = "Reset preview setting"
+                alertText = "Reset alert setting to default?"
+                action = { result ->
+                    if (result) {
+                        val settings = CSB.navigationModel.findScreenById("Main").settings.values.flatten()
+                        settings.forEach { it.resetToDefault() }
+                        CSB.navigateToGroup("preview")
+                    }
+                }
+            }
+        }
+    }
     createAbstractScreen("Abstract") {}
 
 
 
     createCustomScreen("customScreen") {
-        title = "Custom Screen"
-
+        title = "Custom screen"
         register {
-            createColorPicker("color2")
+            createInfo("info_custom") {
+                description = "This is custom screen"
+            }
         }
         content = {
-            ScreenTopBar(
-                actions = {
-                    Icon(
-                        painter = painterResource(R.drawable.palette_icon),
-                        contentDescription = null
-                    )
-                }
-            )
-            Text("This is custom screen")
-            RegisteredSetting("color2")
-            Text("hello")
+            AllSetting()
+            repeat(100) {
+                Text("item ${it+1}")
+            }
         }
 
     }

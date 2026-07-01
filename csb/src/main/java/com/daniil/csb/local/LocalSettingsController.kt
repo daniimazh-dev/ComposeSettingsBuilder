@@ -70,7 +70,10 @@ open class LocalSettingsController(
         customScreen.settingsScreenModel.focusToSetting(id)
     }
 
-    fun hideGroup(id: String, hide: Boolean) {
-        customScreen.settingsScreenModel.hideGroup(id, hide)
+    fun hideGroup(groupId: String, isHide: Boolean) {
+        customScreen.settingsScreenModel.hideGroup(groupId, isHide)
+    }
+    fun disableGroup(groupId: String, isHide: Boolean) {
+        customScreen.settingsScreenModel.disableGroup(groupId, isHide)
     }
 }

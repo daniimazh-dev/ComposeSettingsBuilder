@@ -4,6 +4,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.daniil.csb.classes.ComposeSetting
+import com.daniil.csb.classes.GroupTitle
 import com.daniil.csb.screens.Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class SettingsScreenModel(screen: Screen) : ViewModel() {
     val currentScreen = MutableStateFlow<Screen?>(null).stateIn(
@@ -33,22 +35,31 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
             val index = settings.value.values.flatten().indexOfFirst { it.id == id }
             if (index == -1) error("Index of setting $id not found in screen ${currentScreen.value?.id}")
             _scrollFocusIndex.value = index
-            delay(300)
+            delay(300.milliseconds)
             _scrollFocusIndex.value = null
             repeat(2) {
-                delay(200)
+                delay(200.milliseconds)
                 setting.focus(true)
-                delay(200)
+                delay(200.milliseconds)
                 setting.focus(false)
             }
         }
     }
+    fun focusToGroup(groupId: String) {
+        val group = findGroupById(groupId)
+        settings.value[group]?.find { it is GroupTitle }?.let { focusToSetting(it.id) }
+     }
 
 
 
-    fun hideGroup(id: String, hide: Boolean) {
+    fun hideGroup(id: String, isHide: Boolean) {
         val group = findGroupById(id)
-        if (hide) group.hide() else group.show()
+        if (isHide) group.hide() else group.show()
+    }
+
+    fun disableGroup(groupId: String, isDisable: Boolean) {
+        val group = findGroupById(groupId)
+        settings.value[group]?.forEach { it.enabled(isDisable) }
     }
 
 

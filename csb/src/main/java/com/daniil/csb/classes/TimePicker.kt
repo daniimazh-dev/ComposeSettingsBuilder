@@ -1,5 +1,7 @@
 package com.daniil.csb.classes
 
+import android.text.format.DateFormat
+import android.text.format.DateFormat.is24HourFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +24,7 @@ import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.GroupItemClip
@@ -136,7 +139,7 @@ class TimePicker internal constructor(
             title = { if (!title.isBlank()) Text(title) },
             description = { description?.let { Text(it) } },
             display = {
-                TimePreview(value)
+                TimePreview(value, is24Format = DateFormat.is24HourFormat(LocalContext.current))
             },
             onClick = {
                 if (enabled) isAlertOpen = true
@@ -183,10 +186,24 @@ class TimePicker internal constructor(
 @Composable
 private fun TimePreview(
     time: LocalTime,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    is24Format: Boolean = true,
 ) {
     val style = LocalSettingsStyle.current
     val shape = RoundedCornerShape(style.containerCornerShape)
+
+    val hour = if (is24Format) {
+        time.hour
+    } else {
+        when {
+            time.hour == 0 -> 12
+            time.hour > 12 -> time.hour - 12
+            else -> time.hour
+        }
+    }
+
+    val amPm = if (time.hour < 12) "AM" else "PM"
+
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -201,7 +218,7 @@ private fun TimePreview(
                 modifier = Modifier
                     .widthIn(min = 28.dp)
                     .padding(horizontal = 6.dp, vertical = 2.dp),
-                text =  time.hour.toString().padStart(2, '0'),
+                text = hour.toString().padStart(2, '0'),
                 style = style.titleStyle
             )
         }
@@ -212,12 +229,27 @@ private fun TimePreview(
             contentAlignment = Alignment.Center
         ) {
             Text(
-               modifier = Modifier
-                   .widthIn(min = 28.dp)
-                   .padding(horizontal = 6.dp, vertical = 2.dp),
-               text =  time.minute.toString().padStart(2, '0'),
-               style = style.titleStyle
+                modifier = Modifier
+                    .widthIn(min = 28.dp)
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                text = time.minute.toString().padStart(2, '0'),
+                style = style.titleStyle
             )
+        }
+        if (!is24Format) {
+            Box(
+                modifier = Modifier
+                    .background(style.containerColor, shape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    modifier = Modifier
+                        .widthIn(min = 28.dp)
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    text = amPm,
+                    style = style.titleStyle
+                )
+            }
         }
     }
 }

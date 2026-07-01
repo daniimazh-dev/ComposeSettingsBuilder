@@ -1,17 +1,24 @@
 package com.daniil.csb.classes
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.settingui.DefaultContainer
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -46,7 +53,7 @@ class Info internal constructor(
     ) {
         val scope = InfoBuilderScope().apply(builderScope)
         fun create(): Info = with(scope) {
-            return Info(id, title ?: id, description, enabled, onClick)
+            return Info(id, title.orEmpty(), description, enabled, onClick)
         }
     }
 
@@ -55,25 +62,31 @@ class Info internal constructor(
     override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
+        val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
-
-        DefaultSettingUI(
-            modifier = modifier,
-            isFocused = focusState,
-            groupItemClip = position,
-            enabled = enabled,
-            title = { if(!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
-            display = {
-                Icon(
-                    modifier = Modifier.alpha(0.7f),
-                    painter = painterResource(R.drawable.info_icon),
-                    contentDescription = "Info"
-                )
-            },
-            onClick = { onClicked() }
-        )
+        val customStyle = if (title.isBlank()) style.copy(
+            verticalPadding = style.verticalPadding / 2,
+            minHeight = style.minHeight / 1.5f
+        ) else style
+        CompositionLocalProvider(LocalSettingsStyle provides customStyle) {
+            DefaultSettingUI(
+                modifier = modifier,
+                isFocused = focusState,
+                groupItemClip = position,
+                enabled = enabled,
+                title = { if(!title.isBlank()) Text(title) },
+                description = { description?.let { Text(it) } },
+                display = {
+                    Icon(
+                        modifier = Modifier.alpha(0.7f),
+                        painter = painterResource(R.drawable.info_icon),
+                        contentDescription = "Info"
+                    )
+                },
+                onClick = { onClicked() }
+            )
+        }
     }
 }
 

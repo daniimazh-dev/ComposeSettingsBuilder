@@ -3,6 +3,7 @@ package com.daniil.csb
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,8 +25,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,14 +35,20 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.LocalGroupPosition
+import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.CustomScreen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.settingui.styles.CSBStyle
@@ -81,6 +89,7 @@ fun SettingsScreen(
                 }
             },
         ) { currentScreen ->
+            if (currentScreen is AbstractScreen) error("Cannot display abstract screens")
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -88,16 +97,23 @@ fun SettingsScreen(
                     .padding(currentScreen.paddingValues)
                     .then(currentScreen.modifier)
             ) {
-                if (currentScreen is CustomScreen) {
-                    Column() {
-                        currentScreen.Render()
-                    }
-                    return@AnimatedContent
-                }
-
                 val settingsScreenModel = currentScreen.settingsScreenModel
                 val title by settingsScreenModel.title.collectAsState()
                 val settings by settingsScreenModel.settings.collectAsState()
+                val lazyListState = settingsScreenModel.lazyListState
+
+
+
+                val isCanScroll by remember {
+                    derivedStateOf { lazyListState.canScrollForward || lazyListState.canScrollBackward }
+                }
+
+                val isShowTitleTopBar by remember {
+                    derivedStateOf {
+                        val isBigTitleVisible = lazyListState.layoutInfo.visibleItemsInfo.any { it.key == "big_title" }
+                        if (isCanScroll) !isBigTitleVisible else true
+                    }
+                }
 
                 val isDebugModeEnable =
                     remember(currentScreen) { currentScreen.attribute?.contains(ScreenAttribute.Debag) == true }
@@ -120,82 +136,146 @@ fun SettingsScreen(
                     }
                 }
 
+                val isPrimaryScreen = remember(currentScreen.id) {
+                    if (currentScreen.attribute.isNullOrEmpty()) return@remember true
+                    ScreenAttribute.Primary !in currentScreen.attribute!!
+                }
+                val isShowNavigation = remember(currentScreen.id) {
+                    ScreenAttribute.DisableNavigation !in (currentScreen.attribute ?: listOf()) && isPrimaryScreen
+                }
+                val topbarHeight = 52.dp
+                if (isDebugModeEnable) {
+                    Box(
+                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                    ) {
+                        Text(
+                            text = "${currentScreen::class.simpleName} id: ${currentScreen.id}",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                }
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
-                    state = settingsScreenModel.lazyListState,
+                    state = lazyListState,
                 ) {
-                    title?.let { title ->
+
+                    if (title == null && isShowNavigation || (title !=null && !isCanScroll)) {
                         item {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 52.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                val showNavigation =
-                                    remember(currentScreen.id) { screenStack.size > 1 }
-                                if (showNavigation) {
-                                    IconButton(
-                                        onClick = navigationModel::goBack
+                            Spacer(modifier = Modifier.height(topbarHeight))
+                        }
+                    }
+                    if (title != null && isCanScroll) {
+                        item(key = "big_title") {
+                            Spacer(Modifier.height(topbarHeight))
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                text = title.orEmpty(),
+                                style = MaterialTheme.typography.displaySmall
+                            )
+                        }
+                        item {
+                            Spacer(Modifier.height(20.dp))
+                        }
+                    }
+                    if (currentScreen is CustomScreen) {
+                        item {
+                            Column(modifier = Modifier) {
+                                currentScreen.Render()
+                            }
+                        }
+
+                    } else {
+                        settings.keys.forEach { group ->
+                            if (isDebugModeEnable) {
+                                item {
+                                    Box(
+                                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
                                     ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.arrow_back_icon),
-                                            contentDescription = "back"
+                                        Text(
+                                            text = "Group id: ${group.id} | isHide: ${group.hide}",
+                                            style = MaterialTheme.typography.labelMedium
                                         )
                                     }
                                 }
-
-                                Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.titleLarge
-                                )
                             }
-                            Spacer(Modifier.height(style.itemSpacing))
-                        }
-                    }
+                            if (!group.hide) {
+                                val groupItems = settings[group] ?: return@forEach
 
-                    settings.keys.forEach { group ->
-                        if (isDebugModeEnable) {
-                            item {
-                                Box(
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
-                                ) {
-                                    Text(
-                                        text = "Group id: ${group.id} | isHide: ${group.hide}",
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                }
-                            }
-                        }
-                        if (!group.hide) {
-                            val groupItems = settings[group] ?: return@forEach
+                                items(items = groupItems, key = { it.id }) { setting ->
 
-                            items(items = groupItems, key = { it.id }) { setting ->
-
-                                val groupWithoutTitle = groupItems.filterNot { it.independentObject }
-                                val first = groupWithoutTitle.firstOrNull()?.id ?: return@items
-                                val last = groupWithoutTitle.last().id
-                                val groupPosition = when {
-                                    last == first -> GroupItemClip.Full
-                                    setting.id == last -> GroupItemClip.Last
-                                    setting.id == first -> GroupItemClip.First
-                                    else -> GroupItemClip.None
-                                }
-                                val debugData = DebugData(
-                                    settingSimpleName = setting::class.simpleName,
-                                    settingId = setting.id,
-                                    currentValue = setting.value
-                                ).takeIf { isDebugModeEnable }
-                                CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                    CompositionLocalProvider(LocalDebugData provides debugData) {
-                                        setting.UI(modifier = Modifier.animateItem())
+                                    val groupWithoutTitle =
+                                        groupItems.filterNot { it.independentObject }
+                                    val first =
+                                        groupWithoutTitle.firstOrNull()?.id ?: return@items
+                                    val last = groupWithoutTitle.last().id
+                                    val groupPosition = when {
+                                        last == first -> GroupItemClip.Full
+                                        setting.id == last -> GroupItemClip.Last
+                                        setting.id == first -> GroupItemClip.First
+                                        else -> GroupItemClip.None
+                                    }
+                                    val debugData = DebugData(
+                                        settingSimpleName = setting::class.simpleName,
+                                        settingId = setting.id,
+                                        currentValue = setting.value
+                                    ).takeIf { isDebugModeEnable }
+                                    CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                        CompositionLocalProvider(LocalDebugData provides debugData) {
+                                            setting.UI(modifier = Modifier.animateItem())
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(if (title == null) Color.Transparent else MaterialTheme.colorScheme.background)
+//                        .animateContentSize()
+                ) {
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = topbarHeight),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (isPrimaryScreen && isShowNavigation) {
+                                FilledIconButton(
+                                    onClick = navigationModel::goBack,
+                                    colors = IconButtonDefaults.iconButtonColors().copy(
+                                        containerColor = MaterialTheme.colorScheme.background
+                                    )
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.arrow_back_icon),
+                                        contentDescription = "back"
+                                    )
+                                }
+                            }
+                            AnimatedVisibility(
+                                visible = isShowTitleTopBar,
+                                enter = fadeIn(tween(200)),
+                                exit = fadeOut(tween(200))
+                            ) {
+                                Text(
+                                    text = title.orEmpty(),
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                            }
+
+
+                        }
+
+                }
+
             }
         }
     }

@@ -39,7 +39,7 @@ import com.daniil.csb.settingui.styles.LocalSettingsStyle
 
 open class CustomScreen internal constructor(
     override var id: String,
-    override var title: String? = id,
+    override var title: String?,
     settings: List<ComposeSetting<*>>,
     override var modifier: Modifier,
     override var paddingValues: PaddingValues,
@@ -108,52 +108,6 @@ open class CustomScreen internal constructor(
         ) {
             RegisteredSetting(registeredSettings.find { it.id == id } ?: return, groupItemClip)
         }
-
-        @Composable
-        fun ScreenTopBar(
-            modifier: Modifier = Modifier,
-            navigationModel: SettingsNavigationModel = CSB.navigationModel,
-            onBack: () -> Unit = {},
-            actions: (@Composable RowScope.() -> Unit)? = null
-        ) {
-            Row(
-                modifier = modifier
-                    .then(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 52.dp)
-                    ),
-
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = {
-                        onBack()
-                        navigationModel.goBack()
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.arrow_back_icon),
-                        contentDescription = "back"
-                    )
-                }
-
-                Text(
-                    text = title.orEmpty(),
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-
-                Spacer(modifier = Modifier.weight(1f))
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    actions?.invoke(this)
-                }
-
-            }
-            Spacer(Modifier.height(8.dp))
-        }
     }
 
 
@@ -162,14 +116,14 @@ open class CustomScreen internal constructor(
         private lateinit var content: @Composable CustomScreenScope.() -> Unit
         private var paddingValues = PaddingValues.Zero
         private var attribute: List<ScreenAttribute>? = null
-        private var title: String = id
+        private var title: String? = null
         private var modifier: Modifier = Modifier
 
         fun registerSettings(vararg items: ComposeSetting<*>) = apply {
             this.builderSettings.addAll(items)
         }
 
-        fun setTitle(title: String) = apply { this.title = title }
+        fun setTitle(title: String?) = apply { this.title = title }
         fun setModifier(modifier: Modifier) = apply { this.modifier = modifier }
         fun setContent(content: @Composable CustomScreenScope.() -> Unit) = apply {
             this.content = content
@@ -202,7 +156,7 @@ open class CustomScreen internal constructor(
 
 open class CreateCustomScreenScope() {
     var modifier: Modifier = Modifier
-    var title: String = "Screen"
+    var title: String? = null
     val registeredSettings = mutableListOf<ComposeSetting<*>>()
     var content: @Composable CustomScreenScope.() -> Unit = { AllSetting() }
 

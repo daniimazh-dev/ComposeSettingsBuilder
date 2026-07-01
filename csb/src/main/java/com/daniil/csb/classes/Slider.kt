@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -145,6 +146,10 @@ class Slider internal constructor(
                 Slider(
                     modifier = Modifier.fillMaxWidth(),
                     state = sliderState.value,
+                    colors = SliderDefaults.colors().copy(
+                        activeTrackColor =  style.activeColor,
+                        thumbColor =  style.activeColor
+                    ),
                     enabled = enabled,
                 )
                 if (startPointRange != null && endPointRange != null) {

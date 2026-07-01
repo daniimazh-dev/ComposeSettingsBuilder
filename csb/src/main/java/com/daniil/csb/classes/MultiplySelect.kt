@@ -218,7 +218,7 @@ class MultiplySelect internal constructor(
                                         .size(22.dp)
                                         .border(
                                             2.dp,
-                                            MaterialTheme.colorScheme.primary,
+                                            style.activeColor,
                                             MaterialTheme.shapes.small
                                         ),
                                     contentAlignment = Alignment.Center
@@ -233,7 +233,7 @@ class MultiplySelect internal constructor(
                                                 modifier = Modifier
                                                     .size(12.dp)
                                                     .background(
-                                                        MaterialTheme.colorScheme.primary,
+                                                        style.activeColor,
                                                         RoundedCornerShape(3.dp)
                                                     )
                                             )

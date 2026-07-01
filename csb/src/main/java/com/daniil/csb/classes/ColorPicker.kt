@@ -67,6 +67,7 @@ import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -594,7 +595,7 @@ private fun CustomGradientSlider(
                     )
                 }
                 .size(thumbRadius * 1.8f)
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .background(LocalSettingsStyle.current.activeColor, CircleShape)
                 .border(2.dp, MaterialTheme.colorScheme.onPrimary, CircleShape)
         )
     }

@@ -25,6 +25,7 @@ fun CSBStyle.Material3() = SettingsStyle(
     containerCornerShape = 4.dp,
     backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    activeColor = MaterialTheme.colorScheme.primary,
     focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
     horizontalPadding = 16.dp,
     verticalPadding = 12.dp,
@@ -43,6 +44,7 @@ val CSBStyle.ClassicLight: SettingsStyle
         labelStyle = TextStyle.Default.copy(
             fontSize = 11.sp
         ),
+        activeColor = Color.Cyan,
         descriptionStyle = TextStyle.Default.copy(
             fontSize = 12.sp,
             color = Color.Gray
@@ -73,6 +75,7 @@ fun CSBStyle.Bobble() = SettingsStyle(
     verticalPadding = 14.dp,
     titleStyle = MaterialTheme.typography.titleMedium,
     labelStyle = MaterialTheme.typography.labelSmall,
+    activeColor = MaterialTheme.colorScheme.primary,
     descriptionStyle = MaterialTheme.typography.bodySmall.copy(
         color = MaterialTheme.colorScheme.outline
     ),

@@ -3,7 +3,16 @@ package com.daniil.csb
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.EaseOutQuint
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -37,19 +46,19 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.CustomScreen
+import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.settingui.styles.CSBStyle
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
@@ -57,12 +66,33 @@ import com.daniil.csb.settingui.styles.Material3
 import com.daniil.csb.settingui.styles.SettingsStyle
 import kotlinx.coroutines.flow.StateFlow
 
+typealias ScreenTransitionSpec = AnimatedContentTransitionScope<Screen>.() -> ContentTransform
+
+private val defaultTransitionAnimationSpring =
+    tween<IntOffset>(durationMillis = 300, easing = LinearOutSlowInEasing)
+
+private val defaultTransitionAnimationFadeSpec =  tween<Float>(200)
+
+private val defaultSettingsScreenTransitionSpecForward: ScreenTransitionSpec = {
+    slideInHorizontally(animationSpec = defaultTransitionAnimationSpring) { it }
+        .togetherWith(
+            fadeOut(defaultTransitionAnimationFadeSpec)
+                    + slideOutHorizontally(animationSpec = defaultTransitionAnimationSpring)
+        )
+}
+private val defaultSettingsScreenTransitionSpecBack: ScreenTransitionSpec = {
+    (slideInHorizontally(animationSpec = defaultTransitionAnimationSpring) + fadeIn(defaultTransitionAnimationFadeSpec))
+        .togetherWith(slideOutHorizontally(animationSpec = defaultTransitionAnimationSpring) { it })
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues = PaddingValues.Zero,
+    screenTransitionForward: ScreenTransitionSpec = defaultSettingsScreenTransitionSpecForward,
+    screenTransitionBack: ScreenTransitionSpec = defaultSettingsScreenTransitionSpecBack,
     style: SettingsStyle = CSBStyle.Material3()
 ) {
     CompositionLocalProvider(LocalSettingsStyle provides style) {
@@ -72,22 +102,14 @@ fun SettingsScreen(
         val screenStack by navigationModel.screenStack.collectAsState()
         val screenHeap by navigationModel.screenHeap.collectAsState()
 
-        BackHandler(screenStack.size > 1) {
+        BackHandler(ScreenAttribute.Primary !in (currentScreen?.attribute ?: listOf())) {
             navigationModel.goBack()
         }
-
         AnimatedContent(
             modifier = modifier,
             targetState = currentScreen ?: return@CompositionLocalProvider,
-            transitionSpec = {
-                if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Back) {
-                    fadeIn(tween(300))
-                        .togetherWith(slideOutHorizontally(animationSpec = tween(300)) { it / 1 })
-                } else {
-                    slideInHorizontally(animationSpec = tween(300)) { it / 1 }
-                        .togetherWith(fadeOut(tween(300)))
-                }
-            },
+            transitionSpec = if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Forward)
+                screenTransitionForward else screenTransitionBack
         ) { currentScreen ->
             if (currentScreen is AbstractScreen) error("Cannot display abstract screens")
             Box(
@@ -103,14 +125,14 @@ fun SettingsScreen(
                 val lazyListState = settingsScreenModel.lazyListState
 
 
-
                 val isCanScroll by remember {
                     derivedStateOf { lazyListState.canScrollForward || lazyListState.canScrollBackward }
                 }
 
                 val isShowTitleTopBar by remember {
                     derivedStateOf {
-                        val isBigTitleVisible = lazyListState.layoutInfo.visibleItemsInfo.any { it.key == "big_title" }
+                        val isBigTitleVisible =
+                            lazyListState.layoutInfo.visibleItemsInfo.any { it.key == "big_title" }
                         if (isCanScroll) !isBigTitleVisible else true
                     }
                 }
@@ -141,7 +163,8 @@ fun SettingsScreen(
                     ScreenAttribute.Primary !in currentScreen.attribute!!
                 }
                 val isShowNavigation = remember(currentScreen.id) {
-                    ScreenAttribute.DisableNavigation !in (currentScreen.attribute ?: listOf()) && isPrimaryScreen
+                    ScreenAttribute.DisableNavigation !in (currentScreen.attribute
+                        ?: listOf()) && isPrimaryScreen
                 }
                 val topbarHeight = 52.dp
                 if (isDebugModeEnable) {
@@ -161,7 +184,7 @@ fun SettingsScreen(
                     state = lazyListState,
                 ) {
 
-                    if (title == null && isShowNavigation || (title !=null && !isCanScroll)) {
+                    if (title == null && isShowNavigation || (title != null && !isCanScroll)) {
                         item {
                             Spacer(modifier = Modifier.height(topbarHeight))
                         }
@@ -241,38 +264,38 @@ fun SettingsScreen(
 //                        .animateContentSize()
                 ) {
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = topbarHeight),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (isPrimaryScreen && isShowNavigation) {
-                                FilledIconButton(
-                                    onClick = navigationModel::goBack,
-                                    colors = IconButtonDefaults.iconButtonColors().copy(
-                                        containerColor = MaterialTheme.colorScheme.background
-                                    )
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.arrow_back_icon),
-                                        contentDescription = "back"
-                                    )
-                                }
-                            }
-                            AnimatedVisibility(
-                                visible = isShowTitleTopBar,
-                                enter = fadeIn(tween(200)),
-                                exit = fadeOut(tween(200))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = topbarHeight),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isPrimaryScreen && isShowNavigation) {
+                            FilledIconButton(
+                                onClick = navigationModel::goBack,
+                                colors = IconButtonDefaults.iconButtonColors().copy(
+                                    containerColor = MaterialTheme.colorScheme.background
+                                )
                             ) {
-                                Text(
-                                    text = title.orEmpty(),
-                                    style = MaterialTheme.typography.titleLarge
+                                Icon(
+                                    painter = painterResource(R.drawable.arrow_back_icon),
+                                    contentDescription = "back"
                                 )
                             }
-
-
                         }
+                        AnimatedVisibility(
+                            visible = isShowTitleTopBar,
+                            enter = fadeIn(tween(200)),
+                            exit = fadeOut(tween(200))
+                        ) {
+                            Text(
+                                text = title.orEmpty(),
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+
+
+                    }
 
                 }
 

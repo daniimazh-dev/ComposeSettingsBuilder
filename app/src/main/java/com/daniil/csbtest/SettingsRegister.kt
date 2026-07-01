@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.CSB
+import com.daniil.csb.classes.Switch
 import com.daniil.csb.classes.createAction
 import com.daniil.csb.classes.createColorPicker
 import com.daniil.csb.classes.createCustomSetting
@@ -46,11 +47,37 @@ fun initSettings() = registerSettingScreens {
                 description = "Go to another page"
                 redirectToId = "customScreen"
             }
-            createSwitch("switch") {
+            createSwitch("switch_style1") {
                 defaultValue = true
-                title = "Switch"
+                title = "Switch 1"
                 description = "Regular switch"
+                uiMode = Switch.UIMode.Switch
                 onChangeValue = { state -> }
+            }
+
+            createSwitch("switch_style2") {
+                defaultValue = true
+                title = "Switch 2"
+                description = "Switch style RadioButton"
+                uiMode = Switch.UIMode.RadioButton
+            }
+            createSwitch("switch_style3") {
+                defaultValue = true
+                title = "Switch 3"
+                description = "Switch style SquareRadioButton"
+                uiMode = Switch.UIMode.SquareRadioButton
+            }
+            createSwitch("switch_style4") {
+                defaultValue = true
+                title = "Switch 4"
+                description = "Switch style CheckBox"
+                uiMode = Switch.UIMode.CheckBox
+            }
+            createSwitch("switch_style5") {
+                defaultValue = true
+                title = "Switch 5"
+                description = "Switch style OnOffState"
+                uiMode = Switch.UIMode.OnOffState
             }
             createSlider("slider") {
                 title = "Slider"

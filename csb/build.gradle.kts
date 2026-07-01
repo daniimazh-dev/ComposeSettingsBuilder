@@ -9,11 +9,7 @@ plugins {
 
 android {
     namespace = "com.daniil.csb"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 26

@@ -1,15 +1,15 @@
 [versions]
 agp = "9.2.1"
-coreKtx = "1.18.0"
+coreKtx = "1.19.0"
 
-lifecycleRuntimeKtx = "2.10.0"
+lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
-kotlin = "2.3.21"
-composeBom = "2026.04.01"
-serialization = "1.6.3"
-lifecycleViewmodelCompose = "2.11.0-beta01"
+kotlin = "2.4.0"
+composeBom = "2026.06.01"
+serialization = "1.11.0"
+lifecycleViewmodelCompose = "2.11.0"
 appcompat = "1.7.1"
-material = "1.13.0"
+material = "1.14.0"
 material3 = "1.4.0"
 
 [libraries]

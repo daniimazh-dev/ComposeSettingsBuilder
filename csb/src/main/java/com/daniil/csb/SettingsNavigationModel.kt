@@ -8,7 +8,6 @@ import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlin.error
 
@@ -45,10 +44,10 @@ class SettingsNavigationModel : ViewModel() {
 
     private var _currentScreen = MutableStateFlow<Screen?>(null)
     val currentScreen = _currentScreen.asStateFlow()
-    var lastNavigateAction = MutableStateFlow(LastNavigateAction.Go)
+    var lastNavigateAction = MutableStateFlow(LastNavigateAction.Forward)
         private set
     enum class LastNavigateAction {
-        Go,
+        Forward,
         Back,
     }
 
@@ -111,7 +110,7 @@ class SettingsNavigationModel : ViewModel() {
         } else {
             _currentScreen.update { screen }
             _screenStack.value.add(screen)
-            lastNavigateAction.update { LastNavigateAction.Go }
+            lastNavigateAction.update { LastNavigateAction.Forward }
         }
     }
     fun goToScreen(screenId: String) {

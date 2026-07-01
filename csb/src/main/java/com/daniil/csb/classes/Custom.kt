@@ -11,6 +11,7 @@ import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 
 class Custom<T : Any> internal constructor(
@@ -23,7 +24,8 @@ class Custom<T : Any> internal constructor(
     val groupClip: GroupItemClip?,
     val onClick: () -> Unit,
     val content: (@Composable () -> Unit)?,
-    val clazz: KClass<T>
+    val clazz: KClass<T>,
+    val serializer: KSerializer<T>? = null
 ) : ComposeSetting<T>() {
     private var _value = MutableStateFlow(this@Custom.defaultValue)
     override val value = _value.asStateFlow()
@@ -41,14 +43,25 @@ class Custom<T : Any> internal constructor(
 
     override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
+        if (serializer != null) return saveJson(serializer)
+
         val data = value.value
 
         return when (clazz) {
+            Unit::class -> SaveSettingPackage.UnitPackage(id, enabled.value)
             String::class -> SaveSettingPackage.StringPackage(id, enabled.value, data as String)
             Int::class -> SaveSettingPackage.IntPackage(id, enabled.value, data as Int)
             Float::class -> SaveSettingPackage.FloatPackage(id, enabled.value, data as Float)
             Boolean::class -> SaveSettingPackage.BooleanPackage(id, enabled.value, data as Boolean)
-            else -> SaveSettingPackage.UnitPackage(id, enabled.value)
+            else -> error("Save method for custom setting \"$id\" not found. Set serealizer paramerter")
+        }
+    }
+
+    override fun loadLogic(pack: SaveSettingPackage) {
+        if (serializer != null) {
+            loadJson(pack, serializer)
+        } else {
+            super.loadLogic(pack)
         }
     }
 
@@ -61,6 +74,7 @@ class Custom<T : Any> internal constructor(
         var description: String? = null
         var enabled = true
         var isSaveSetting = true
+        var serializer: KSerializer<T>? = null
     }
 
     class Builder<T : Any>(
@@ -70,7 +84,7 @@ class Custom<T : Any> internal constructor(
     ) {
         val scope = CustomBuilderScope<T>().apply(builderScope)
         fun create(): Custom<T> = with(scope) {
-            return Custom(id, defaultValue ?: error("Default value must be not null in setting $id"), title ?: id, description, enabled,  isSaveSetting, groupClip, onClick, content, clazz)
+            return Custom(id, defaultValue ?: error("Default value must be not null in setting $id"), title ?: id, description, enabled,  isSaveSetting, groupClip, onClick, content, clazz, serializer)
         }
     }
 

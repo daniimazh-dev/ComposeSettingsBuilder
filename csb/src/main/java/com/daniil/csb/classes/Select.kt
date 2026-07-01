@@ -213,7 +213,7 @@ class Select(
                                     modifier = Modifier
                                         .padding(8.dp)
                                         .size(22.dp)
-                                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                                        .border(2.dp,  style.activeColor, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Row() {
@@ -225,7 +225,7 @@ class Select(
                                             Box(
                                                 modifier = Modifier
                                                     .size(12.dp)
-                                                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                                    .background( style.activeColor, CircleShape)
                                             )
                                         }
                                     }

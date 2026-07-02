@@ -60,17 +60,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.utils.FancyTabBar
-import com.daniil.csb.utils.FancyTabBarData
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.utils.FancyTabBar
+import com.daniil.csb.utils.FancyTabBarData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.KSerializer
 import kotlin.math.roundToInt
 import android.graphics.Color as AndroidColor
 
@@ -109,7 +110,7 @@ class ColorPicker internal constructor(
         _value.value = newValue
     }
 
-    override fun saveLogic(): SaveSettingPackage? {
+    override fun saveLogic(serializer: KSerializer<Color>?): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.IntPackage(
             id = id,
@@ -118,8 +119,7 @@ class ColorPicker internal constructor(
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage) {
-        if (pack == null) return
+    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<Color>?) {
         val data = pack.value as Int
         enabled(pack.enable) // Enable
         if (isSaveSetting) changeValue(Color(data))

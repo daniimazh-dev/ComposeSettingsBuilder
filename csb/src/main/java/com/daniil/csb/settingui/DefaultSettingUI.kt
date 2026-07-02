@@ -20,7 +20,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
-import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.settingui.styles.CSBStyle
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
@@ -36,7 +35,7 @@ fun DefaultSettingUI(
     icon: (@Composable () -> Unit)? = null,
     description: @Composable () -> Unit = {},
     display: @Composable () -> Unit,
-    onClick: () -> Unit
+    onClick: (() -> Unit)?
 ) {
     val style = LocalSettingsStyle.current
     

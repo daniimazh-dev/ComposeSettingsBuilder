@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,15 +13,16 @@ import androidx.compose.ui.res.painterResource
 import com.daniil.csb.CSB
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.screens.Screen
 import com.daniil.csb.SettingsNavigationModel
-import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.screens.Screen
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.KSerializer
 
 class Redirect internal constructor(
     override var id: String,
@@ -68,9 +68,10 @@ class Redirect internal constructor(
     override fun fetchValue(): StateFlow<Screen> = MutableStateFlow(navigationModel.findScreenById(redirectToId))
     override fun resetToDefault() {}
 
-    override fun loadLogic(pack: SaveSettingPackage) {
-        enabled(pack.enable)
+    override fun saveLogic(serializer: KSerializer<Screen>?): SaveSettingPackage {
+        return SaveSettingPackage.UnitPackage(id, enabled.value)
     }
+
 
 
     class RedirectBuilderScope() {

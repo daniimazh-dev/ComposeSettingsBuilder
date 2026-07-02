@@ -32,7 +32,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
-import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.settingui.DefaultSettingUI
@@ -71,15 +70,6 @@ class Switch internal constructor(
     override fun changeValue(newValue: Boolean) {
         onChangeValue(newValue)
         _value.value = newValue
-    }
-
-    override fun saveLogic(): SaveSettingPackage? {
-        if (!isSaveSetting) return null
-        return SaveSettingPackage.BooleanPackage(
-            id = id,
-            enable = enabled.value,
-            value = value.value
-        )
     }
 
     class SwitchBuilderScope() {
@@ -125,9 +115,7 @@ class Switch internal constructor(
                     UIMode.Switch -> {
                         Switch(
                             checked = value,
-                            onCheckedChange = {
-                                changeValue(it)
-                            },
+                            onCheckedChange = { if (enabled) changeValue(it) },
                             colors = SwitchDefaults.colors().copy(
                                 checkedTrackColor = style.activeColor
                             ),
@@ -142,7 +130,7 @@ class Switch internal constructor(
                                 .size(28.dp)
                                 .border(2.dp, style.activeColor, shape)
                                 .clip(shape)
-                                .clickable { changeValue(!value) },
+                                .clickable { if (enabled) changeValue(!value) },
                             contentAlignment = Alignment.Center
                         ) {
                             Row() {
@@ -168,7 +156,7 @@ class Switch internal constructor(
                                 .size(28.dp)
                                 .border(2.dp, style.activeColor, shape)
                                 .clip(shape)
-                                .clickable { changeValue(!value) },
+                                .clickable { if (enabled) changeValue(!value) },
                             contentAlignment = Alignment.Center
                         ) {
                             Row() {
@@ -197,7 +185,7 @@ class Switch internal constructor(
                             modifier = Modifier
                             .clip(RoundedCornerShape(style.containerCornerShape))
                             .background(color = animateColor)
-                            .clickable { changeValue(!value) },
+                            .clickable { if (enabled) changeValue(!value) },
                         ) {
                             AnimatedContent(
                                 targetState = value

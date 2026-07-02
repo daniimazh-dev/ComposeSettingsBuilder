@@ -11,6 +11,7 @@ import com.daniil.csb.CSB
 import com.daniil.csb.classes.Switch
 import com.daniil.csb.classes.createAction
 import com.daniil.csb.classes.createColorPicker
+import com.daniil.csb.classes.createCounter
 import com.daniil.csb.classes.createCustomSetting
 import com.daniil.csb.classes.createGroupTitle
 import com.daniil.csb.classes.createInfo
@@ -22,7 +23,6 @@ import com.daniil.csb.classes.createStringData
 import com.daniil.csb.classes.createSwitch
 import com.daniil.csb.classes.createTimePicker
 import com.daniil.csb.classes.utils.registerSettingScreens
-import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.createAbstractScreen
 import com.daniil.csb.screens.createCustomScreen
 import com.daniil.csb.screens.createScreen
@@ -79,9 +79,16 @@ fun initSettings() = registerSettingScreens {
                 description = "Switch style OnOffState"
                 uiMode = Switch.UIMode.OnOffState
             }
+            createCounter("counter") {
+                title = "Counter"
+                description = "Counter in range for 0 to 100"
+                steps = 1
+                defaultValue = 1
+                range = 0..100
+            }
             createSlider("slider") {
                 title = "Slider"
-                description = "Slider with range 0 -> 1"
+                description = "Slider with range for 0 to 1"
                 startPointRange = "Slow 0"
                 endPointRange = "Fast 1"
                 steps = 0

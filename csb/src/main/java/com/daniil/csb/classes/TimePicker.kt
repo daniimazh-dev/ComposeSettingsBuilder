@@ -1,7 +1,6 @@
 package com.daniil.csb.classes
 
 import android.text.format.DateFormat
-import android.text.format.DateFormat.is24HourFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -77,12 +75,12 @@ class TimePicker internal constructor(
         _value.value = newValue
     }
 
-    override fun saveLogic(): SaveSettingPackage? {
-        return saveJson(LocalTimeSerializer)
+    override fun saveLogic(serializer: KSerializer<LocalTime>?): SaveSettingPackage? {
+        return super.saveLogic(LocalTimeSerializer)
     }
 
-    override fun loadLogic(pack: SaveSettingPackage) {
-        loadJson(pack, LocalTimeSerializer)
+    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<LocalTime>?) {
+        super.loadLogic(pack, LocalTimeSerializer)
     }
 
     class TimePickerBuilderScope() {

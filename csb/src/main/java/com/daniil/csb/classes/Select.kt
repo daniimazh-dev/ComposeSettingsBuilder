@@ -46,6 +46,7 @@ import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 
 class Select(
@@ -80,7 +81,7 @@ class Select(
         _value.value = option
     }
 
-    override fun saveLogic(): SaveSettingPackage? {
+    override fun saveLogic(serializer: KSerializer<Option>?): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.StringPackage(
             id = id,
@@ -89,8 +90,7 @@ class Select(
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage) {
-        if (pack == null) return
+    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<Option>?) {
         if (isSaveSetting) changeValue(pack.value as String)
         enabled(pack.enable)
     }

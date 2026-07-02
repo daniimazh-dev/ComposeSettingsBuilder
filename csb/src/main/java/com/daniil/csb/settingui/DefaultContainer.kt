@@ -27,7 +27,7 @@ fun DefaultContainer(
     isFocused: Boolean = false,
     groupItemClip: GroupItemClip? = null,
     enabled: Boolean,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     content: @Composable () -> Unit
 ) {
     val style = LocalSettingsStyle.current
@@ -68,7 +68,8 @@ fun DefaultContainer(
             .clip(groupClip)
             .background(if (isFocused) focusColor else defaultColor)
             .then(
-                if (enabled) modifier.clickable(onClick = onClick)
+                if (enabled) modifier
+                    .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier )
                 else modifier.alpha(0.5f)
             )
     ) {

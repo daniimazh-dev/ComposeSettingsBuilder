@@ -31,16 +31,50 @@ interface SettingInterface <T> {
     fun fetchValue(): StateFlow<T> = value
     fun resetToDefault() { changeValue(defaultValue) }
 
-    fun saveLogic(): SaveSettingPackage? {
+    fun saveLogic(serializer: KSerializer<T>? = null): SaveSettingPackage? {
         if (!isSaveSetting) return null
-        return SaveSettingPackage.UnitPackage(id, enabled.value)
+        if (serializer != null) return saveJson(serializer)
+        val data = value.value ?: return null
+        return when (data::class) {
+            Unit::class -> SaveSettingPackage.UnitPackage(id, enabled.value)
+            String::class -> SaveSettingPackage.StringPackage(id, enabled.value, data as String)
+            Int::class -> SaveSettingPackage.IntPackage(id, enabled.value, data as Int)
+            Float::class -> SaveSettingPackage.FloatPackage(id, enabled.value, data as Float)
+            Boolean::class -> SaveSettingPackage.BooleanPackage(id, enabled.value, data as Boolean)
+            else -> error("Save method for setting \"$id\" not found. Set serealizer paramerter")
+        }
     }
-    fun loadLogic(pack: SaveSettingPackage) {
-        if (pack == null) return // Not found save data
+    fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<T>? = null) {
         enabled(pack.enable) // Enable
         if (pack is SaveSettingPackage.UnitPackage) return // Pack is unit
-        @Suppress("UNCHECKED_CAST")
-        if (isSaveSetting) changeValue(pack.value as T) // Set value
+        if (pack is SaveSettingPackage.JsonPackage) {
+            if (serializer == null) error("Setting \"$id\" return JsonPackage but serializer for load not found")
+            loadJson(pack, serializer)
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            if (isSaveSetting) changeValue(pack.value as T) // Set value
+        }
+    }
+
+    fun saveJson(serializer: KSerializer<T>): SaveSettingPackage? {
+        if (!isSaveSetting) return null
+        return SaveSettingPackage.JsonPackage(
+            id = id,
+            enable = enabled.value,
+            value = Json.encodeToString(serializer, value.value)
+        )
+    }
+
+    fun loadJson(pack: SaveSettingPackage, serializer: KSerializer<T>) {
+        enabled(pack.enable)
+        if (pack is SaveSettingPackage.JsonPackage && isSaveSetting) {
+            try {
+                val newValue = Json.decodeFromString(serializer, pack.value)
+                changeValue(newValue)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
     @Composable
     fun UI(

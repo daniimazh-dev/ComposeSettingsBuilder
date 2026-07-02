@@ -5,9 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,30 +38,6 @@ class Custom<T : Any> internal constructor(
 
     override fun changeValue(newValue: T) {
         _value.value = newValue
-    }
-
-    override fun saveLogic(): SaveSettingPackage? {
-        if (!isSaveSetting) return null
-        if (serializer != null) return saveJson(serializer)
-
-        val data = value.value
-
-        return when (clazz) {
-            Unit::class -> SaveSettingPackage.UnitPackage(id, enabled.value)
-            String::class -> SaveSettingPackage.StringPackage(id, enabled.value, data as String)
-            Int::class -> SaveSettingPackage.IntPackage(id, enabled.value, data as Int)
-            Float::class -> SaveSettingPackage.FloatPackage(id, enabled.value, data as Float)
-            Boolean::class -> SaveSettingPackage.BooleanPackage(id, enabled.value, data as Boolean)
-            else -> error("Save method for custom setting \"$id\" not found. Set serealizer paramerter")
-        }
-    }
-
-    override fun loadLogic(pack: SaveSettingPackage) {
-        if (serializer != null) {
-            loadJson(pack, serializer)
-        } else {
-            super.loadLogic(pack)
-        }
     }
 
     class CustomBuilderScope<T>() {

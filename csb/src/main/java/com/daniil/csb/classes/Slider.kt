@@ -20,9 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.settingui.DefaultContainer
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,14 +73,6 @@ class Slider internal constructor(
         )
     }
 
-    override fun saveLogic(): SaveSettingPackage? {
-        if (!isSaveSetting) return null
-        return SaveSettingPackage.FloatPackage(
-            id = id,
-            enable = enabled.value,
-            value = value.value
-        )
-    }
 
     class SliderBuilderScope() {
         var defaultValue = 0f

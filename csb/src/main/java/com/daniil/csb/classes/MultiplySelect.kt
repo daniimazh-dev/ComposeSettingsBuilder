@@ -40,12 +40,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 
 
@@ -87,7 +88,7 @@ class MultiplySelect internal constructor(
     }
 
 
-    override fun saveLogic(): SaveSettingPackage? {
+    override fun saveLogic(serializer: KSerializer<List<Option>>?): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.StringListPackage(
             id = id,
@@ -96,8 +97,7 @@ class MultiplySelect internal constructor(
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage) {
-        if (pack == null) return
+    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<List<Option>>?) {
         if (isSaveSetting) changeValue(options.filter { it.id in pack.value as List<*> })
         enabled(pack.enable)
     }

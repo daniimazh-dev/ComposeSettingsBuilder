@@ -13,7 +13,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,9 +28,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
-import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.styles.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,16 +61,6 @@ class StringData internal constructor(
         onChangeValue(newValue)
         _value.value = newValue
     }
-
-    override fun saveLogic(): SaveSettingPackage? {
-        if (!isSaveSetting) return null
-        return SaveSettingPackage.StringPackage(
-            id = id,
-            enable = enabled.value,
-            value = value.value
-        )
-    }
-
 
 
     class StringDataBuilderScope() {

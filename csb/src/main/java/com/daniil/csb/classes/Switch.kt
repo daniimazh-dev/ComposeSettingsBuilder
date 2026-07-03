@@ -45,7 +45,7 @@ class Switch internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
-    var onChangeValue: (Boolean) -> Unit = {},
+    override var onChangeValue: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean = true,
     val uiMode: UIMode = UIMode.Switch
 ) : ComposeSetting<Boolean>() {

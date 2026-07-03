@@ -38,7 +38,7 @@ class Slider internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
-    var onChangeValue: (Float) -> Unit = {},
+    override var onChangeValue: (T) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Float>() {
 

@@ -32,9 +32,8 @@ class Redirect internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
-    var onRedirect: () -> Unit = {},
+    var onRedirect: (Screen) -> Unit = {},
     val navigationModel: SettingsNavigationModel = CSB.navigationModel,
-    override var isSaveSetting: Boolean
 ): ComposeSetting<Screen>() {
     internal constructor(
         id: String,
@@ -44,10 +43,9 @@ class Redirect internal constructor(
         title: String,
         description: String?,
         enabled: Boolean = true,
-        onRedirect: () -> Unit = {},
+        onRedirect: (Screen) -> Unit = {},
         navigationModel: SettingsNavigationModel = CSB.navigationModel,
-        isSaveSetting: Boolean
-    ): this(id,redirectTo.id,  focus, showArrow, title, description, enabled, onRedirect, navigationModel, isSaveSetting)
+    ): this(id, redirectTo.id,  focus, showArrow, title, description, enabled, onRedirect, navigationModel)
 
     override val defaultValue: Screen = Screen(
         id = "", settings = mapOf(),
@@ -61,6 +59,9 @@ class Redirect internal constructor(
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
+    override val onChangeValue: (Screen) -> Unit
+        get() = { onRedirect(value.value) }
+    override var isSaveSetting: Boolean = false
 
     override fun enabled(state: Boolean) { _enable.value = state }
     override fun changeValue(newValue: Screen) { redirectToId = newValue.id }
@@ -79,7 +80,7 @@ class Redirect internal constructor(
         var redirectToId: String? = null
         var focus: String? = null
         var showArrow: Boolean = true
-        var onRedirect: () -> Unit = {}
+        var onRedirect: (Screen) -> Unit = {}
         var navigationModel: SettingsNavigationModel = CSB.navigationModel
         var title: String? = null
         var description: String? = null
@@ -93,8 +94,8 @@ class Redirect internal constructor(
         val scope = RedirectBuilderScope().apply(builderScope)
         fun create(): Redirect = with(scope) {
             val res = when {
-                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, enabled, onRedirect, navigationModel, isSaveSetting)
-                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title ?: id, description, enabled, onRedirect, navigationModel, isSaveSetting)
+                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, enabled, onRedirect, navigationModel)
+                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title ?: id, description, enabled, onRedirect, navigationModel)
                 else -> error("Not found redirect parameter")
             }
             return res
@@ -114,7 +115,7 @@ class Redirect internal constructor(
             } else {
                 navigationModel.goToScreen(navigationModel.findScreenById(redirectToId))
             }
-            onRedirect()
+            onRedirect(value.value)
         }
         DefaultSettingUI(
             modifier = modifier,

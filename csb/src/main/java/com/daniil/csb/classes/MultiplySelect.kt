@@ -58,7 +58,7 @@ class MultiplySelect internal constructor(
     val alertTitle: String,
     override val description: String?,
     enabled: Boolean = true,
-    var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {},
+    var onChangeValue: (T) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<List<MultiplySelect.Option>>() {
     private var _value = MutableStateFlow(this@MultiplySelect.defaultValue)

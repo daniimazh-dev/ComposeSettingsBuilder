@@ -20,14 +20,13 @@ import kotlin.String
 class Action internal constructor(
     override var id: String,
     var requestAlert: Boolean,
-    var action: (Boolean) -> Unit,
+    var onAction: (Boolean) -> Unit,
     val alertTitle: String?,
     val icon: @Composable (() -> Unit)?,
     val text: String?,
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
-    override var isSaveSetting: Boolean
 ) : ComposeSetting<Unit>() {
     private var _value = MutableStateFlow(Unit)
     override val value = _value.asStateFlow()
@@ -38,6 +37,10 @@ class Action internal constructor(
     override fun enabled(state: Boolean) {
         _enable.value = state
     }
+
+    override var isSaveSetting: Boolean = false
+
+    override val onChangeValue: (Unit) -> Unit = {}
 
     override fun changeValue(newValue: Unit) {}
 
@@ -52,7 +55,6 @@ class Action internal constructor(
         var title: String? = null
         var description: String? = null
         var enabled = true
-        var isSaveSetting = true
     }
 
     class Builder(
@@ -71,7 +73,6 @@ class Action internal constructor(
                 title ?: id,
                 description,
                 enabled,
-                isSaveSetting
             )
         }
     }
@@ -96,7 +97,7 @@ class Action internal constructor(
                 if (this@Action.requestAlert) {
                     alertOpen = true
                 } else {
-                    action(true)
+                    onAction(true)
                 }
             }
         )
@@ -111,7 +112,7 @@ class Action internal constructor(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            action(true)
+                            onAction(true)
                             alertOpen = false
                         }
                     ) {
@@ -121,7 +122,7 @@ class Action internal constructor(
                 dismissButton = {
                     TextButton(
                         onClick = {
-                            action(false)
+                            onAction(false)
                             alertOpen = false
                         }
                     ) {
@@ -129,7 +130,7 @@ class Action internal constructor(
                     }
                 },
                 onDismissRequest = {
-                    action(false)
+                    onAction(false)
                     alertOpen = false
                 }
             )

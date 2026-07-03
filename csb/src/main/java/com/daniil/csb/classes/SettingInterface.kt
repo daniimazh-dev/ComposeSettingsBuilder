@@ -18,6 +18,7 @@ interface SettingInterface <T> {
     val enabled: StateFlow<Boolean>
     var isSaveSetting: Boolean
     val focusState: MutableStateFlow<Boolean>
+    val onChangeValue: (T) -> Unit
 
 
     fun saveOff() { isSaveSetting = false }

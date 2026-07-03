@@ -57,7 +57,7 @@ class Select(
     val alertTitle: String,
     override val description: String?,
     enabled: Boolean = true,
-    var onChangeValue: (Option) -> Unit = {},
+    override var onChangeValue: (T) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<Select.Option>() {
     private var _value = MutableStateFlow(defaultValue)

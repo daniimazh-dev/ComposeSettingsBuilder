@@ -49,7 +49,7 @@ class Counter internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
-    var onChangeValue: (Int) -> Unit = {},
+    override var onChangeValue: (Int) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Int>() {
 

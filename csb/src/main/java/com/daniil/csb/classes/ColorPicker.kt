@@ -81,7 +81,7 @@ class ColorPicker internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
-    var onChangeValue: (Color) -> Unit = {},
+    override var onChangeValue: (Color) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Color>() {
     internal constructor(

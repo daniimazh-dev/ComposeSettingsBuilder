@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.classes.utils.GroupItemClip
 import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.settingui.DefaultContainer
@@ -23,7 +24,7 @@ class Custom<T : Any> internal constructor(
     val groupClip: GroupItemClip?,
     val onClick: () -> Unit,
     val content: (@Composable () -> Unit)?,
-    val clazz: KClass<T>,
+    override val onChangeValue: (T) -> Unit,
     val serializer: KSerializer<T>? = null
 ) : ComposeSetting<T>() {
     private var _value = MutableStateFlow(this@Custom.defaultValue)
@@ -36,13 +37,23 @@ class Custom<T : Any> internal constructor(
         _enable.value = state
     }
 
+    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<T>?) {
+        super.loadLogic(pack, this.serializer)
+    }
+
+    override fun saveLogic(serializer: KSerializer<T>?): SaveSettingPackage? {
+        return super.saveLogic(this.serializer)
+    }
+
     override fun changeValue(newValue: T) {
+        onChangeValue(newValue)
         _value.value = newValue
     }
 
     class CustomBuilderScope<T>() {
         var defaultValue: T? = null
         var content: (@Composable () -> Unit)? = null
+        var onChangeValue: (T) -> Unit = {}
         var groupClip: GroupItemClip? = null
         var onClick: () -> Unit = {}
         var title: String? = null
@@ -54,12 +65,12 @@ class Custom<T : Any> internal constructor(
 
     class Builder<T : Any>(
         val id: String,
-        val clazz: KClass<T>,
         builderScope: CustomBuilderScope<T>.() -> Unit = {}
     ) {
         val scope = CustomBuilderScope<T>().apply(builderScope)
         fun create(): Custom<T> = with(scope) {
-            return Custom(id, defaultValue ?: error("Default value must be not null in setting $id"), title ?: id, description, enabled,  isSaveSetting, groupClip, onClick, content, clazz, serializer)
+            defaultValue ?: error("Default value must be not null in setting $id")
+            return Custom(id, defaultValue!!, title ?: id, description, enabled,  isSaveSetting, groupClip, onClick, content, onChangeValue, serializer)
         }
     }
 
@@ -85,7 +96,7 @@ inline fun <reified T : Any> SettingBuilder.createCustomSetting(
     id: String,
     noinline builder: Custom.CustomBuilderScope<T>.() -> Unit
 ): Custom<T> {
-    val setting = Custom.Builder(id, T::class, builder).create()
+    val setting = Custom.Builder(id,builder).create()
     setting.addToHeap()
     return setting
 }

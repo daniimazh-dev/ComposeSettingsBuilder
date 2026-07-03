@@ -56,7 +56,7 @@ class TimePicker internal constructor(
     override val description: String?,
     enabled: Boolean = true,
     val alertTitle: String,
-    var onChangeValue: (LocalTime) -> Unit = {},
+    override var onChangeValue: (LocalTime) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<LocalTime>() {
     private var _value = MutableStateFlow(defaultValue)

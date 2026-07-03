@@ -44,7 +44,7 @@ class StringData internal constructor(
     val label: (@Composable () -> Unit)?,
     override val description: String?,
     enabled: Boolean = true,
-    var onChangeValue: (String) -> Unit = {},
+    override var onChangeValue: (String) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<String>() {
     private var _value = MutableStateFlow(this@StringData.defaultValue)

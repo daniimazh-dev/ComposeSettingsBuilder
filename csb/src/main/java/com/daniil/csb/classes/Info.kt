@@ -33,7 +33,7 @@ class Info internal constructor(
     override val value = _value.asStateFlow()
 
     override var isSaveSetting: Boolean = false
-
+    override val onChangeValue: (Unit) -> Unit = {}
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
 

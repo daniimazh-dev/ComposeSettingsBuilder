@@ -27,7 +27,7 @@ class GroupTitle internal constructor(
     override var isSaveSetting: Boolean = true
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
-
+    override val onChangeValue: (Unit) -> Unit = {}
     override fun enabled(state: Boolean) {
         _enable.value = state
     }

@@ -3,6 +3,8 @@ package com.daniil.csb.settingui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -15,11 +17,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.daniil.csb.LocalDebugData
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.LocalGroupPosition
 import com.daniil.csb.screens.Screen
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settings.utils.GroupItemClip
 
 @Composable
 fun DefaultContainer(
@@ -27,6 +26,7 @@ fun DefaultContainer(
     isFocused: Boolean = false,
     groupItemClip: GroupItemClip? = null,
     enabled: Boolean,
+    paddingValues: PaddingValues = PaddingValues.Zero,
     onClick: (() -> Unit)?,
     content: @Composable () -> Unit
 ) {
@@ -67,6 +67,7 @@ fun DefaultContainer(
             .shadow(elevation = style.cardElevation, shape = style.edgeGroupCorner, clip = false)
             .clip(groupClip)
             .background(if (isFocused) focusColor else defaultColor)
+            .padding(paddingValues)
             .then(
                 if (enabled) modifier
                     .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier )

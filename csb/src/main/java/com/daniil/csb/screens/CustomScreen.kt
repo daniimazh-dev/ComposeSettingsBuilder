@@ -5,37 +5,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.DebugData
-import com.daniil.csb.LocalDebugData
-import com.daniil.csb.R
-import com.daniil.csb.SettingsNavigationModel
-import com.daniil.csb.classes.ComposeSetting
-import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.ScreenBuilder
 import com.daniil.csb.screens.CustomScreen.CustomScreenScope
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingBuilder
+import com.daniil.csb.settingui.LocalDebugData
+import com.daniil.csb.settingui.LocalSettingsStyle
 
 open class CustomScreen internal constructor(
     override var id: String,
@@ -45,18 +28,19 @@ open class CustomScreen internal constructor(
     override var paddingValues: PaddingValues,
     var content: @Composable CustomScreenScope.() -> Unit,
     override var attribute: List<ScreenAttribute>? = null,
+    override var onCloseScreen: () -> Unit = {},
 ) : Screen(id, title, modifier, paddingValues) {
 
 
     private var registeredSettings: MutableList<ComposeSetting<*>> = settings.toMutableList()
 
     override var settings: Map<Group, List<ComposeSetting<*>>>
-        get() = mapOf(Group(id, false) to registeredSettings)
+        get() = mapOf(Group(id, null, false) to registeredSettings)
         set(value) {}
 
     inner class CustomScreenScope {
         @Composable
-        fun AllSetting() {
+        fun AllSettings() {
             val style = LocalSettingsStyle.current
             Column(
                 verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
@@ -118,6 +102,7 @@ open class CustomScreen internal constructor(
         private var attribute: List<ScreenAttribute>? = null
         private var title: String? = null
         private var modifier: Modifier = Modifier
+        private var onCloseScreen: () -> Unit = {}
 
         fun registerSettings(vararg items: ComposeSetting<*>) = apply {
             this.builderSettings.addAll(items)
@@ -125,6 +110,7 @@ open class CustomScreen internal constructor(
 
         fun setTitle(title: String?) = apply { this.title = title }
         fun setModifier(modifier: Modifier) = apply { this.modifier = modifier }
+        fun setOnCloseScreen(onCloseScreen: () -> Unit) = apply{ this.onCloseScreen = onCloseScreen }
         fun setContent(content: @Composable CustomScreenScope.() -> Unit) = apply {
             this.content = content
         }
@@ -153,35 +139,37 @@ open class CustomScreen internal constructor(
     }
 }
 
-
-open class CreateCustomScreenScope() {
+class ContentConfiguredToken internal constructor()
+@CsbDslMarkers
+open class CreateCustomScreenScope(): SettingBuilder() {
     var modifier: Modifier = Modifier
     var title: String? = null
-    val registeredSettings = mutableListOf<ComposeSetting<*>>()
-    var content: @Composable CustomScreenScope.() -> Unit = { AllSetting() }
+    var onCloseScreen: () -> Unit = {}
+    var content: @Composable CustomScreenScope.() -> Unit  = { AllSettings() }
+        private set
 
-    fun register(registerScope: RegisterScope.() -> Unit) {
-        val data = RegisterScope().apply(registerScope)
-        this.registeredSettings.addAll(data.settings)
+    fun setContent(content: @Composable (CustomScreenScope.() -> Unit)): ContentConfiguredToken {
+        this.content = content
+        return ContentConfiguredToken()
     }
+    fun useDefaultContent(): ContentConfiguredToken = ContentConfiguredToken()
 }
-
-class RegisterScope() : SettingBuilder()
-
 fun ScreenBuilder.createCustomScreen(
     id: String,
     screenAttribute: List<ScreenAttribute>? = null,
-    scope: CreateCustomScreenScope.() -> Unit
+    scope: CreateCustomScreenScope.() -> ContentConfiguredToken
 ): CustomScreen {
-    val data = CreateCustomScreenScope().apply(scope)
+    val data = CreateCustomScreenScope()
+    data.scope()
 
     val screen =
         CustomScreen.Builder(id).setTitle(data.title)
             .setModifier(data.modifier)
-            .registerSettings(*data.registeredSettings.toTypedArray())
+            .registerSettings(*data.settings.map { it.second }.toTypedArray())
             .setContent(data.content)
+            .setOnCloseScreen(onCloseScreen = data.onCloseScreen)
             .setAttribute(screenAttribute)
             .build()
-    screen.addToHeap()
+    screen.register()
     return screen
 }

@@ -1,11 +1,11 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -20,10 +20,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultContainer
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -38,7 +39,7 @@ class Slider internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
-    override var onChangeValue: (T) -> Unit = {},
+    override var onChangeValue: (Float) -> Unit = {},
     override var isSaveSetting: Boolean = true
 ) : ComposeSetting<Float>() {
 
@@ -74,6 +75,7 @@ class Slider internal constructor(
     }
 
 
+    @CsbDslMarkers
     class SliderBuilderScope() {
         var defaultValue = 0f
         var range: ClosedFloatingPointRange<Float> = 0f..1f
@@ -94,11 +96,24 @@ class Slider internal constructor(
     ) {
         val scope = SliderBuilderScope().apply(builderScope)
         fun create(): Slider = with(scope) {
-            return Slider(id, defaultValue, range, steps, startPointRange, endPointRange,  title ?: id, description, enabled, onChangeValue, isSaveSetting)
+            return Slider(
+                id,
+                defaultValue,
+                range,
+                steps,
+                startPointRange,
+                endPointRange,
+                title ?: id,
+                description,
+                enabled,
+                onChangeValue,
+                isSaveSetting
+            )
         }
     }
 
     override val focusState = MutableStateFlow(false)
+
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val style = LocalSettingsStyle.current
@@ -110,36 +125,33 @@ class Slider internal constructor(
             isFocused = focusState,
             enabled = enabled,
             groupItemClip = position,
+            paddingValues =
+                PaddingValues(horizontal = style.horizontalPadding, vertical = style.verticalPadding),
             onClick = {}
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 52.dp)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .heightIn(min = style.minHeight)
+            ) {
 
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        if (!title.isBlank()) Text(text = title, style = style.titleStyle)
-                        val descriptionStyle = style.labelStyle
-                            .copy(color = MaterialTheme.colorScheme.outline)
-                        description?.let { Text(text = it, style = descriptionStyle) }
+                    if (!title.isBlank()) Text(text = title, style = style.titleStyle)
+                    val descriptionStyle = style.labelStyle
+                        .copy(color = MaterialTheme.colorScheme.outline)
+                    description?.let { Text(text = it, style = descriptionStyle) }
 
-                    }
                 }
+
 
                 Slider(
                     modifier = Modifier.fillMaxWidth(),
                     state = sliderState.value,
                     colors = SliderDefaults.colors().copy(
-                        activeTrackColor =  style.activeColor,
-                        thumbColor =  style.activeColor
+                        activeTrackColor = style.activeColor,
+                        thumbColor = style.activeColor
                     ),
                     enabled = enabled,
                 )
@@ -163,11 +175,3 @@ class Slider internal constructor(
 
 }
 
-fun SettingBuilder.createSlider(
-    id: String,
-    builder: Slider.SliderBuilderScope.() -> Unit = {}
-): Slider {
-    val setting = Slider.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

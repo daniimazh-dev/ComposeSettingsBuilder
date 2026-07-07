@@ -1,8 +1,5 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,13 +9,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.settingui.DefaultContainer
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -40,6 +36,7 @@ class Info internal constructor(
     override fun enabled(state: Boolean) { _enable.value = state }
 
     override fun changeValue(newValue: Unit) {}
+    @CsbDslMarkers
     class InfoBuilderScope() {
         var title: String? = null
         var description: String? = null
@@ -90,11 +87,3 @@ class Info internal constructor(
     }
 }
 
-fun SettingBuilder.createInfo(
-    id: String,
-    builder: Info.InfoBuilderScope.() -> Unit = {}
-): Info {
-    val setting = Info.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

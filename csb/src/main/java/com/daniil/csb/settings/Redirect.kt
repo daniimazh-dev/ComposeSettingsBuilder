@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.FilledIconButton
@@ -11,14 +11,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import com.daniil.csb.CSB
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.SettingsNavigationModel
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
 import com.daniil.csb.screens.Screen
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,7 @@ class Redirect internal constructor(
     var showArrow: Boolean = true,
     override val title: String,
     override val description: String?,
+    val labelIcon: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
     var onRedirect: (Screen) -> Unit = {},
     val navigationModel: SettingsNavigationModel = CSB.navigationModel,
@@ -42,10 +44,11 @@ class Redirect internal constructor(
         showArrow: Boolean = true,
         title: String,
         description: String?,
+        labelIcon: (@Composable () -> Unit)? = null,
         enabled: Boolean = true,
         onRedirect: (Screen) -> Unit = {},
         navigationModel: SettingsNavigationModel = CSB.navigationModel,
-    ): this(id, redirectTo.id,  focus, showArrow, title, description, enabled, onRedirect, navigationModel)
+    ): this(id, redirectTo.id,  focus, showArrow, title, description, labelIcon, enabled, onRedirect, navigationModel)
 
     override val defaultValue: Screen = Screen(
         id = "", settings = mapOf(),
@@ -75,6 +78,7 @@ class Redirect internal constructor(
 
 
 
+    @CsbDslMarkers
     class RedirectBuilderScope() {
         var redirectTo: Screen? = null
         var redirectToId: String? = null
@@ -84,6 +88,7 @@ class Redirect internal constructor(
         var navigationModel: SettingsNavigationModel = CSB.navigationModel
         var title: String? = null
         var description: String? = null
+        var labelIcon: (@Composable () -> Unit)? = null
         var enabled = true
         var isSaveSetting = true
     }
@@ -94,8 +99,8 @@ class Redirect internal constructor(
         val scope = RedirectBuilderScope().apply(builderScope)
         fun create(): Redirect = with(scope) {
             val res = when {
-                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, enabled, onRedirect, navigationModel)
-                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title ?: id, description, enabled, onRedirect, navigationModel)
+                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, labelIcon, enabled, onRedirect, navigationModel)
+                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title ?: id, description, labelIcon, enabled, onRedirect, navigationModel)
                 else -> error("Not found redirect parameter")
             }
             return res
@@ -124,6 +129,7 @@ class Redirect internal constructor(
             enabled = enabled,
             title = { if(!title.isBlank()) Text(title) },
             description = { description?.let { Text(it) } },
+            icon = labelIcon,
             display = {
                 if (showArrow) {
                     FilledIconButton(
@@ -143,11 +149,3 @@ class Redirect internal constructor(
     }
 }
 
-fun SettingBuilder.createRedirect(
-    id: String,
-    builder: Redirect.RedirectBuilderScope.() -> Unit
-): Redirect {
-    val setting = Redirect.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

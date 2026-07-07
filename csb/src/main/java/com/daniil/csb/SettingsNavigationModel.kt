@@ -2,7 +2,7 @@ package com.daniil.csb
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
-import com.daniil.csb.classes.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute

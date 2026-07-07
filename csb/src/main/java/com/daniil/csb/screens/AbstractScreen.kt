@@ -2,9 +2,8 @@ package com.daniil.csb.screens
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Modifier
-import com.daniil.csb.classes.ComposeSetting
-import com.daniil.csb.classes.utils.ScreenBuilder
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.SettingBuilder
 
 class AbstractScreen
 internal constructor(
@@ -13,7 +12,7 @@ internal constructor(
 ) : Screen(id, id, Modifier, PaddingValues.Zero) {
 
     override var settings: Map<Group, List<ComposeSetting<*>>>
-        get() = mapOf(Screen.Group(id, false) to abstractSettings)
+        get() = mapOf(Screen.Group(id, null,false) to abstractSettings)
         set(value) {}
 
     class Builder(
@@ -33,7 +32,7 @@ fun ScreenBuilder.createAbstractScreen(
     settingsBuilderScope: SettingBuilder.() -> Unit,
 ): AbstractScreen {
     val data = SettingBuilder().apply(settingsBuilderScope)
-    val screen = AbstractScreen.Builder(id).setContent(*data.settings.toTypedArray()).build()
-    screen.addToHeap()
+    val screen = AbstractScreen.Builder(id).setContent(*data.settings.map { it.second }.toTypedArray()).build()
+    screen.register()
     return screen
 }

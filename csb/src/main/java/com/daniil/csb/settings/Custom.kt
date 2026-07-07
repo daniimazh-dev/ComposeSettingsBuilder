@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -6,13 +6,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.KSerializer
-import kotlin.reflect.KClass
 
 class Custom<T : Any> internal constructor(
     override var id: String,
@@ -50,6 +50,7 @@ class Custom<T : Any> internal constructor(
         _value.value = newValue
     }
 
+    @CsbDslMarkers
     class CustomBuilderScope<T>() {
         var defaultValue: T? = null
         var content: (@Composable () -> Unit)? = null
@@ -92,11 +93,4 @@ class Custom<T : Any> internal constructor(
     }
 }
 
-inline fun <reified T : Any> SettingBuilder.createCustomSetting(
-    id: String,
-    noinline builder: Custom.CustomBuilderScope<T>.() -> Unit
-): Custom<T> {
-    val setting = Custom.Builder(id,builder).create()
-    setting.addToHeap()
-    return setting
-}
+

@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
@@ -38,12 +38,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.KSerializer
@@ -57,7 +58,7 @@ class Select(
     val alertTitle: String,
     override val description: String?,
     enabled: Boolean = true,
-    override var onChangeValue: (T) -> Unit = {},
+    override var onChangeValue: (Option) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<Select.Option>() {
     private var _value = MutableStateFlow(defaultValue)
@@ -105,8 +106,9 @@ class Select(
         override fun toString(): String = id
     }
 
+    @CsbDslMarkers
     class SelectBuilderScope() {
-        lateinit var options: List<Pair<String, String>>
+        var options = mutableListOf<Option>()
         var defaultValueId: String? = null
         var title: String? = null
         var onChangeValue: (Option) -> Unit = {}
@@ -114,6 +116,12 @@ class Select(
         var description: String? = null
         var enabled = true
         var isSaveSetting = true
+        fun option(id: String, title: String) {
+            +Option(id, title)
+        }
+        operator fun Option.unaryPlus() {
+            options.add(this)
+        }
     }
 
     class Builder(
@@ -124,8 +132,8 @@ class Select(
         fun create(): Select = with(scope) {
             return Select(
                 id,
-                options.map { Option(it.first, it.second) },
-                defaultValue = options.first { it.first == (defaultValueId ?: options[0].first) }.let { Option(it.first, it.second) },
+                options,
+                defaultValue = options.first { it.id == (defaultValueId ?: options[0].id) },
                 title ?: id,
                 alertTitle,
                 description,
@@ -272,11 +280,3 @@ class Select(
 }
 
 
-fun SettingBuilder.createSelect(
-    id: String,
-    builder: Select.SelectBuilderScope.() -> Unit
-): Select {
-    val setting = Select.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -31,11 +31,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -72,6 +73,7 @@ class Switch internal constructor(
         _value.value = newValue
     }
 
+    @CsbDslMarkers
     class SwitchBuilderScope() {
         var defaultValue = false
         var title: String? = null
@@ -211,11 +213,3 @@ class Switch internal constructor(
     }
 }
 
-fun SettingBuilder.createSwitch(
-    id: String,
-    builder: Switch.SwitchBuilderScope.() -> Unit = { defaultValue = false }
-): Switch {
-    val setting = Switch.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

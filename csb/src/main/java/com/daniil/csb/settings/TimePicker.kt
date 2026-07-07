@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
@@ -24,30 +24,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.utils.LocalTimeSerializer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import java.time.LocalTime
-
-object LocalTimeSerializer : KSerializer<LocalTime> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("LocalTime", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: LocalTime) =
-        encoder.encodeString(value.toString())
-
-    override fun deserialize(decoder: Decoder): LocalTime = LocalTime.parse(decoder.decodeString())
-}
 
 class TimePicker internal constructor(
     override var id: String,
@@ -83,6 +70,7 @@ class TimePicker internal constructor(
         super.loadLogic(pack, LocalTimeSerializer)
     }
 
+    @CsbDslMarkers
     class TimePickerBuilderScope() {
         var defaultValue = LocalTime.now()
         var title: String? = null
@@ -252,11 +240,3 @@ private fun TimePreview(
     }
 }
 
-fun SettingBuilder.createTimePicker(
-    id: String,
-    builder: TimePicker.TimePickerBuilderScope.() -> Unit = {}
-): TimePicker {
-    val setting = TimePicker.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

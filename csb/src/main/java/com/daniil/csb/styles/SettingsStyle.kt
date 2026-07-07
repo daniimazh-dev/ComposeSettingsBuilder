@@ -1,4 +1,4 @@
-package com.daniil.csb.settingui.styles
+package com.daniil.csb.styles
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -25,6 +25,4 @@ data class SettingsStyle(
     val itemSpacing: Dp = 8.dp,
     val cardElevation: Dp = 2.dp,
 )
-
-val LocalSettingsStyle = staticCompositionLocalOf { SettingsStyle() }
 

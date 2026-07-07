@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 
 import android.content.ClipData
@@ -60,12 +60,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.utils.FancyTabBar
 import com.daniil.csb.utils.FancyTabBarData
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,6 +126,7 @@ class ColorPicker internal constructor(
         if (isSaveSetting) changeValue(Color(data))
     }
 
+    @CsbDslMarkers
     class ColorPickerBuilderScope() {
         var defaultValue: Color? = null
         var defaultValueInt: Int? = null
@@ -601,11 +603,3 @@ private fun CustomGradientSlider(
     }
 }
 
-fun SettingBuilder.createColorPicker(
-    id: String,
-    builder: ColorPicker.ColorPickerBuilderScope.() -> Unit = { defaultValue = Color.Blue }
-): ColorPicker {
-    val setting = ColorPicker.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

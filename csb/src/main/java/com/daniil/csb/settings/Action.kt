@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -10,8 +10,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.classes.utils.GroupItemClip
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,6 +47,7 @@ class Action internal constructor(
 
     override val defaultValue: Unit = Unit
 
+    @CsbDslMarkers
     class ActionBuilderScope() {
         var requestAlert = false
         var action: (result: Boolean) -> Unit = {}
@@ -139,12 +141,3 @@ class Action internal constructor(
     }
 }
 
-fun SettingBuilder.createAction(
-    id: String,
-    builder: Action.ActionBuilderScope.() -> Unit = { }
-): Action {
-
-    val setting = Action.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

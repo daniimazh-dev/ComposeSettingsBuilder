@@ -1,15 +1,14 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.GroupItemClip
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
-interface SettingInterface <T> {
+interface ComposeSettingInterface <T> {
     val id: String
     val title: String
     val description: String?
@@ -79,7 +78,7 @@ interface SettingInterface <T> {
     }
     @Composable
     fun UI(
-        modifier: Modifier = Modifier,
+        modifier: Modifier = Modifier.Companion,
         position: GroupItemClip? = null,
     )
 }

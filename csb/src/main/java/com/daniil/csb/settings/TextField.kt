@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,16 +27,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 
-class StringData internal constructor(
+class TextField internal constructor(
     override var id: String,
     override val defaultValue: String,
     override val title: String,
@@ -47,7 +48,7 @@ class StringData internal constructor(
     override var onChangeValue: (String) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<String>() {
-    private var _value = MutableStateFlow(this@StringData.defaultValue)
+    private var _value = MutableStateFlow(this@TextField.defaultValue)
     override val value = _value.asStateFlow()
 
     private var _enable = MutableStateFlow(enabled)
@@ -63,7 +64,8 @@ class StringData internal constructor(
     }
 
 
-    class StringDataBuilderScope() {
+    @CsbDslMarkers
+    class TextFieldBuilderScope() {
         var defaultValue: String = ""
         var title: String? = null
         var label: (@Composable () -> Unit)? = null
@@ -76,11 +78,11 @@ class StringData internal constructor(
 
     class Builder(
         val id: String,
-        builderScope: StringDataBuilderScope.() -> Unit
+        builderScope: TextFieldBuilderScope.() -> Unit
     ) {
-        val scope = StringDataBuilderScope().apply(builderScope)
-        fun create(): StringData = with(scope) {
-            return StringData(
+        val scope = TextFieldBuilderScope().apply(builderScope)
+        fun create(): TextField = with(scope) {
+            return TextField(
                 id,
                 defaultValue,
                 title ?: id,
@@ -189,11 +191,3 @@ class StringData internal constructor(
     }
 }
 
-fun SettingBuilder.createStringData(
-    id: String,
-    builder: StringData.StringDataBuilderScope.() -> Unit = {}
-): StringData {
-    val setting = StringData.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

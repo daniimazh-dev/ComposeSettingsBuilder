@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.daniil.csb.screens.ScreenBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -29,6 +30,15 @@ class CSBInitializer : ContentProvider() {
     override fun delete(uri: Uri, p1: String?, p2: Array<out String>?): Int = 0
     override fun update(uri: Uri, p1: ContentValues?, p2: String?, p3: Array<out String>?): Int = 0
 }
+
+fun registerSettingScreens(
+    screenBuilderScope: ScreenBuilder.() -> Unit
+) {
+    val data = ScreenBuilder().apply(screenBuilderScope)
+    CSB.navigationModel.setScreensHeap(*data.screenHeap.toTypedArray())
+    CSB.navigationModel.viewModelScope.launch{ CSB.loadData() }
+}
+
 
 class SettingViewModel(
     val navigationSettingViewModel: SettingsNavigationModel? = null,

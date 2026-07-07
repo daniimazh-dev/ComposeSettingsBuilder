@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -31,10 +31,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -69,6 +70,7 @@ class Counter internal constructor(
         onChangeValue(coercedValue)
     }
 
+    @CsbDslMarkers
     class CounterBuilderScope() {
 
         var range: IntRange = 0..10
@@ -268,11 +270,3 @@ private fun CounterImpl(
     }
 }
 
-fun SettingBuilder.createCounter(
-    id: String,
-    builder: Counter.CounterBuilderScope.() -> Unit = {}
-): Counter {
-    val setting = Counter.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

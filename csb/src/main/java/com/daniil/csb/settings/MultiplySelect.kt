@@ -1,4 +1,4 @@
-package com.daniil.csb.classes
+package com.daniil.csb.settings
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
@@ -38,12 +38,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.SaveSettingPackage
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.SettingBuilder
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultSettingUI
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
+import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.KSerializer
@@ -58,7 +59,7 @@ class MultiplySelect internal constructor(
     val alertTitle: String,
     override val description: String?,
     enabled: Boolean = true,
-    var onChangeValue: (T) -> Unit = {},
+    override var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {},
     override var isSaveSetting: Boolean
 ) : ComposeSetting<List<MultiplySelect.Option>>() {
     private var _value = MutableStateFlow(this@MultiplySelect.defaultValue)
@@ -112,15 +113,22 @@ class MultiplySelect internal constructor(
         override fun toString(): String = id
     }
 
+    @CsbDslMarkers
     class MultiplySelectBuilderScope() {
         var defaultValue: List<String> = emptyList()
-        lateinit var options: List<Pair<String, String>>
+        var options = mutableListOf<Option>()
         var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {}
         var title: String? = null
         var alertTitle = "Select multiple"
         var description: String? = null
         var enabled = true
         var isSaveSetting = true
+        fun option(id: String, title: String) {
+            +Option(id, title)
+        }
+        operator fun Option.unaryPlus() {
+            options.add(this)
+        }
     }
 
     class Builder(
@@ -129,11 +137,10 @@ class MultiplySelect internal constructor(
     ) {
         val scope = MultiplySelectBuilderScope().apply(builderScope)
         fun create(): MultiplySelect = with(scope) {
-            val optionData =  options.map { Option(it.first, it.second) }
             return MultiplySelect(
                 id,
-                options = optionData,
-                defaultValue = optionData.filter { it.id in defaultValue },
+                options,
+                defaultValue = options.filter { it.id in defaultValue },
                 title ?: id,
                 alertTitle,
                 description,
@@ -281,14 +288,3 @@ class MultiplySelect internal constructor(
     }
 }
 
-fun SettingBuilder.createMultiplySelect(
-    id: String,
-    builder: MultiplySelect.MultiplySelectBuilderScope.() -> Unit = {
-        defaultValue = listOf()
-        options = listOf()
-    }
-): MultiplySelect {
-    val setting = MultiplySelect.Builder(id, builder).create()
-    setting.addToHeap()
-    return setting
-}

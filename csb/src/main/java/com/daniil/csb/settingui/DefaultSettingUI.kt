@@ -20,10 +20,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.settingui.styles.CSBStyle
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
-import com.daniil.csb.settingui.styles.Material3
+import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.styles.CSBStyle
+import com.daniil.csb.styles.Material3
 
 @Composable
 fun DefaultSettingUI(

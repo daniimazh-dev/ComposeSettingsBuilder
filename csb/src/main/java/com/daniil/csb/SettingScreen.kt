@@ -6,13 +6,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.core.EaseOutQuint
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.TweenSpec
-import androidx.compose.animation.core.VisibilityThreshold
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,7 +37,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -54,16 +47,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.classes.utils.GroupItemClip
-import com.daniil.csb.classes.utils.LocalGroupPosition
+import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.CustomScreen
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
-import com.daniil.csb.settingui.styles.CSBStyle
-import com.daniil.csb.settingui.styles.LocalSettingsStyle
-import com.daniil.csb.settingui.styles.Material3
-import com.daniil.csb.settingui.styles.SettingsStyle
+import com.daniil.csb.settingui.LocalDebugData
+import com.daniil.csb.settingui.LocalGroupPosition
+import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.styles.CSBStyle
+import com.daniil.csb.styles.Material3
+import com.daniil.csb.styles.SettingsStyle
 import kotlinx.coroutines.flow.StateFlow
 
 typealias ScreenTransitionSpec = AnimatedContentTransitionScope<Screen>.() -> ContentTransform
@@ -103,6 +97,7 @@ fun SettingsScreen(
         val screenHeap by navigationModel.screenHeap.collectAsState()
 
         BackHandler(ScreenAttribute.Primary !in (currentScreen?.attribute ?: listOf())) {
+            currentScreen?.onCloseScreen()
             navigationModel.goBack()
         }
         AnimatedContent(
@@ -209,7 +204,6 @@ fun SettingsScreen(
                                 currentScreen.Render()
                             }
                         }
-
                     } else {
                         settings.keys.forEach { group ->
                             if (isDebugModeEnable) {
@@ -226,14 +220,13 @@ fun SettingsScreen(
                             }
                             if (!group.hide) {
                                 val groupItems = settings[group] ?: return@forEach
-
+                                item(key = "group_title_${group.id}") {
+                                    group.groupTitle?.UI(Modifier.animateItem())
+                                }
+                                val first = groupItems.firstOrNull()?.id ?: return@forEach
+                                val last = groupItems.last().id
                                 items(items = groupItems, key = { it.id }) { setting ->
 
-                                    val groupWithoutTitle =
-                                        groupItems.filterNot { it.independentObject }
-                                    val first =
-                                        groupWithoutTitle.firstOrNull()?.id ?: return@items
-                                    val last = groupWithoutTitle.last().id
                                     val groupPosition = when {
                                         last == first -> GroupItemClip.Full
                                         setting.id == last -> GroupItemClip.Last
@@ -303,8 +296,6 @@ fun SettingsScreen(
         }
     }
 }
-
-internal val LocalDebugData = compositionLocalOf<DebugData?> { null }
 
 internal data class DebugData(
     val settingSimpleName: String?,

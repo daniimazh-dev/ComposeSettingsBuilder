@@ -5,7 +5,7 @@ import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import com.daniil.csb.classes.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.screens.ScreenAttribute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -122,13 +122,13 @@ object CSB {
             if (!file.exists()) return@forEach
             val json = file.bufferedReader().use { it.readText() }
             val packages = try {
-                Json.decodeFromString<List<SaveSettingPackage>>(json)
+                Json.decodeFromString<List<SaveSettingPackage?>>(json)
             } catch (_: Exception) {
                 Log.d("CSB", "Error load settings")
                 emptyList()
             }
 
-            packages.forEach { pack ->
+            packages.filterNotNull().forEach { pack ->
                 try {
                     val setting = findSettingById(pack.id)
                     setting.loadLogic(pack)

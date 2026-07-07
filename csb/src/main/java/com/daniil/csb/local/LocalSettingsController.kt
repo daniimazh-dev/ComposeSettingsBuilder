@@ -1,38 +1,62 @@
 package com.daniil.csb.local
 
-import com.daniil.csb.classes.ComposeSetting
-import com.daniil.csb.classes.utils.SettingBuilder
-import com.daniil.csb.screens.CreateCustomScreenScope
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.screens.ContentConfiguredToken
 import com.daniil.csb.screens.CustomScreen
+import com.daniil.csb.screens.Screen
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
 
-class LocalScreenBuilderScope(
-    val localController: LocalSettingsController
-): CreateCustomScreenScope()
-open class LocalSettingsController(
-    localScreenBuilder: LocalScreenBuilderScope.() -> Unit
-) {
+open class LocalSettingsController() {
+    internal lateinit var screen: Screen
 
-    var customScreen: CustomScreen
-    init {
-        customScreen = createLocalScreen(id = UUID.randomUUID().toString(), scope = localScreenBuilder)
+    fun setCustomScreen(localCustomScreenBuilderScope: LocalCustomScreenBuilderScope.() -> ContentConfiguredToken) {
+        screen = createCustomLocalScreen(
+            id = UUID.randomUUID().toString(),
+            scope = localCustomScreenBuilderScope
+        )
     }
+
+    fun setScreen(localScreenBuilderScope: LocalScreenBuilderScope.() -> Unit) {
+        screen = createLocalScreen(
+            id = UUID.randomUUID().toString(),
+            scope = localScreenBuilderScope
+        )
+    }
+
+    fun setEmptyScreen() {
+        screen = createLocalScreen(
+            id = UUID.randomUUID().toString(),
+            scope = {}
+        )
+    }
+
     private fun createLocalScreen(
         id: String,
         scope: LocalScreenBuilderScope.() -> Unit
-    ): CustomScreen {
+    ): Screen {
         val data = LocalScreenBuilderScope(this).apply(scope)
+        val screen = Screen.Builder(id)
+            .setGroupedContent(data.getData())
+            .build()
+        return screen
+    }
 
-        val screen = CustomScreen.Builder(id).setTitle(data.title)
-                .setModifier(data.modifier)
-                .registerSettings(*data.registeredSettings.toTypedArray())
-                .setContent(data.content).build()
+    private fun createCustomLocalScreen(
+        id: String,
+        scope: LocalCustomScreenBuilderScope.() -> ContentConfiguredToken
+    ): CustomScreen {
+        val data = LocalCustomScreenBuilderScope(this)
+        data.scope()
+
+        val screen = CustomScreen.Builder(id)
+            .registerSettings(*data.settings.map { it.second }.toTypedArray())
+            .setContent(data.content).build()
         return screen
     }
 
     fun findById(id: String): ComposeSetting<*> {
-        return customScreen.settingsScreenModel.findSettingById(id)
+        return screen.settingsScreenModel.findSettingById(id)
     }
 
     inline fun <reified T> getValue(id: String): StateFlow<T> {
@@ -46,6 +70,7 @@ open class LocalSettingsController(
 
     inline fun <reified T> setValue(id: String, newValue: T) {
         val setting = findById(id)
+
         @Suppress("UNCHECKED_CAST")
         val target = setting as? ComposeSetting<T>
         target?.changeValue(newValue) ?: error("Type mismatch $id")
@@ -61,19 +86,32 @@ open class LocalSettingsController(
         setting.resetToDefault()
     }
 
-    fun saveState(id: String, state: Boolean) {
-        val setting = findById(id)
-        if (state) setting.saveOn() else setting.saveOff()
+    fun generateLocalSave(): LocalSave {
+        val packages =
+            screen.settingsScreenModel.settings.value.values.flatten().map { it.saveLogic() }
+        return LocalSave(packages)
+    }
+
+    fun loadLocalSave(localSave: LocalSave) {
+        val packages = localSave.savePackages
+        packages.filterNotNull().forEach { pack ->
+            try {
+                val setting = findById(pack.id)
+                setting.loadLogic(pack)
+            } catch (_: Exception) {
+            }
+        }
     }
 
     fun focusToSetting(id: String) {
-        customScreen.settingsScreenModel.focusToSetting(id)
+        screen.settingsScreenModel.focusToSetting(id)
     }
 
     fun hideGroup(groupId: String, isHide: Boolean) {
-        customScreen.settingsScreenModel.hideGroup(groupId, isHide)
+        screen.settingsScreenModel.hideGroup(groupId, isHide)
     }
+
     fun disableGroup(groupId: String, isHide: Boolean) {
-        customScreen.settingsScreenModel.disableGroup(groupId, isHide)
+        screen.settingsScreenModel.disableGroup(groupId, isHide)
     }
 }

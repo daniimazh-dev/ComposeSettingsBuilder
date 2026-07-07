@@ -3,8 +3,7 @@ package com.daniil.csb
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.daniil.csb.classes.ComposeSetting
-import com.daniil.csb.classes.GroupTitle
+import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.screens.Screen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,7 +46,7 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
     }
     fun focusToGroup(groupId: String) {
         val group = findGroupById(groupId)
-        settings.value[group]?.find { it is GroupTitle }?.let { focusToSetting(it.id) }
+        settings.value[group]?.firstOrNull()?.let { focusToSetting(it.id) }
      }
 
 

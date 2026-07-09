@@ -1,5 +1,6 @@
 package com.daniil.csb.settings.utils
 
+import com.daniil.csb.screens.ContentConfiguredToken
 import com.daniil.csb.settings.Action
 import com.daniil.csb.settings.ColorPicker
 import com.daniil.csb.settings.ContentChoice
@@ -59,7 +60,7 @@ interface SettingDslInterface {
 
     fun <T : Any> createCustomSetting(
         id: String,
-        builder: Custom.CustomBuilderScope<T>.() -> Unit
+        builder: Custom.CustomBuilderScope<T>.() -> ContentConfiguredToken
     ): SettingToken<Custom<T>> =
         Custom.Builder(id, builder).create().register()
 

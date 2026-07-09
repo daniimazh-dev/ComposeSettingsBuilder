@@ -1,42 +1,92 @@
 package com.daniil.csb.preview
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.CSB
 import com.daniil.csb.SettingsScreen
-import com.daniil.csb.settings.Switch
 import com.daniil.csb.local.LocalSettings
 import com.daniil.csb.local.rememberLocalSettingsController
 import com.daniil.csb.registerSettingScreens
-import com.daniil.csb.screens.createAbstractScreen
-import com.daniil.csb.screens.createCustomScreen
-import com.daniil.csb.screens.createScreen
 import com.daniil.csb.screens.customGroupTitle
+import com.daniil.csb.settings.ContentChoice
+import com.daniil.csb.settings.Select
+import com.daniil.csb.settings.Switch
+import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.styles.Bobble
 import com.daniil.csb.styles.CSBStyle
+import com.daniil.csb.styles.ClassicDark
+import com.daniil.csb.styles.ClassicLight
 import com.daniil.csb.styles.Material3
+import java.time.LocalTime
 
+@SuppressLint("RememberReturnType")
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-    initSettings()
-    SettingsScreen(
-        modifier = Modifier.fillMaxSize(),
-        paddingValues = PaddingValues(16.dp),
-        style = CSBStyle.Material3()
-    )
+    remember { initSettings() }
+    val style = CSB.getValue<Select.Option>("theme_select").collectAsState().value
+    val isDarkTheme = CSB.getValue<Boolean>("dark_mode").collectAsState().value
+    val colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()
+    MaterialTheme(colorScheme = colorScheme) {
+        SettingsScreen(
+            modifier = Modifier.fillMaxSize(),
+            paddingValues = PaddingValues(16.dp),
+            style = when (style.id) {
+                "material" -> CSBStyle.Material3()
+                "bobble" -> CSBStyle.Bobble()
+                "classic" -> if (isDarkTheme) CSBStyle.ClassicDark else CSBStyle.ClassicLight
+                else -> CSBStyle.Material3()
+            }
+        )
+    }
+
 }
 
 
 fun initSettings() = registerSettingScreens {
+    CSB.config {
+        +"flag:disableStored"
+        +"flag:allowDisplayAbstractScreen"
+        +"flag:ignoreSettingNotFoundError"
+        +"flag:disableContainerGroupRound"
+//        +"flag:enableDebugMode"
+//        +"flag:disableScroll"
+        savePatch = "csb"
+        primaryScreenId = "Main"
+
+//        +"var:IgnoreFlags=false"
+        +"exec:setValue(nullw, String, sks)"
+        +"exec:setValue(switch_style_2, bool, false)"
+        +"exec:setValue(switch_style_1, bool, false)@IgnoreFlags"
+    }
     createScreen("Main") {
         title = "CSB Preview"
         group {
@@ -125,6 +175,34 @@ fun initSettings() = registerSettingScreens {
                 option("4", "Item 4")
                 defaultValueId = "1"
             }
+            createContentChoice("content_choice") {
+                title = "Content choice"
+                description = "Choice option with UI"
+                @Composable
+                fun Dark(state: Boolean) {
+                    ThemeToggleIcon(
+                        isDarkTheme = true,
+                        isActive = state,
+                        shape = LocalSettingsStyle.current.edgeGroupCorner,
+                        size = minContentHeight
+                    )
+                }
+
+                @Composable
+                fun Light(state: Boolean) {
+                    ThemeToggleIcon(
+                        isDarkTheme = false,
+                        isActive = state,
+                        shape = LocalSettingsStyle.current.edgeGroupCorner,
+                        size = minContentHeight
+                    )
+                }
+                uiMode = ContentChoice.UIMode.Row
+                option("Light_theme") { Light(it) }
+                option("Dark_theme") { Dark(it) }
+                defaultValueId = "Light_theme"
+                onChangeValue = { CSB.setValue("dark_mode", it == "Dark_theme") }
+            }
             createColorPicker("color") {
                 title = "Color picker"
                 description = "Color selection by HSV and RGB gamma"
@@ -158,18 +236,21 @@ fun initSettings() = registerSettingScreens {
                 title = "Custom"
                 description = "Custom setting with custom ui and rules"
                 defaultValue = Unit
-                content = {
-                    Column(
-                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp)
-                    ) {
-                        Text(
-                            text = title.orEmpty(),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = description.orEmpty(),
-                            style = MaterialTheme.typography.labelMedium
-                        )
+                setContent {
+                    Row() {
+                        Column(
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp)
+                        ) {
+                            Text(
+                                text = title.orEmpty(),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = description.orEmpty(),
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -177,7 +258,7 @@ fun initSettings() = registerSettingScreens {
     }
     createScreen("preview_setting") {
         group {
-            groupTitle = customGroupTitle("Preview setting")
+            groupTitle = customGroupTitle("Preview settings")
             createSelect("theme_select") {
                 title = "Settings theme"
                 description = "Change settings theme asset"
@@ -236,8 +317,11 @@ fun initSettings() = registerSettingScreens {
             )
         }
     }
-    createAbstractScreen("Abstract") {}
-
+    createAbstractScreen("Abstract") {
+        createSwitch("dark_mode") {
+            defaultValue = false
+        }
+    }
 
 
     createCustomScreen("customScreen") {
@@ -251,5 +335,102 @@ fun initSettings() = registerSettingScreens {
                 Text("item ${it + 1}")
             }
         }
+    }
+}
+
+
+
+@Composable
+fun ThemeToggleIcon(
+    isDarkTheme: Boolean,
+    isActive: Boolean,
+    shape: Shape,
+    modifier: Modifier = Modifier,
+    size: Dp = 60.dp
+) {
+    // Анімація кольорів залежно від теми та її активності
+    val skyColor by animateColorAsState(
+        targetValue = when {
+            !isDarkTheme && isActive -> Color(0xFFE0F7FA) // Активне денне небо
+            isDarkTheme && isActive -> Color(0xFF1A1B2F)  // Активне нічне небо
+            else -> Color(0xFFE0E0E0)                      // Неактивний фон (сірий)
+        },
+        animationSpec = tween(500), label = "Sky"
+    )
+
+    val celestialColor by animateColorAsState(
+        targetValue = when {
+            !isDarkTheme && isActive -> Color(0xFFFFB300) // Активне Сонце
+            isDarkTheme && isActive -> Color(0xFFFFF59D)  // Активний Місяць
+            else -> Color(0xFF9E9E9E)                      // Неактивне світило
+        },
+        animationSpec = tween(500), label = "Celestial"
+    )
+
+    val mountainColor1 by animateColorAsState(
+        targetValue = when {
+            !isDarkTheme && isActive -> Color(0xFF90A4AE) // Активні гори день
+            isDarkTheme && isActive -> Color(0xFF37474F)  // Активні гори ніч
+            else -> Color(0xFFBDBDBD)                      // Неактивні гори
+        },
+        animationSpec = tween(500), label = "Mountain1"
+    )
+
+    val mountainColor2 by animateColorAsState(
+        targetValue = when {
+            !isDarkTheme && isActive -> Color(0xFF78909C)
+            isDarkTheme && isActive -> Color(0xFF263238)
+            else -> Color(0xFF757575)
+        },
+        animationSpec = tween(500), label = "Mountain2"
+    )
+
+    Canvas(modifier = modifier
+        .size(size)
+        .clip(shape)
+        .background(skyColor)
+    ) {
+        val width = size.toPx()
+        val height = size.toPx()
+
+        // 2. Світило (Сонце або Місяць)
+        if (!isDarkTheme) {
+            // Сонце
+            drawCircle(
+                color = celestialColor,
+                radius = width * 0.15f,
+                center = Offset(width * 0.35f, height * 0.35f)
+            )
+        } else {
+            // Місяць (через накладання кола кольору неба)
+            drawCircle(
+                color = celestialColor,
+                radius = width * 0.15f,
+                center = Offset(width * 0.35f, height * 0.35f)
+            )
+            drawCircle(
+                color = skyColor,
+                radius = width * 0.15f,
+                center = Offset(width * 0.43f, height * 0.30f)
+            )
+        }
+
+        // 3. Задня гора
+        val path1 = Path().apply {
+            moveTo(width * 0.12f, height * 0.80f)
+            lineTo(width * 0.45f, height * 0.45f)
+            lineTo(width * 0.80f, height * 0.80f)
+            close()
+        }
+        drawPath(path = path1, color = mountainColor1)
+
+        // 4. Передня гора
+        val path2 = Path().apply {
+            moveTo(width * 0.30f, height * 0.80f)
+            lineTo(width * 0.65f, height * 0.52f)
+            lineTo(width * 0.90f, height * 0.80f)
+            close()
+        }
+        drawPath(path = path2, color = mountainColor2)
     }
 }

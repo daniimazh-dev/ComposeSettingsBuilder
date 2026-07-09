@@ -3,9 +3,9 @@ package com.daniil.csb.screens
 import com.daniil.csb.CsbDslMarkers
 
 @CsbDslMarkers
-open class ScreenBuilder() {
+open class ScreenBuilder(): ScreenDslInterface {
     internal val screenHeap: MutableList<Screen> = mutableListOf()
-    internal fun Screen.register() {
+    override fun Screen.register() {
         screenHeap.add(this)
     }
 }

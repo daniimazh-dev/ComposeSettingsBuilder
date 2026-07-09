@@ -1,5 +1,6 @@
 package com.daniil.csb.settings
 
+import android.graphics.drawable.shapes.Shape
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
@@ -40,7 +41,7 @@ class ContentChoice(
     override val id: String,
     override val title: String,
     override val description: String?,
-    val contents: List<ChoiceComponents>,
+    val contents: List<ChoiceOption>,
     override val defaultValue: String,
     override var isSaveSetting: Boolean,
     val contentSize: Dp,
@@ -62,7 +63,7 @@ class ContentChoice(
         onChangeValue(newValue)
         _value.value = newValue
     }
-    data class ChoiceComponents(
+    data class ChoiceOption(
         val id: String,
         val content:  @Composable (Boolean) -> Unit
     ) {
@@ -70,7 +71,7 @@ class ContentChoice(
     }
     @CsbDslMarkers
     class ChoiceContentBuilderScope() {
-        var contents = mutableListOf<ChoiceComponents>()
+        var contents = mutableListOf<ChoiceOption>()
         var defaultValueId: String? = null
         var minContentHeight: Dp = 78.dp
         var uiMode = UIMode.Grid
@@ -80,10 +81,10 @@ class ContentChoice(
         var description: String? = null
         var enabled = true
         var isSaveSetting = true
-        fun component(id: String, content: @Composable (Boolean) -> Unit) {
-            +ChoiceComponents(id, content)
+        fun option(id: String, content: @Composable (Boolean) -> Unit) {
+            +ChoiceOption(id, content)
         }
-        operator fun ChoiceComponents.unaryPlus() {
+        operator fun ChoiceOption.unaryPlus() {
             contents.add(this)
         }
     }
@@ -154,7 +155,7 @@ class ContentChoice(
                                         modifier = Modifier,
                                         isSelected = isSelected,
                                         contentSize = this@ContentChoice.contentSize,
-                                        onClick = { if (enable) changeValue(id) }
+                                        onClick = { if (enable) changeValue(item.id) }
                                     ) {
                                         item.content.invoke(isSelected)
                                     }
@@ -173,7 +174,7 @@ class ContentChoice(
                                         modifier = Modifier.fillMaxWidth(),
                                         isSelected = isSelected,
                                         contentSize = this@ContentChoice.contentSize,
-                                        onClick = { if (enable) changeValue(id) }
+                                        onClick = { if (enable) changeValue(item.id) }
                                     ) {
                                         item.content.invoke(isSelected)
                                     }
@@ -193,7 +194,7 @@ class ContentChoice(
                                         modifier = Modifier,
                                         isSelected = isSelected,
                                         contentSize = this@ContentChoice.contentSize,
-                                        onClick = { if (enable) changeValue(id)  }
+                                        onClick = { if (enable) changeValue(item.id)  }
                                     ) {
                                         item.content.invoke(isSelected)
                                     }

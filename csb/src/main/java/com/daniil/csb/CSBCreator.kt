@@ -36,46 +36,6 @@ fun registerSettingScreens(
 ) {
     val data = ScreenBuilder().apply(screenBuilderScope)
     CSB.navigationModel.setScreensHeap(*data.screenHeap.toTypedArray())
-    CSB.navigationModel.viewModelScope.launch{ CSB.loadData() }
-}
-
-
-class SettingViewModel(
-    val navigationSettingViewModel: SettingsNavigationModel? = null,
-    application: Application,
-): AndroidViewModel(application) {
-    companion object {
-        val NAVIGATION_MODEL_KEY = object : CreationExtras.Key<SettingsNavigationModel> {}
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] ?: error("Application not found in CreationExtras")
-                val navigation = this[NAVIGATION_MODEL_KEY] ?: CSB.navigationModel
-                SettingViewModel(navigation, application)
-            }
-        }
-    }
-
-    private fun loadData() {
-        viewModelScope.launch {
-//            val context = getApplication<Application>().applicationContext
-//            navigationSettingViewModel?.initialize()
-        }
-    }
-
-    fun create(
-        context: Context,
-        settingViewModel: SettingsNavigationModel,
-        coroutineScope: CoroutineScope
-    ) {
-//        settingViewModel.initialize(context)
-    }
-}
-
-fun ComponentActivity.settingViewModel(): Lazy<SettingViewModel> {
-    return lazy(LazyThreadSafetyMode.NONE) {
-        val extras = MutableCreationExtras(defaultViewModelCreationExtras).apply {
-            set(SettingViewModel.NAVIGATION_MODEL_KEY, CSB.navigationModel)
-        }
-        ViewModelProvider(this.viewModelStore, SettingViewModel.Factory, extras)[SettingViewModel::class.java]
-    }
+    CSB.suspendLoadData()
+    CSB.executeConfigAction()
 }

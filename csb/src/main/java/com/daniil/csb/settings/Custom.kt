@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import com.daniil.csb.SaveSettingPackage
 import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.screens.ContentConfiguredToken
 import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settingui.DefaultContainer
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +54,8 @@ class Custom<T : Any> internal constructor(
     @CsbDslMarkers
     class CustomBuilderScope<T>() {
         var defaultValue: T? = null
-        var content: (@Composable () -> Unit)? = null
+        var content: (@Composable () -> Unit)? = null // Nullable for use default UI method
+            private set
         var onChangeValue: (T) -> Unit = {}
         var groupClip: GroupItemClip? = null
         var onClick: () -> Unit = {}
@@ -62,16 +64,26 @@ class Custom<T : Any> internal constructor(
         var enabled = true
         var isSaveSetting = true
         var serializer: KSerializer<T>? = null
+        fun setContent(content: @Composable () -> Unit): ContentConfiguredToken {
+            this.content = content
+            return ContentConfiguredToken()
+        }
+        fun useDefaultContent() = ContentConfiguredToken()
     }
 
     class Builder<T : Any>(
         val id: String,
-        builderScope: CustomBuilderScope<T>.() -> Unit = {}
+        val builderScope: CustomBuilderScope<T>.() -> ContentConfiguredToken
     ) {
-        val scope = CustomBuilderScope<T>().apply(builderScope)
-        fun create(): Custom<T> = with(scope) {
-            defaultValue ?: error("Default value must be not null in setting $id")
-            return Custom(id, defaultValue!!, title ?: id, description, enabled,  isSaveSetting, groupClip, onClick, content, onChangeValue, serializer)
+        val scope = CustomBuilderScope<T>()
+
+        fun create(): Custom<T>  {
+            val data = CustomBuilderScope<T>()
+            data.builderScope()
+            with(data) {
+                defaultValue ?: error("Default value must be not null in custom setting $id")
+                return Custom(id, defaultValue!!, title ?: id, description, enabled,  isSaveSetting, groupClip, onClick, content, onChangeValue, serializer)
+            }
         }
     }
 

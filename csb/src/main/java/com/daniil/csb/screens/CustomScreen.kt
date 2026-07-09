@@ -154,22 +154,3 @@ open class CreateCustomScreenScope(): SettingBuilder() {
     }
     fun useDefaultContent(): ContentConfiguredToken = ContentConfiguredToken()
 }
-fun ScreenBuilder.createCustomScreen(
-    id: String,
-    screenAttribute: List<ScreenAttribute>? = null,
-    scope: CreateCustomScreenScope.() -> ContentConfiguredToken
-): CustomScreen {
-    val data = CreateCustomScreenScope()
-    data.scope()
-
-    val screen =
-        CustomScreen.Builder(id).setTitle(data.title)
-            .setModifier(data.modifier)
-            .registerSettings(*data.settings.map { it.second }.toTypedArray())
-            .setContent(data.content)
-            .setOnCloseScreen(onCloseScreen = data.onCloseScreen)
-            .setAttribute(screenAttribute)
-            .build()
-    screen.register()
-    return screen
-}

@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.daniil.csb.isInFlag
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.settings.utils.GroupItemClip
 
@@ -36,8 +37,10 @@ fun DefaultContainer(
 
     val baseShape = style.edgeGroupCorner as RoundedCornerShape
     val gcs = style.containerCornerShape
+    val entries = if ("disableContainerGroupRound".isInFlag()) GroupItemClip.None else groupItemClip ?: groupPosition
 
-    val groupClip = when (groupItemClip ?: groupPosition) {
+    val groupClip = when (entries) {
+
         GroupItemClip.First -> baseShape.copy(
             bottomEnd = CornerSize(gcs),
             bottomStart = CornerSize(gcs),
@@ -64,7 +67,7 @@ fun DefaultContainer(
 
     Box(
         modifier = Modifier
-            .shadow(elevation = style.cardElevation, shape = style.edgeGroupCorner, clip = false)
+            .shadow(elevation = style.cardElevation, shape = groupClip, clip = false)
             .clip(groupClip)
             .background(if (isFocused) focusColor else defaultColor)
             .padding(paddingValues)

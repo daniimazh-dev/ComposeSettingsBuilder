@@ -1,12 +1,17 @@
 package com.daniil.csb
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
+import com.daniil.csb.settings.utils.ComposeSettingInterface
+import com.daniil.csb.settings.utils.GroupItemClip
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.error
@@ -21,7 +26,10 @@ class SettingsNavigationModel : ViewModel() {
     ) {
         _screenHeap.value = screen.toList()
         if (screenStack.value.isEmpty()) {
-            val primary = screenHeap.value.firstOrNull { it.attribute?.contains(ScreenAttribute.Primary) == true }
+            val primary = screenHeap.value.firstOrNull {
+                it.attribute?.contains(ScreenAttribute.Primary) == true ||
+                it.id == CSB.config.primaryScreenId
+            }
             if (primary == null) {
                 val index = screenHeap.value.indexOfFirst { it !is AbstractScreen }
                 if (index != -1) {
@@ -46,6 +54,7 @@ class SettingsNavigationModel : ViewModel() {
     val currentScreen = _currentScreen.asStateFlow()
     var lastNavigateAction = MutableStateFlow(LastNavigateAction.Forward)
         private set
+
     enum class LastNavigateAction {
         Forward,
         Back,
@@ -54,19 +63,24 @@ class SettingsNavigationModel : ViewModel() {
     fun findScreenById(id: String): Screen {
         return screenHeap.value.find { it.id == id } ?: error("Screen $id not found")
     }
+
     fun findScreenBySetting(id: String): Screen {
-        val screen = screenHeap.value.find { it.settings.values.flatten().find { it.id == id } != null }
+        val screen =
+            screenHeap.value.find { it.settings.values.flatten().find { it.id == id } != null }
         return screen ?: error("Setting $id not found")
     }
+
     fun findScreenByGroup(id: String): Screen {
-        val screen = screenHeap.value.find { it.settings.keys.find { it.id == id  } != null }
+        val screen = screenHeap.value.find { it.settings.keys.find { it.id == id } != null }
         return screen ?: error("Setting $id not found")
     }
+
     fun findSettingById(id: String): ComposeSetting<*> {
         val settingsHeap = screenHeap.value.flatMap { it.settings.values }.flatten()
         val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found")
         return setting
     }
+
     fun findGroupById(id: String): Screen.Group {
         val groupHeap = _screenHeap.value.flatMap { it.settings.keys }
         val group = groupHeap.find { it.id == id } ?: error("Group $id not found")
@@ -79,6 +93,7 @@ class SettingsNavigationModel : ViewModel() {
         if (currentScreen != screen) goToScreen(screen)
         screen.settingsScreenModel.focusToSetting(setting.id)
     }
+
     fun navigateToGroup(groupId: String) {
         val group = findGroupById(groupId)
         val screen = findScreenByGroup(group.id)
@@ -91,13 +106,17 @@ class SettingsNavigationModel : ViewModel() {
         screen.settingsScreenModel.hideGroup(groupId, isHide)
     }
 
-    fun disableGroup(screenId: String = currentScreen.value!!.id, groupId: String, isDisable: Boolean) {
+    fun disableGroup(
+        screenId: String = currentScreen.value!!.id,
+        groupId: String,
+        isDisable: Boolean
+    ) {
         val screen = findScreenById(screenId)
         screen.settingsScreenModel.disableGroup(groupId, isDisable)
     }
 
     fun goToScreen(screen: Screen) {
-        if (screen is AbstractScreen) error("Cannot go to abstract screen")
+        if (screen is AbstractScreen && !"allowDisplayAbstractScreen".isInFlag()) error("Cannot go to abstract screen")
         if (screen.attribute?.contains(ScreenAttribute.NonRedirectable) == true) return
         val indexInStack = screenStack.value.indexOfFirst { it.id == screen.id }
         val isInStack = indexInStack != -1
@@ -105,7 +124,7 @@ class SettingsNavigationModel : ViewModel() {
         if (isInStack) {
             _currentScreen.update { screen }
             val stackSize = screenStack.value.size
-            _screenStack.value.removeRange(indexInStack+1, stackSize)
+            _screenStack.value.removeRange(indexInStack + 1, stackSize)
             lastNavigateAction.update { LastNavigateAction.Back }
         } else {
             _currentScreen.update { screen }
@@ -113,6 +132,7 @@ class SettingsNavigationModel : ViewModel() {
             lastNavigateAction.update { LastNavigateAction.Forward }
         }
     }
+
     fun goToScreen(screenId: String) {
         val screenInstance = findScreenById(screenId)
         goToScreen(screenInstance)

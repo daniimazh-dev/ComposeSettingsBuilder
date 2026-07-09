@@ -106,7 +106,8 @@ fun SettingsScreen(
             transitionSpec = if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Forward)
                 screenTransitionForward else screenTransitionBack
         ) { currentScreen ->
-            if (currentScreen is AbstractScreen) error("Cannot display abstract screens")
+            if (currentScreen is AbstractScreen && !"allowDisplayAbstractScreen".isInFlag())
+                error("Cannot display abstract screens")
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -133,7 +134,10 @@ fun SettingsScreen(
                 }
 
                 val isDebugModeEnable =
-                    remember(currentScreen) { currentScreen.attribute?.contains(ScreenAttribute.Debag) == true }
+                    remember(currentScreen) {
+                        currentScreen.attribute?.contains(ScreenAttribute.Debag) == true
+                                || "enableDebugMode".isInFlag()
+                    }
 
                 val scrollFocusIndex by settingsScreenModel.scrollFocusIndex.collectAsState()
                 LaunchedEffect(scrollFocusIndex) {
@@ -177,6 +181,7 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
                     state = lazyListState,
+                    userScrollEnabled = remember { !"disableScroll".isInFlag() }
                 ) {
 
                     if (title == null && isShowNavigation || (title != null && !isCanScroll)) {
@@ -228,6 +233,7 @@ fun SettingsScreen(
                                 items(items = groupItems, key = { it.id }) { setting ->
 
                                     val groupPosition = when {
+                                        "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
                                         last == first -> GroupItemClip.Full
                                         setting.id == last -> GroupItemClip.Last
                                         setting.id == first -> GroupItemClip.First

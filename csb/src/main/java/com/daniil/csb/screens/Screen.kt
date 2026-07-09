@@ -18,7 +18,7 @@ open class Screen internal constructor(
     open val settings: Map<Group, List<ComposeSetting<*>>> = emptyMap(),
     open val onCloseScreen: () -> Unit = {},
 ) {
-    internal val settingsScreenModel: SettingsScreenModel by lazy { SettingsScreenModel(this) }
+    internal open val settingsScreenModel: SettingsScreenModel by lazy { SettingsScreenModel(this) }
 
     class Group(
         val id: String,
@@ -77,22 +77,4 @@ class CreateScreenScope() : ScreenBuilderScope() {
 @CsbDslMarkers
 class GroupScope() : SettingBuilder() {
     var groupTitle: GroupTitle? = DefaultGroupTitle
-}
-
-fun ScreenBuilder.createScreen(
-    id: String,
-    screenAttribute: List<ScreenAttribute>? = null,
-    scope: CreateScreenScope.() -> Unit
-): Screen {
-    val data = CreateScreenScope().apply(scope)
-    val screen = Screen.Builder(id)
-        .setTitle(data.title)
-        .setModifier(data.modifier)
-        .setPaddingValues(data.paddingValues)
-        .setGroupedContent(data.getData())
-        .setOnCloseScreen(onCloseScreen = data.onCloseScreen)
-        .setAttribute(screenAttribute)
-        .build()
-    screen.register()
-    return screen
 }

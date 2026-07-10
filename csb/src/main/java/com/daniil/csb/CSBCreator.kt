@@ -1,22 +1,10 @@
 package com.daniil.csb
 
-import android.app.Application
 import android.content.ContentProvider
 import android.content.ContentValues
-import android.content.Context
 import android.database.Cursor
 import android.net.Uri
-import androidx.activity.ComponentActivity
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
-import androidx.lifecycle.viewmodel.MutableCreationExtras
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.daniil.csb.screens.ScreenBuilder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 class CSBInitializer : ContentProvider() {
     override fun onCreate(): Boolean {
@@ -36,6 +24,6 @@ fun registerSettingScreens(
 ) {
     val data = ScreenBuilder().apply(screenBuilderScope)
     CSB.navigationModel.setScreensHeap(*data.screenHeap.toTypedArray())
-    CSB.suspendLoadData()
+    CSB.load()
     CSB.executeConfigAction()
 }

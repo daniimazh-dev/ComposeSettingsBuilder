@@ -16,11 +16,11 @@ internal val allFlags = setOf(
     "allowDisplayAbstractScreen",
     "disableContainerGroupRound",
     "enableDebugMode",
-    "useExperimentalApi", // TODO
-    "enableSwitchWithNavigate", // TODO
-    "enablePredictiveBackHandler", // TODO
+//    "useExperimentalApi", // TODO
+//    "enableSwitchWithNavigate", // TODO
+//    "enablePredictiveBackHandler", // TODO
     "disableScroll",
-    "useOneFileJsonSaveMethod", // TODO
-    "useJsonSaveMethod", // TODO
+    "useOneFileJsonSaveMethod",
+    "useJsonSaveMethod",
     "disableStored",
 )

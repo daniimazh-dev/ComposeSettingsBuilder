@@ -2,6 +2,7 @@ package com.daniil.csb
 
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -39,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +60,7 @@ import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.Material3
 import com.daniil.csb.styles.SettingsStyle
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 
 typealias ScreenTransitionSpec = AnimatedContentTransitionScope<Screen>.() -> ContentTransform
@@ -65,7 +68,7 @@ typealias ScreenTransitionSpec = AnimatedContentTransitionScope<Screen>.() -> Co
 private val defaultTransitionAnimationSpring =
     tween<IntOffset>(durationMillis = 300, easing = LinearOutSlowInEasing)
 
-private val defaultTransitionAnimationFadeSpec =  tween<Float>(200)
+private val defaultTransitionAnimationFadeSpec = tween<Float>(200)
 
 private val defaultSettingsScreenTransitionSpecForward: ScreenTransitionSpec = {
     slideInHorizontally(animationSpec = defaultTransitionAnimationSpring) { it }
@@ -75,7 +78,9 @@ private val defaultSettingsScreenTransitionSpecForward: ScreenTransitionSpec = {
         )
 }
 private val defaultSettingsScreenTransitionSpecBack: ScreenTransitionSpec = {
-    (slideInHorizontally(animationSpec = defaultTransitionAnimationSpring) + fadeIn(defaultTransitionAnimationFadeSpec))
+    (slideInHorizontally(animationSpec = defaultTransitionAnimationSpring) + fadeIn(
+        defaultTransitionAnimationFadeSpec
+    ))
         .togetherWith(slideOutHorizontally(animationSpec = defaultTransitionAnimationSpring) { it })
 }
 
@@ -95,13 +100,21 @@ fun SettingsScreen(
         val lastNavigateAction by navigationModel.lastNavigateAction.collectAsState()
         val screenStack by navigationModel.screenStack.collectAsState()
         val screenHeap by navigationModel.screenHeap.collectAsState()
+        val enableBackHandler by remember {
+            mutableStateOf(
+                ScreenAttribute.Primary !in (currentScreen?.attribute ?: listOf())
+            )
+        }
 
-        BackHandler(ScreenAttribute.Primary !in (currentScreen?.attribute ?: listOf())) {
+        BackHandler(enableBackHandler) {
             currentScreen?.onCloseScreen()
             navigationModel.goBack()
         }
+
+
         AnimatedContent(
             modifier = modifier,
+            contentKey = { it.id },
             targetState = currentScreen ?: return@CompositionLocalProvider,
             transitionSpec = if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Forward)
                 screenTransitionForward else screenTransitionBack

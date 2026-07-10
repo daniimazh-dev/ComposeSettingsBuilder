@@ -18,7 +18,7 @@ Add the library to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.daniil:csb:1.1.0")
+    implementation("io.github.daniimazh-dev:csb:1.0.0")
 }
 ```
 
@@ -34,8 +34,7 @@ fun initSettings() = registerSettingScreens {
         title = "Settings"
 
         group("General") {
-            createGroupTitle("Preferences")
-            
+            groupTitle = customGroupTitle("Preference")
             createSwitch("notifications_enabled") {
                 title = "Enable Notifications"
                 defaultValue = true
@@ -43,11 +42,9 @@ fun initSettings() = registerSettingScreens {
 
             createSelect("theme_mode") {
                 title = "Theme"
-                options = listOf(
-                    "light" to "Light",
-                    "dark" to "Dark",
-                    "system" to "System"
-                )
+                option("system", "System")
+                option("dark", "Dark")
+                option("light", "Light")
                 defaultValueId = "system"
             }
         }
@@ -99,7 +96,8 @@ CSB.setValue("notifications_enabled", false)
 | **Multiply Select** | `createMultiplySelect` | Multiple choices from list                          |
 | **Color Picker**    | `createColorPicker`    | HSV/RGB color selection                             |
 | **Time Picker**     | `createTimePicker`     | Time selection                                      |
-| **String Data**     | `createStringData`     | Text input                                          |
+| **TextField**       | `createTextField`      | Text input                                          |
+| **Content Choice**  | `createContentChoice`  | Choice between multiple options with Icon/UI        |                                                 | Text input                                          |
 | **Action**          | `createAction`         | Trigger a function with optional confirmation alert |
 | **Redirect**        | `createRedirect`       | Navigate to another settings screen                 |
 | **Info**            | `createInfo`           | Display informational text                          |
@@ -112,14 +110,12 @@ Use `rememberLocalSettingsController` to create the controller and `LocalSetting
 
 ```kotlin
   val localController = rememberLocalSettingsController {
-    register {
-        createSwitch("local_switch") {
-            title = "Local Toggle"
-            defaultValue = false
-        }
-    }
+      createSwitch("local_switch") {
+          title = "Local Toggle"
+          defaultValue = false 
+      }
     // Customize the display of settings
-    content = { 
+    setContent {
         RegisteredSetting("local_switch") 
     }
 }
@@ -139,7 +135,7 @@ You can customize the look and feel by passing a `SettingsStyle` to the `Setting
 
 ```kotlin
 SettingsScreen(
-    style = CSBStyle.Material3(
+    style = CSBStyle.Material3.copy(
         activeColor = Color.Blue,
         containerCornerShape = 12.dp
     )

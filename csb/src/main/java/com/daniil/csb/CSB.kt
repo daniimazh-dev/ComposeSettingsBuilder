@@ -9,15 +9,26 @@ import androidx.lifecycle.viewModelScope
 import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.ScreenBuilder
+import androidx.datastore.core.DataStore
+import androidx.datastore.dataStore
+import com.daniil.csb.local.SettingsSerializer
+import com.daniil.csb.persistence.CSBStoredData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.createDirectories
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
+import kotlin.io.path.bufferedReader
 
 object CSB {
     lateinit var config: CSBConfig
@@ -25,6 +36,11 @@ object CSB {
     private val context: Context
         get() = _applicationContext
             ?: error("CSB is not initialized. Ensure CSBInitializer is in your Manifest or call CSB.init(context).")
+
+    private val Context.csbDataStore: DataStore<CSBStoredData> by dataStore(
+        fileName = "csb_settings.json",
+        serializer = SettingsSerializer
+    )
 
     private val globalScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -61,8 +77,8 @@ object CSB {
                                 else -> setValue(setting.id, value)
                             }
                         }
-                        "saveData" -> navigationModel.viewModelScope.launch { saveData() }
-                        "loadData" -> suspendLoadData()
+                        "saveData" -> navigationModel.viewModelScope.launch { save() }
+                        "loadData" -> load()
                         "resetToDefault" -> resetToDefault(param[0])
                         "resetAllToDefaults" -> resetAllSettingsToDefault()
                         "storedMode" -> storedMode(param[0], param[1].toBoolean())
@@ -86,14 +102,12 @@ object CSB {
 
     private var isIgnoreFlags = false
 
-    context(_: ScreenBuilder)
     fun config(scope: CSBConfigureScope.() -> Unit) {
         val data = CSBConfigureScope().apply(scope)
         this.config = data.createCSBConfig()
         this.executeArray = data.executeArray
     }
 
-    context(_: ScreenBuilder)
     fun config(config: CSBConfig) {
         this.config = config
         this.executeArray
@@ -171,10 +185,7 @@ object CSB {
     }
 
     private fun defaultConfig() = with(ScreenBuilder()) {
-        config {
-            +"var:IgnoreFlags=false"
-            // Default param
-        }
+        config { /* Default param */ }
     }
 
     internal fun init(context: Context) {
@@ -186,7 +197,7 @@ object CSB {
 
         app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityPaused(activity: Activity) {
-                globalScope.launch { saveData() }
+                globalScope.launch { save() }
             }
 
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
@@ -325,21 +336,38 @@ object CSB {
         }
     }
 
-    internal fun suspendLoadData() {
-        navigationModel.viewModelScope.launch { loadData() }
+
+    internal fun load() = with(navigationModel.viewModelScope) {
+        if ("disableStored".isInFlag()) return@with
+        launch {
+            when {
+                "useJsonSaveMethod".isInFlag() -> 
+                    if ("useOneFileJsonSaveMethod".isInFlag()) loadWithJsonOneFile() else loadDataWithJson()
+                else -> loadWithDataStore()
+            }
+        }
     }
 
-    internal suspend fun loadData() = withContext(Dispatchers.IO) {
+    internal fun save() = with(navigationModel.viewModelScope) {
+        if ("disableStored".isInFlag()) return@with
+        launch {
+            when {
+                "useJsonSaveMethod".isInFlag() ->
+                    if ("useOneFileJsonSaveMethod".isInFlag()) saveWithJsonOneFile() else saveDataWithJson()
+                else -> saveDataWithDataStore()
+            }
+        }
+    }
+    internal suspend fun loadDataWithJson() = withContext(Dispatchers.IO) {
         if ("disableStored".isInFlag()) return@withContext
-        val patch = File(context.filesDir, config.savePatch)
+        val patch = context.filesDir.toPath().resolve(config.savePatch)
         if (!patch.exists()) {
-            patch.mkdir()
+            patch.createDirectories()
         }
         navigationModel.screenHeap.value.forEach { screenInstance ->
-
-            val file = File(patch, "csb_${screenInstance.id}")
+            val file = patch.resolve("csb_${screenInstance.id}")
             if (!file.exists()) return@forEach
-            val json = file.bufferedReader().use { it.readText() }
+            val json = file.readText()
             val packages = try {
                 Json.decodeFromString<List<SaveSettingPackage?>>(json)
             } catch (_: Exception) {
@@ -356,19 +384,61 @@ object CSB {
             }
         }
     }
-
-    internal suspend fun saveData() = withContext(Dispatchers.IO) {
+    internal suspend fun loadWithJsonOneFile() = withContext(Dispatchers.IO) {
         if ("disableStored".isInFlag()) return@withContext
-        val patch = File(context.filesDir, config.savePatch)
+        val patch = context.filesDir.toPath().resolve(config.savePatch)
+        val file = patch.resolve("csb_settings.json")
+        if (!file.exists()) return@withContext
+
+        val json = file.readText()
+        val storedData = try {
+            Json.decodeFromString<CSBStoredData>(json)
+        } catch (e: Exception) {
+            Log.d("CSB", "Error loading settings from single file", e)
+            return@withContext
+        }
+
+        storedData.screenSettings.forEach { (_, packages) ->
+            packages.forEach { pack ->
+                try {
+                    val setting = findSettingById(pack.id).getOrNull() ?: return@forEach
+                    setting.loadLogic(pack)
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
+    internal suspend fun saveWithJsonOneFile() = withContext(Dispatchers.IO) {
+        if ("disableStored".isInFlag()) return@withContext
+        val patch = context.filesDir.toPath().resolve(config.savePatch)
+        if (!patch.exists()) patch.createDirectories()
+        val file = patch.resolve("csb_settings.json")
+
+        val updatedMap = mutableMapOf<String, List<SaveSettingPackage>>()
+        for (screen in navigationModel.screenHeap.value) {
+            if (screen.attribute?.contains(ScreenAttribute.Unstored) == true) continue
+
+            val jsonPackageList: List<SaveSettingPackage> = screen.settings.values
+                .flatten()
+                .mapNotNull { it.saveLogic() }
+
+            if (jsonPackageList.isNotEmpty()) {
+                updatedMap[screen.id] = jsonPackageList
+            }
+        }
+
+        val json = Json.encodeToString(CSBStoredData(updatedMap))
+        file.writeText(json)
+    }
+    internal suspend fun saveDataWithJson() = withContext(Dispatchers.IO) {
+        if ("disableStored".isInFlag()) return@withContext
+        val patch = context.filesDir.toPath().resolve(config.savePatch)
         if (!patch.exists()) {
-            patch.mkdir()
+            patch.createDirectories()
         }
         for (screen in navigationModel.screenHeap.value) {
             if (screen.attribute?.contains(ScreenAttribute.Unstored) == true) continue
-            val file = File(patch, "csb_${screen.id}")
-            if (!file.exists()) {
-                file.createNewFile()
-            }
+            val file = patch.resolve("csb_${screen.id}")
 
             val jsonPackageList: List<SaveSettingPackage> = screen.settings.values
                 .flatten()
@@ -378,6 +448,45 @@ object CSB {
                 val json = Json.encodeToString(jsonPackageList)
                 file.writeText(json)
             }
+        }
+    }
+
+    internal suspend fun loadWithDataStore() = withContext(Dispatchers.IO) {
+        val storedData = context.csbDataStore.data.first()
+
+        navigationModel.screenHeap.value.forEach { screenInstance ->
+            val packages = storedData.screenSettings[screenInstance.id] ?: emptyList()
+            packages.forEach { pack ->
+                try {
+                    val setting = findSettingById(pack.id).getOrNull() ?: return@forEach
+                    setting.loadLogic(pack)
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
+
+    internal suspend fun saveDataWithDataStore() = withContext(Dispatchers.IO) {
+        context.csbDataStore.updateData { currentData ->
+            val updatedMap = currentData.screenSettings.toMutableMap()
+
+            for (screen in navigationModel.screenHeap.value) {
+                if (screen.attribute?.contains(ScreenAttribute.Unstored) == true) {
+                    updatedMap.remove(screen.id)
+                    continue
+                }
+
+                val jsonPackageList: List<SaveSettingPackage> = screen.settings.values
+                    .flatten()
+                    .mapNotNull { it.saveLogic() }
+
+                if (jsonPackageList.isNotEmpty()) {
+                    updatedMap[screen.id] = jsonPackageList
+                } else {
+                    updatedMap.remove(screen.id)
+                }
+            }
+            currentData.copy(screenSettings = updatedMap)
         }
     }
 }

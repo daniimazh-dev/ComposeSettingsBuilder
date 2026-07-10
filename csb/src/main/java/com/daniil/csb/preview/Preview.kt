@@ -71,21 +71,9 @@ private fun Preview() {
 }
 
 
-fun initSettings() = registerSettingScreens {
+private fun initSettings() = registerSettingScreens {
     CSB.config {
-        +"flag:disableStored"
-        +"flag:allowDisplayAbstractScreen"
-        +"flag:ignoreSettingNotFoundError"
-        +"flag:disableContainerGroupRound"
-//        +"flag:enableDebugMode"
-//        +"flag:disableScroll"
-        savePatch = "csb"
-        primaryScreenId = "Main"
-
-//        +"var:IgnoreFlags=false"
-        +"exec:setValue(nullw, String, sks)"
-        +"exec:setValue(switch_style_2, bool, false)"
-        +"exec:setValue(switch_style_1, bool, false)@IgnoreFlags"
+//        +"flag:disableStored"
     }
     createScreen("Main") {
         title = "CSB Preview"

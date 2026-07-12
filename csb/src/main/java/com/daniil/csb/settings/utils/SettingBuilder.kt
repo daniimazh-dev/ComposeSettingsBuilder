@@ -5,9 +5,9 @@ import com.daniil.csb.screens.ScreenBuilder
 
 @CsbDslMarkers
 open class SettingBuilder: SettingDslInterface {
-    val settings: MutableList<Pair<String?, ComposeSetting<*>>> = mutableListOf()
-    internal  fun <T : ComposeSetting<*>> addToHeap(setting: T, groupId: String? = null): SettingToken<T> {
-        settings.add(groupId to setting)
+    val settings: MutableList<ComposeSetting<*>> = mutableListOf()
+    internal  fun <T : ComposeSetting<*>> addToHeap(setting: T): SettingToken<T> {
+        settings.add(setting)
         return SettingToken(setting)
     }
 

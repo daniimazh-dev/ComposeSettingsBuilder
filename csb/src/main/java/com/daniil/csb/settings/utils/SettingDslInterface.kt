@@ -1,6 +1,7 @@
 package com.daniil.csb.settings.utils
 
 import com.daniil.csb.screens.ContentConfiguredToken
+import com.daniil.csb.screens.FragmentController
 import com.daniil.csb.settings.Action
 import com.daniil.csb.settings.ColorPicker
 import com.daniil.csb.settings.ContentChoice
@@ -12,6 +13,7 @@ import com.daniil.csb.settings.Redirect
 import com.daniil.csb.settings.Select
 import com.daniil.csb.settings.Slider
 import com.daniil.csb.settings.Switch
+import com.daniil.csb.settings.TabBar
 import com.daniil.csb.settings.TextField
 import com.daniil.csb.settings.TimePicker
 
@@ -93,6 +95,16 @@ interface SettingDslInterface {
         builder: TextField.TextFieldBuilderScope.() -> Unit
     ): SettingToken<TextField> =
         TextField.Builder(id, builder).create().register()
+
+    fun createTabBar(
+        id: String,
+        builder: TabBar.TabBarBuilderScope.() -> Unit
+    ) = TabBar.Builder(id, builder).create().register()
+    fun createTabBar(
+        id: String,
+        controller: FragmentController
+    ) = TabBar.Builder(id, controller).create().register()
+
 
     fun <T : ComposeSetting<*>> T.register(): SettingToken<T>
 }

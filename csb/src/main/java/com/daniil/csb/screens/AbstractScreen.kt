@@ -12,8 +12,8 @@ internal constructor(
     val abstractSettings: List<ComposeSetting<*>>
 ) : Screen(id, id, Modifier, PaddingValues.Zero) {
 
-    override val settings: Map<Group, List<ComposeSetting<*>>>
-        get() = mapOf(Screen.Group(id, null,false) to abstractSettings)
+    override val settings: List<GroupSealed>
+        get() = listOf(Group(id, null,false, abstractSettings))
 
     class Builder(
         val id: String

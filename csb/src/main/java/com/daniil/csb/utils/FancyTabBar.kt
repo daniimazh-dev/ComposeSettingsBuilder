@@ -1,5 +1,6 @@
 package com.daniil.csb.utils
 
+
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -34,6 +35,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -53,8 +55,26 @@ private fun ContentDrawScope.drawWithLayer(block: ContentDrawScope.() -> Unit) {
 
 data class FancyTabBarData(
     val id: String,
-    val name: String = id,
-    val painterId: Int,
+    val titleContent: @Composable () -> Unit,
+)
+
+object FancyTabBarDefaults {
+    @Composable
+    fun colors(): FancyTabBarColor {
+        return FancyTabBarColor(
+            bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            indicatorColor = MaterialTheme.colorScheme.primary,
+            textColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            selectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+data class FancyTabBarColor(
+    val bgColor: Color,
+    val indicatorColor: Color,
+    val textColor: Color,
+    val selectedTextColor: Color
 )
 
 @Composable
@@ -62,15 +82,11 @@ fun FancyTabBar(
     modifier: Modifier = Modifier,
     selectedIndex: Int,
     entries: List<FancyTabBarData>,
+    colors: FancyTabBarColor = FancyTabBarDefaults.colors(),
     horizontal: Boolean = true,
     onSelected: (String) -> Unit
 ) {
     if (entries.size < 2) return
-
-    val bgColor = MaterialTheme.colorScheme.surfaceContainerHigh
-    val indicatorColor = MaterialTheme.colorScheme.primary
-    val textColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val selectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
 
 
     BoxWithConstraints(
@@ -80,7 +96,7 @@ fun FancyTabBar(
                 else Modifier.width(52.dp)// можна винести параметром
             )
             .clip(MaterialTheme.shapes.large)
-            .background(bgColor)
+            .background(colors.bgColor)
             .padding(6.dp)
     ) {
         val maxMainSize = if (horizontal) maxWidth else maxHeight
@@ -118,7 +134,7 @@ fun FancyTabBar(
                         Offset(0f, indicatorOffset.toPx())
 
                     drawRoundRect(
-                        color = indicatorColor,
+                        color = colors.indicatorColor,
                         topLeft = offsetPx,
                         size = sizePx,
                         cornerRadius = CornerRadius(radiusPx),
@@ -154,24 +170,7 @@ fun FancyTabBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(item.painterId),
-                            contentDescription = item.id,
-                            tint = if (isSelected) selectedTextColor else textColor,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        if (horizontal)
-                            Spacer(Modifier.width(6.dp))
-                        else
-                            Spacer(Modifier.height(4.dp))
-                        if (horizontal) {
-                            Text(
-                                text = item.name,
-                                style = MaterialTheme.typography.labelLarge,
-                                autoSize = TextAutoSize.StepBased(10.sp, 14.sp),
-                                color = if (isSelected) selectedTextColor else textColor
-                            )
-                        }
+                        item.titleContent()
                     }
                 }
             }

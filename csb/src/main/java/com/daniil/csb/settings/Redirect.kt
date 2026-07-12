@@ -51,7 +51,7 @@ class Redirect internal constructor(
     ): this(id, redirectTo.id,  focus, showArrow, title, description, labelIcon, enabled, onRedirect, navigationModel)
 
     override val defaultValue: Screen = Screen(
-        id = "", settings = mapOf(),
+        id = "", settings = listOf(),
         title = "",
         modifier = Modifier,
         paddingValues = PaddingValues.Zero,

@@ -1,17 +1,18 @@
 package com.daniil.csb
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
+import com.daniil.csb.screens.FragmentController
+import com.daniil.csb.screens.FragmentedGroup
+import com.daniil.csb.screens.Group
+import com.daniil.csb.screens.GroupController
+import com.daniil.csb.screens.GroupSealed
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.screens.ScreenController
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.error
@@ -66,23 +67,23 @@ class SettingsNavigationModel : ViewModel() {
 
     fun findScreenBySetting(id: String): Screen {
         val screen =
-            screenHeap.value.find { it.settings.values.flatten().find { it.id == id } != null }
+            screenHeap.value.find { it.settings.flatMap { it.settings }.find { it.id == id } != null }
         return screen ?: error("Setting $id not found")
     }
 
     fun findScreenByGroup(id: String): Screen {
-        val screen = screenHeap.value.find { it.settings.keys.find { it.id == id } != null }
+        val screen = screenHeap.value.find { it.settings.find { it.id == id } != null }
         return screen ?: error("Setting $id not found")
     }
 
     fun findSettingById(id: String): ComposeSetting<*> {
-        val settingsHeap = screenHeap.value.flatMap { it.settings.values }.flatten()
+        val settingsHeap = screenHeap.value.flatMap { it.settings.flatMap { it.settings } }
         val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found")
         return setting
     }
 
-    fun findGroupById(id: String): Screen.Group {
-        val groupHeap = _screenHeap.value.flatMap { it.settings.keys }
+    fun findGroupById(id: String): GroupSealed {
+        val groupHeap = _screenHeap.value.flatMap { it.settings }
         val group = groupHeap.find { it.id == id } ?: error("Group $id not found")
         return group
     }
@@ -113,6 +114,18 @@ class SettingsNavigationModel : ViewModel() {
     ) {
         val screen = findScreenById(screenId)
         screen.settingsScreenModel.disableGroup(groupId, isDisable)
+    }
+    fun fragmentController(id: String): FragmentController {
+        val fragmentedGroup = findGroupById(id)
+        return FragmentController((fragmentedGroup as? FragmentedGroup) ?: error("Group \"$id\" is not FragmentedGroup"))
+    }
+    fun groupController(id: String): GroupController {
+        val fragmentedGroup = findGroupById(id)
+        return GroupController((fragmentedGroup as? Group) ?: error("Group \"$id\" is not BasicGroup"))
+    }
+    fun screenController(id: String): ScreenController {
+        val screen = findScreenById(id)
+        return ScreenController(screen)
     }
 
     fun goToScreen(screen: Screen) {

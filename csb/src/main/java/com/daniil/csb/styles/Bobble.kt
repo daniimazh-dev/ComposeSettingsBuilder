@@ -25,5 +25,5 @@ fun CSBStyle.Bobble() = SettingsStyle(
     backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    minHeight = 52.dp,
+    minHeight = 72.dp,
 )

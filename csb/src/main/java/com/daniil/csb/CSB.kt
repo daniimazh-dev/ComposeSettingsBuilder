@@ -13,6 +13,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.daniil.csb.local.SettingsSerializer
 import com.daniil.csb.persistence.CSBStoredData
+import com.daniil.csb.screens.FragmentController
+import com.daniil.csb.screens.GroupController
+import com.daniil.csb.screens.Screen
+import com.daniil.csb.screens.ScreenController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -55,10 +59,14 @@ object CSB {
             val oldEnableIgnore = isIgnoreFlags
             if (ignoreFlag) isIgnoreFlags = true
             try {
-                val pureExpression = if (ignoreFlag) expression.substringBeforeLast("@") else expression
+                val pureExpression =
+                    if (ignoreFlag) expression.substringBeforeLast("@") else expression
                 val action = pureExpression.substringBefore('(')
                 val param = if (pureExpression.contains('(') && pureExpression.contains(')')) {
-                    pureExpression.substring(pureExpression.indexOf('(') + 1, pureExpression.indexOf(')'))
+                    pureExpression.substring(
+                        pureExpression.indexOf('(') + 1,
+                        pureExpression.indexOf(')')
+                    )
                         .split(',').map { it.trim() }
                 } else emptyList()
                 try {
@@ -77,6 +85,7 @@ object CSB {
                                 else -> setValue(setting.id, value)
                             }
                         }
+
                         "saveData" -> navigationModel.viewModelScope.launch { save() }
                         "loadData" -> load()
                         "resetToDefault" -> resetToDefault(param[0])
@@ -86,8 +95,8 @@ object CSB {
                         "enable" -> enable(param[0], param[1].toBoolean())
                         "navigateToScreen" -> navigateToScreen(param[0])
                         "navigateToGroup" -> navigateToGroup(param[0])
-                        "disableGroup" -> disableGroup(param[0], param[1].toBoolean())
-                        "hideGroup" -> hideGroup(param[0], param[1].toBoolean())
+                        "disableGroup" -> groupController(param[0]).isDisable(param[1].toBoolean())
+                        "hideGroup" -> groupController(param[0]).isShow(!param[1].toBoolean())
                         else -> error("Action \"$action\" not found")
                     }
                 } catch (_: IndexOutOfBoundsException) {
@@ -221,7 +230,7 @@ object CSB {
     }
 
     fun getAllSettings(): List<ComposeSetting<*>> {
-        return navigationModel.screenHeap.value.flatMap { it.settings.values.flatten() }
+        return navigationModel.screenHeap.value.flatMap { it.settings.flatMap { it.settings } }
     }
 
     inline fun <reified T> getValue(id: String): StateFlow<T> {
@@ -300,40 +309,17 @@ object CSB {
         }
     }
 
-    fun hideGroup(screenId: String, groupId: String, isHide: Boolean) {
-        try {
-            navigationModel.hideGroup(screenId, groupId, isHide)
-        } catch (e: Exception) {
-            if (!"ignoreSettingNotFoundError".isInFlag()) throw e
-        }
+
+    fun groupController(id: String): GroupController {
+        return navigationModel.groupController(id)
     }
 
-    fun hideGroup(groupId: String, isHide: Boolean) {
-        try {
-            val screenId =
-                CSB.navigationModel.currentScreen.value?.id ?: error("Screen not yet initialized")
-            navigationModel.hideGroup(screenId, groupId, isHide)
-        } catch (e: Exception) {
-            if (!"ignoreSettingNotFoundError".isInFlag()) throw e
-        }
+    fun fragmentController(id: String): FragmentController {
+        return navigationModel.fragmentController(id)
     }
 
-    fun disableGroup(screenId: String, groupId: String, isDisable: Boolean) {
-        try {
-            navigationModel.disableGroup(screenId, groupId, isDisable)
-        } catch (e: Exception) {
-            if (!"ignoreSettingNotFoundError".isInFlag()) throw e
-        }
-    }
-
-    fun disableGroup(groupId: String, isDisable: Boolean) {
-        try {
-            val screenId =
-                CSB.navigationModel.currentScreen.value?.id ?: error("Screen not yet initialized")
-            navigationModel.disableGroup(screenId, groupId, isDisable)
-        } catch (e: Exception) {
-            if (!"ignoreSettingNotFoundError".isInFlag()) throw e
-        }
+    fun screenController(id: String): ScreenController {
+        return navigationModel.screenController(id)
     }
 
 
@@ -341,8 +327,9 @@ object CSB {
         if ("disableStored".isInFlag()) return@with
         launch {
             when {
-                "useJsonSaveMethod".isInFlag() -> 
+                "useJsonSaveMethod".isInFlag() ->
                     if ("useOneFileJsonSaveMethod".isInFlag()) loadWithJsonOneFile() else loadDataWithJson()
+
                 else -> loadWithDataStore()
             }
         }
@@ -354,10 +341,12 @@ object CSB {
             when {
                 "useJsonSaveMethod".isInFlag() ->
                     if ("useOneFileJsonSaveMethod".isInFlag()) saveWithJsonOneFile() else saveDataWithJson()
+
                 else -> saveDataWithDataStore()
             }
         }
     }
+
     internal suspend fun loadDataWithJson() = withContext(Dispatchers.IO) {
         if ("disableStored".isInFlag()) return@withContext
         val patch = context.filesDir.toPath().resolve(config.savePatch)
@@ -384,6 +373,7 @@ object CSB {
             }
         }
     }
+
     internal suspend fun loadWithJsonOneFile() = withContext(Dispatchers.IO) {
         if ("disableStored".isInFlag()) return@withContext
         val patch = context.filesDir.toPath().resolve(config.savePatch)
@@ -408,6 +398,7 @@ object CSB {
             }
         }
     }
+
     internal suspend fun saveWithJsonOneFile() = withContext(Dispatchers.IO) {
         if ("disableStored".isInFlag()) return@withContext
         val patch = context.filesDir.toPath().resolve(config.savePatch)
@@ -418,8 +409,7 @@ object CSB {
         for (screen in navigationModel.screenHeap.value) {
             if (screen.attribute?.contains(ScreenAttribute.Unstored) == true) continue
 
-            val jsonPackageList: List<SaveSettingPackage> = screen.settings.values
-                .flatten()
+            val jsonPackageList: List<SaveSettingPackage> = screen.settings.flatMap { it.settings }
                 .mapNotNull { it.saveLogic() }
 
             if (jsonPackageList.isNotEmpty()) {
@@ -430,6 +420,7 @@ object CSB {
         val json = Json.encodeToString(CSBStoredData(updatedMap))
         file.writeText(json)
     }
+
     internal suspend fun saveDataWithJson() = withContext(Dispatchers.IO) {
         if ("disableStored".isInFlag()) return@withContext
         val patch = context.filesDir.toPath().resolve(config.savePatch)
@@ -440,8 +431,7 @@ object CSB {
             if (screen.attribute?.contains(ScreenAttribute.Unstored) == true) continue
             val file = patch.resolve("csb_${screen.id}")
 
-            val jsonPackageList: List<SaveSettingPackage> = screen.settings.values
-                .flatten()
+            val jsonPackageList: List<SaveSettingPackage> = screen.settings.flatMap { it.settings }
                 .mapNotNull { it.saveLogic() }
 
             if (jsonPackageList.isNotEmpty()) {
@@ -476,9 +466,9 @@ object CSB {
                     continue
                 }
 
-                val jsonPackageList: List<SaveSettingPackage> = screen.settings.values
-                    .flatten()
-                    .mapNotNull { it.saveLogic() }
+                val jsonPackageList: List<SaveSettingPackage> =
+                    screen.settings.flatMap { it.settings }
+                        .mapNotNull { it.saveLogic() }
 
                 if (jsonPackageList.isNotEmpty()) {
                     updatedMap[screen.id] = jsonPackageList

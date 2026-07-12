@@ -47,8 +47,8 @@ internal object DefaultGroupTitle: GroupTitle("")
 
 fun GroupScope.customGroupTitle(
     title: String? = null
-): GroupTitle {
-    return title?.let { GroupTitle(it) } ?: DefaultGroupTitle
+): GroupTitle? {
+    return title?.let { GroupTitle(it) }
 }
 
 fun GroupScope.customGroupTitle(

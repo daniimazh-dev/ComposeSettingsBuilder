@@ -34,9 +34,8 @@ open class CustomScreen internal constructor(
 
     private var registeredSettings: MutableList<ComposeSetting<*>> = settings.toMutableList()
 
-    override var settings: Map<Group, List<ComposeSetting<*>>>
-        get() = mapOf(Group(id, null, false) to registeredSettings)
-        set(value) {}
+    override val settings: List<GroupSealed>
+        get() = listOf(Group(id, null, false, registeredSettings))
 
     inner class CustomScreenScope {
         @Composable

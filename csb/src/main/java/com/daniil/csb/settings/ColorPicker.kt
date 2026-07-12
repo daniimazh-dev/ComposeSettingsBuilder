@@ -345,21 +345,32 @@ private fun ColorPickerDialog(
                     .clip(MaterialTheme.shapes.small)
                     .verticalScroll(rememberScrollState()),
             ) {
-
                 FancyTabBar(
                     modifier = Modifier.fillMaxWidth(),
                     selectedIndex = pickerMode.ordinal,
                     entries = listOf(
                         FancyTabBarData(
                             id = PickerMode.Choice.name,
-                            name = "HSV",
-                            painterId = R.drawable.palette_icon
-                        ),
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceAround,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(painterResource(R.drawable.palette_icon), contentDescription = null)
+                                Text("HSV")
+                            }
+                          },
                         FancyTabBarData(
                             id = PickerMode.Editor.name,
-                            name = "RGB",
-                            painterId = R.drawable.edit_icon
-                        )
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceAround,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(painterResource(R.drawable.edit_icon), contentDescription = null)
+                                Text("RGB")
+                            }
+                        }
                     ),
                     onSelected = {
                         pickerMode = PickerMode.valueOf(it)

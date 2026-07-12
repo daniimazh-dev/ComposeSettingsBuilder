@@ -2,7 +2,6 @@ package com.daniil.csb
 
 
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -52,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.CustomScreen
+import com.daniil.csb.screens.FragmentedGroup
+import com.daniil.csb.screens.Group
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.settingui.LocalDebugData
@@ -60,7 +61,6 @@ import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.Material3
 import com.daniil.csb.styles.SettingsStyle
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 
 typealias ScreenTransitionSpec = AnimatedContentTransitionScope<Screen>.() -> ContentTransform
@@ -100,9 +100,10 @@ fun SettingsScreen(
         val lastNavigateAction by navigationModel.lastNavigateAction.collectAsState()
         val screenStack by navigationModel.screenStack.collectAsState()
         val screenHeap by navigationModel.screenHeap.collectAsState()
-        val enableBackHandler by remember {
+        val attributes = remember(currentScreen?.id) { currentScreen?.attribute ?: listOf() }
+        val enableBackHandler by remember(currentScreen?.id) {
             mutableStateOf(
-                ScreenAttribute.Primary !in (currentScreen?.attribute ?: listOf())
+                ScreenAttribute.Primary !in attributes
             )
         }
 
@@ -148,8 +149,7 @@ fun SettingsScreen(
 
                 val isDebugModeEnable =
                     remember(currentScreen) {
-                        currentScreen.attribute?.contains(ScreenAttribute.Debag) == true
-                                || "enableDebugMode".isInFlag()
+                        attributes.contains(ScreenAttribute.Debag) || "enableDebugMode".isInFlag()
                     }
 
                 val scrollFocusIndex by settingsScreenModel.scrollFocusIndex.collectAsState()
@@ -172,11 +172,10 @@ fun SettingsScreen(
 
                 val isPrimaryScreen = remember(currentScreen.id) {
                     if (currentScreen.attribute.isNullOrEmpty()) return@remember true
-                    ScreenAttribute.Primary !in currentScreen.attribute!!
+                    ScreenAttribute.Primary !in attributes
                 }
                 val isShowNavigation = remember(currentScreen.id) {
-                    ScreenAttribute.DisableNavigation !in (currentScreen.attribute
-                        ?: listOf()) && isPrimaryScreen
+                    ScreenAttribute.DisableNavigation !in attributes && isPrimaryScreen
                 }
                 val topbarHeight = 52.dp
                 if (isDebugModeEnable) {
@@ -223,44 +222,118 @@ fun SettingsScreen(
                             }
                         }
                     } else {
-                        settings.keys.forEach { group ->
+                        settings.forEach { group ->
                             if (isDebugModeEnable) {
                                 item {
                                     Box(
                                         modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
                                     ) {
                                         Text(
-                                            text = "Group id: ${group.id} | isHide: ${group.hide}",
+                                            text = "Group id: ${group.id} | isHide: ${group.hide.collectAsState().value}",
                                             style = MaterialTheme.typography.labelMedium
                                         )
                                     }
                                 }
                             }
-                            if (!group.hide) {
-                                val groupItems = settings[group] ?: return@forEach
-                                item(key = "group_title_${group.id}") {
-                                    group.groupTitle?.UI(Modifier.animateItem())
-                                }
-                                val first = groupItems.firstOrNull()?.id ?: return@forEach
-                                val last = groupItems.last().id
-                                items(items = groupItems, key = { it.id }) { setting ->
-
-                                    val groupPosition = when {
-                                        "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
-                                        last == first -> GroupItemClip.Full
-                                        setting.id == last -> GroupItemClip.Last
-                                        setting.id == first -> GroupItemClip.First
-                                        else -> GroupItemClip.None
-                                    }
-                                    val debugData = DebugData(
-                                        settingSimpleName = setting::class.simpleName,
-                                        settingId = setting.id,
-                                        currentValue = setting.value
-                                    ).takeIf { isDebugModeEnable }
-                                    CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                        CompositionLocalProvider(LocalDebugData provides debugData) {
-                                            setting.UI(modifier = Modifier.animateItem())
+                            if (!group.hide.value) {
+                                when (group) {
+                                    is FragmentedGroup -> {
+                                        item(key = "group_title_${group.id}") {
+                                            group.groupTitle?.UI(Modifier.animateItem())
                                         }
+                                        group.unfragmentedGroup?.also { gp ->
+                                            val first = gp.settings.firstOrNull()?.id ?: return@also
+                                            val last = gp.settings.last().id
+                                            items(gp.settings, key = { it.id }) { setting ->
+                                                val groupPosition = when {
+                                                    "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
+                                                    last == first || setting.id == first -> GroupItemClip.First
+                                                    else -> GroupItemClip.None
+                                                }
+                                                val debugData = DebugData(
+                                                    settingSimpleName = setting::class.simpleName,
+                                                    settingId = setting.id,
+                                                    currentValue = setting.value
+                                                ).takeIf { isDebugModeEnable }
+                                                CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                    CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                        setting.UI(modifier = Modifier.animateItem())
+                                                    }
+                                                }
+
+                                            }
+                                        }
+                                        item {
+                                            val fragment by group.currentFragment.collectAsState()
+
+                                            val first =
+                                                fragment.settings.firstOrNull()?.id ?: return@item
+                                            val last = fragment.settings.last().id
+                                            AnimatedContent(
+                                                modifier = Modifier
+                                                    .then(group.modifier)
+                                                    .padding(group.paddingValues),
+                                                targetState = fragment,
+                                            ) { fr ->
+                                                Column(
+                                                    verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
+                                                ) {
+                                                    fr.settings.forEach { setting ->
+
+                                                        val groupPosition = when {
+                                                            "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
+                                                            last == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.Full
+                                                            setting.id == last -> GroupItemClip.Last
+                                                            setting.id == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.First
+                                                            else -> GroupItemClip.None
+                                                        }
+                                                        val debugData = DebugData(
+                                                            settingSimpleName = setting::class.simpleName,
+                                                            settingId = setting.id,
+                                                            currentValue = setting.value
+                                                        ).takeIf { isDebugModeEnable }
+                                                        CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                            CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                                setting.UI(modifier = Modifier.animateItem())
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+
+                                        }
+                                    }
+
+                                    is Group -> {
+
+                                        val groupItems = group.settings
+                                        item(key = "group_title_${group.id}") {
+                                            group.groupTitle?.UI(Modifier.animateItem())
+                                        }
+                                        val first = groupItems.firstOrNull()?.id ?: return@forEach
+                                        val last = groupItems.last().id
+                                        items(items = groupItems, key = { it.id }) { setting ->
+
+                                            val groupPosition = when {
+                                                "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
+                                                last == first -> GroupItemClip.Full
+                                                setting.id == last -> GroupItemClip.Last
+                                                setting.id == first -> GroupItemClip.First
+                                                else -> GroupItemClip.None
+                                            }
+                                            val debugData = DebugData(
+                                                settingSimpleName = setting::class.simpleName,
+                                                settingId = setting.id,
+                                                currentValue = setting.value
+                                            ).takeIf { isDebugModeEnable }
+                                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                    setting.UI(modifier = Modifier.animateItem())
+                                                }
+                                            }
+                                        }
+
                                     }
                                 }
                             }

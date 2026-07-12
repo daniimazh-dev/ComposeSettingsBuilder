@@ -21,7 +21,7 @@ fun CSBStyle.Material3() = SettingsStyle(
     focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
     horizontalPadding = 16.dp,
     verticalPadding = 12.dp,
-    minHeight = 68.dp,
+    minHeight = 72.dp,
     itemSpacing = 4.dp,
     cardElevation = 2.dp,
 )

@@ -12,8 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -35,6 +36,7 @@ import com.daniil.csb.SettingsScreen
 import com.daniil.csb.local.LocalSettings
 import com.daniil.csb.local.rememberLocalSettingsController
 import com.daniil.csb.registerSettingScreens
+import com.daniil.csb.screens.FragmentController
 import com.daniil.csb.screens.customGroupTitle
 import com.daniil.csb.settings.ContentChoice
 import com.daniil.csb.settings.Select
@@ -45,7 +47,6 @@ import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.ClassicDark
 import com.daniil.csb.styles.ClassicLight
 import com.daniil.csb.styles.Material3
-import java.time.LocalTime
 
 @SuppressLint("RememberReturnType")
 @Preview(showBackground = true)
@@ -56,16 +57,22 @@ private fun Preview() {
     val isDarkTheme = CSB.getValue<Boolean>("dark_mode").collectAsState().value
     val colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()
     MaterialTheme(colorScheme = colorScheme) {
-        SettingsScreen(
-            modifier = Modifier.fillMaxSize(),
-            paddingValues = PaddingValues(16.dp),
-            style = when (style.id) {
-                "material" -> CSBStyle.Material3()
-                "bobble" -> CSBStyle.Bobble()
-                "classic" -> if (isDarkTheme) CSBStyle.ClassicDark else CSBStyle.ClassicLight
-                else -> CSBStyle.Material3()
-            }
-        )
+        Scaffold(
+            modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
+            SettingsScreen(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                paddingValues = PaddingValues(16.dp),
+                style = when (style.id) {
+                    "material" -> CSBStyle.Material3()
+                    "bobble" -> CSBStyle.Bobble()
+                    "classic" -> if (isDarkTheme) CSBStyle.ClassicDark else CSBStyle.ClassicLight
+                    else -> CSBStyle.Material3()
+                }
+            )
+        }
     }
 
 }
@@ -74,6 +81,7 @@ private fun Preview() {
 private fun initSettings() = registerSettingScreens {
     CSB.config {
 //        +"flag:disableStored"
+//        +"flag:enableDebugMode"
     }
     createScreen("Main") {
         title = "CSB Preview"
@@ -90,6 +98,60 @@ private fun initSettings() = registerSettingScreens {
             title = "Local settings"
             description = "Setting without centralized binding"
         }
+        group {
+            createTabBar("tab") {
+                tab("first")
+                tab("second")
+                tab("third")
+                tab("fourth")
+            }
+
+
+        }
+//        createTabBar("switch_tab", CSB.fragmentController("Fragment"))
+        fragmentedGroup("Fragment") {
+            groupTitle = customGroupTitle("Switch stiles")
+            initialFragmentId = "1"
+//            createInfo("switch_info") { description = "Switch styles" }
+            createTabBar("switch_tab", controller)
+            fragment("1") {
+                groupTitle = customGroupTitle("Default")
+                createSwitch("switch_style1") {
+                    title = "Switch 1"
+                    description = "Regular switch"
+                    uiMode = Switch.UIMode.Switch
+                    onChangeValue = { }
+                }
+            }
+            fragment("2") {
+                createSwitch("switch_style2") {
+                    title = "Switch 2"
+                    description = "Switch style RadioButton"
+                    uiMode = Switch.UIMode.RadioButton
+                }
+            }
+            fragment("3") {
+                createSwitch("switch_style3") {
+                    title = "Switch 3"
+                    description = "Switch style SquareRadioButton"
+                    uiMode = Switch.UIMode.SquareRadioButton
+                }
+            }
+            fragment("4") {
+                createSwitch("switch_style4") {
+                    title = "Switch 4"
+                    description = "Switch style CheckBox"
+                    uiMode = Switch.UIMode.CheckBox
+                }
+            }
+            fragment("5") {
+                createSwitch("switch_style5") {
+                    title = "Switch 5"
+                    description = "Switch style OnOffState"
+                    uiMode = Switch.UIMode.OnOffState
+                }
+            }
+        }
         group("preview") {
             groupTitle = customGroupTitle("CSB Preview")
             createRedirect("redirect") {
@@ -97,38 +159,7 @@ private fun initSettings() = registerSettingScreens {
                 description = "Go to another page"
                 redirectToId = "customScreen"
             }
-            createSwitch("switch_style1") {
-                defaultValue = true
-                title = "Switch 1"
-                description = "Regular switch"
-                uiMode = Switch.UIMode.Switch
-                onChangeValue = { state -> }
-            }
 
-            createSwitch("switch_style2") {
-                defaultValue = true
-                title = "Switch 2"
-                description = "Switch style RadioButton"
-                uiMode = Switch.UIMode.RadioButton
-            }
-            createSwitch("switch_style3") {
-                defaultValue = true
-                title = "Switch 3"
-                description = "Switch style SquareRadioButton"
-                uiMode = Switch.UIMode.SquareRadioButton
-            }
-            createSwitch("switch_style4") {
-                defaultValue = true
-                title = "Switch 4"
-                description = "Switch style CheckBox"
-                uiMode = Switch.UIMode.CheckBox
-            }
-            createSwitch("switch_style5") {
-                defaultValue = true
-                title = "Switch 5"
-                description = "Switch style OnOffState"
-                uiMode = Switch.UIMode.OnOffState
-            }
             createCounter("counter") {
                 title = "Counter"
                 description = "Counter in range for 0 to 100"
@@ -188,7 +219,7 @@ private fun initSettings() = registerSettingScreens {
                 uiMode = ContentChoice.UIMode.Row
                 option("Light_theme") { Light(it) }
                 option("Dark_theme") { Dark(it) }
-                defaultValueId = "Light_theme"
+                defaultValueId = "Dark_theme"
                 onChangeValue = { CSB.setValue("dark_mode", it == "Dark_theme") }
             }
             createColorPicker("color") {
@@ -260,7 +291,7 @@ private fun initSettings() = registerSettingScreens {
                 description = "Hide group \"CSB preview\""
                 defaultValue = false
                 onChangeValue = { state ->
-                    CSB.hideGroup("Main", "preview", state)
+                    CSB.groupController("preview").isShow(!state)
                 }
             }
             createSwitch("disable_preview") {
@@ -268,7 +299,7 @@ private fun initSettings() = registerSettingScreens {
                 description = "Disable all setting in group \"CSB preview\""
                 defaultValue = false
                 onChangeValue = { state ->
-                    CSB.disableGroup("Main", "preview", !state)
+                    CSB.groupController("preview").isDisable(!state)
                 }
             }
             createAction("reset_to_default") {
@@ -280,7 +311,7 @@ private fun initSettings() = registerSettingScreens {
                 action = { result ->
                     if (result) {
                         val settings =
-                            CSB.navigationModel.findScreenById("Main").settings.values.flatten()
+                            CSB.navigationModel.findScreenById("Main").settings.flatMap { it.settings }
                         settings.forEach { it.resetToDefault() }
                         CSB.navigateToGroup("preview")
                     }
@@ -301,13 +332,13 @@ private fun initSettings() = registerSettingScreens {
             }
             LocalSettings(
                 localController = localSettingsController,
-                scrollState = null
+                scrollState = null,
             )
         }
     }
     createAbstractScreen("Abstract") {
         createSwitch("dark_mode") {
-            defaultValue = false
+            defaultValue = true
         }
     }
 
@@ -317,12 +348,13 @@ private fun initSettings() = registerSettingScreens {
         createInfo("info_custom") {
             description = "This is custom screen"
         }
-        setContent {
-            AllSettings()
-            repeat(100) {
-                Text("item ${it + 1}")
-            }
-        }
+        useDefaultContent()
+//        setContent {
+//            AllSettings()
+//            repeat(100) {
+//                Text("item ${it + 1}")
+//            }
+//        }
     }
 }
 

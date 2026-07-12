@@ -50,7 +50,7 @@ open class LocalSettingsController() {
         data.scope()
 
         val screen = CustomScreen.Builder(id)
-            .registerSettings(*data.settings.map { it.second }.toTypedArray())
+            .registerSettings(*data.settings.toTypedArray())
             .setContent(data.content).build()
         return screen
     }
@@ -88,7 +88,7 @@ open class LocalSettingsController() {
 
     fun generateLocalSave(): LocalSave {
         val packages =
-            screen.settingsScreenModel.settings.value.values.flatten().map { it.saveLogic() }
+            screen.settingsScreenModel.settings.value.flatMap { it.settings }.map { it.saveLogic() }
         return LocalSave(packages)
     }
 

@@ -1,5 +1,6 @@
 package com.daniil.csb.local
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,9 +11,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.screens.CustomScreen
+import com.daniil.csb.screens.FragmentedGroup
+import com.daniil.csb.screens.Group
 import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.styles.CSBStyle
@@ -40,33 +45,65 @@ fun LocalSettings(
         ) {
             if (screen is CustomScreen) {
                 screen.Render()
+                return@Column
             }
 
-            val settings = screen.settings
-            for (group in screen.settings.keys) {
+            for (group in screen.settings) {
+                if (group.hide.collectAsState().value) continue
+                when (group) {
+                    is FragmentedGroup -> {
+                        val fragment by group.currentFragment.collectAsState()
+                        group.groupTitle?.UI(Modifier)
+                        val first = fragment.settings.firstOrNull()?.id ?: return@Column
+                        val last = fragment.settings.last().id
+                        AnimatedContent(
+                            modifier = Modifier
+                                .then(group.modifier)
+                                .padding(group.paddingValues),
+                            targetState = fragment
+                        ) { fr ->
+                            fr.settings.forEach { setting ->
+                                val groupPosition = when {
+                                    last == first -> GroupItemClip.Full
+                                    setting.id == last -> GroupItemClip.Last
+                                    setting.id == first -> GroupItemClip.First
+                                    else -> GroupItemClip.None
+                                }
+                                CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
 
-                if (!group.hide) {
-                    val groupItems = settings[group] ?: continue
+                                    setting.UI(modifier = Modifier)
 
-                    group.groupTitle?.UI()
-                    val first = groupItems.firstOrNull()?.id ?: continue
-                    val last = groupItems.last().id
-                    for (setting in groupItems) {
-                        val groupPosition = when {
-                            last == first -> GroupItemClip.Full
-                            setting.id == last -> GroupItemClip.Last
-                            setting.id == first -> GroupItemClip.First
-                            else -> GroupItemClip.None
-                        }
-                        CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                            setting.UI()
+                                }
+                            }
                         }
                     }
+
+                    is Group -> {
+
+                        val groupItems = group.settings
+                        group.groupTitle?.UI(Modifier)
+                        val first = groupItems.firstOrNull()?.id ?: return@Column
+                        val last = groupItems.last().id
+                        groupItems.forEach { setting ->
+
+                            val groupPosition = when {
+                                last == first -> GroupItemClip.Full
+                                setting.id == last -> GroupItemClip.Last
+                                setting.id == first -> GroupItemClip.First
+                                else -> GroupItemClip.None
+                            }
+
+                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+
+                                setting.UI(modifier = Modifier)
+
+                            }
+                        }
+
+                    }
                 }
+
             }
-
-
-
         }
     }
 

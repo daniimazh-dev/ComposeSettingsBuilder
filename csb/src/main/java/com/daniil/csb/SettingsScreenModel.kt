@@ -3,8 +3,9 @@ package com.daniil.csb
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.screens.GroupSealed
 import com.daniil.csb.screens.Screen
+import com.daniil.csb.settings.utils.ComposeSetting
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,7 +32,7 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
     fun focusToSetting(id: String) {
         val setting = findSettingById(id)
         viewModelScope.launch {
-            val index = settings.value.values.flatten().indexOfFirst { it.id == id }
+            val index = settings.value.flatMap { it.settings }.indexOfFirst { it.id == id }
             if (index == -1) error("Index of setting $id not found in screen ${currentScreen.value?.id}")
             _scrollFocusIndex.value = index
             delay(300.milliseconds)
@@ -46,7 +47,7 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
     }
     fun focusToGroup(groupId: String) {
         val group = findGroupById(groupId)
-        settings.value[group]?.firstOrNull()?.let { focusToSetting(it.id) }
+        settings.value.flatMap { it.settings }.firstOrNull()?.let { focusToSetting(it.id) }
      }
 
 
@@ -58,17 +59,17 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
 
     fun disableGroup(groupId: String, isDisable: Boolean) {
         val group = findGroupById(groupId)
-        settings.value[group]?.forEach { it.enabled(isDisable) }
+        settings.value.flatMap { it.settings }.forEach { it.enabled(isDisable) }
     }
 
 
     fun findSettingById(id: String): ComposeSetting<*> {
-        val settingsHeap = settings.value.values.flatten()
+        val settingsHeap = settings.value.flatMap { it.settings }
         val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found in screen ${currentScreen.value?.id}")
         return setting
     }
-    fun findGroupById(id: String): Screen.Group {
-        val group = settings.value.keys.find { it.id == id } ?: error("Group $id not found")
+    fun findGroupById(id: String): GroupSealed {
+        val group = settings.value.find { it.id == id } ?: error("Group $id not found")
         return group
     }
     private var _title = MutableStateFlow(screen.title)

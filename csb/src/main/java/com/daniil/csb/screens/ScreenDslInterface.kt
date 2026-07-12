@@ -30,7 +30,7 @@ interface ScreenDslInterface {
         val screen =
             CustomScreen.Builder(id).setTitle(data.title)
                 .setModifier(data.modifier)
-                .registerSettings(*data.settings.map { it.second }.toTypedArray())
+                .registerSettings(*data.settings.toTypedArray())
                 .setContent(data.content)
                 .setOnCloseScreen(onCloseScreen = data.onCloseScreen)
                 .setAttribute(screenAttribute.toList())
@@ -44,7 +44,7 @@ interface ScreenDslInterface {
         scope: CreateAbstractScreenScope.() -> Unit,
     ): AbstractScreen {
         val data = CreateAbstractScreenScope().apply(scope)
-        val screen = AbstractScreen.Builder(id).setContent(*data.settings.map { it.second }.toTypedArray()).build()
+        val screen = AbstractScreen.Builder(id).setContent(*data.settings.toTypedArray()).build()
         screen.register()
         return screen
     }

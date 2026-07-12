@@ -80,6 +80,7 @@ private fun Preview() {
 
 private fun initSettings() = registerSettingScreens {
     CSB.config {
+
 //        +"flag:disableStored"
 //        +"flag:enableDebugMode"
     }

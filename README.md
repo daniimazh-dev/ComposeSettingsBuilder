@@ -18,7 +18,7 @@ Add the library to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.github.daniimazh-dev:csb:1.0.0")
+    implementation("io.github.daniimazh-dev:csb:1.0.1")
 }
 ```
 

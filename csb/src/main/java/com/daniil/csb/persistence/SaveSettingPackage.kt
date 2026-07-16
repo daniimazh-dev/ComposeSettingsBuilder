@@ -1,7 +1,6 @@
-package com.daniil.csb
+package com.daniil.csb.persistence
 
 import kotlinx.serialization.Serializable
-
 
 @Serializable
 sealed class SaveSettingPackage {
@@ -69,4 +68,3 @@ sealed class SaveSettingPackage {
 
 
 }
-

@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.screens.ContentConfiguredToken

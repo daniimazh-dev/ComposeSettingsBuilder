@@ -13,7 +13,7 @@ import androidx.compose.ui.res.painterResource
 import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.settings.utils.ComposeSetting

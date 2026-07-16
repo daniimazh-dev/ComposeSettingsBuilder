@@ -2,6 +2,7 @@ package com.daniil.csb.local
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.screens.CustomScreen
 import com.daniil.csb.screens.FragmentedGroup
@@ -41,7 +43,8 @@ fun LocalSettings(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(screen.paddingValues)
-                .then(scrollState?.let { Modifier.verticalScroll(it) } ?: Modifier)
+                .then(scrollState?.let { Modifier.verticalScroll(it) } ?: Modifier),
+            verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
         ) {
             if (screen is CustomScreen) {
                 screen.Render()

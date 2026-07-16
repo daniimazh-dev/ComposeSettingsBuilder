@@ -2,7 +2,7 @@ package com.daniil.csb.settings.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.daniil.csb.SaveSettingPackage
+import com.daniil.csb.persistence.SaveSettingPackage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.KSerializer

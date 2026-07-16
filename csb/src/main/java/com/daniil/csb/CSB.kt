@@ -13,9 +13,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.daniil.csb.local.SettingsSerializer
 import com.daniil.csb.persistence.CSBStoredData
+import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.screens.FragmentController
 import com.daniil.csb.screens.GroupController
-import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,13 +26,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import java.nio.file.Files
-import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.createDirectories
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import kotlin.io.path.bufferedReader
 
 object CSB {
     lateinit var config: CSBConfig

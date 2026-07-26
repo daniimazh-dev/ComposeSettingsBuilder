@@ -39,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -92,6 +93,7 @@ fun SettingsScreen(
     paddingValues: PaddingValues = PaddingValues.Zero,
     screenTransitionForward: ScreenTransitionSpec = defaultSettingsScreenTransitionSpecForward,
     screenTransitionBack: ScreenTransitionSpec = defaultSettingsScreenTransitionSpecBack,
+    topBarColor: Color = MaterialTheme.colorScheme.background,
     style: SettingsStyle = CSBStyle.Material3()
 ) {
     CompositionLocalProvider(LocalSettingsStyle provides style) {
@@ -132,6 +134,7 @@ fun SettingsScreen(
                 val settingsScreenModel = currentScreen.settingsScreenModel
                 val title by settingsScreenModel.title.collectAsState()
                 val settings by settingsScreenModel.settings.collectAsState()
+                settings.forEach { it.hide.collectAsState() }
                 val lazyListState = settingsScreenModel.lazyListState
 
 
@@ -188,54 +191,56 @@ fun SettingsScreen(
                         )
                     }
                 }
+                key( settings.map { it.hide.collectAsState().value }) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
+                        state = lazyListState,
+                        userScrollEnabled = remember { !"disableScroll".isInFlag() }
+                    ) {
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
-                    state = lazyListState,
-                    userScrollEnabled = remember { !"disableScroll".isInFlag() }
-                ) {
-
-                    if (title == null && isShowNavigation || (title != null && !isCanScroll)) {
-                        item {
-                            Spacer(modifier = Modifier.height(topbarHeight))
-                        }
-                    }
-                    if (title != null && isCanScroll) {
-                        item(key = "big_title") {
-                            Spacer(Modifier.height(topbarHeight))
-                            Text(
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center,
-                                text = title.orEmpty(),
-                                style = MaterialTheme.typography.displaySmall
-                            )
-                        }
-                        item {
-                            Spacer(Modifier.height(20.dp))
-                        }
-                    }
-                    if (currentScreen is CustomScreen) {
-                        item {
-                            Column(modifier = Modifier) {
-                                currentScreen.Render()
+                        if (title == null && isShowNavigation || (title != null && !isCanScroll)) {
+                            item {
+                                Spacer(modifier = Modifier.height(topbarHeight))
                             }
                         }
-                    } else {
-                        settings.forEach { group ->
-                            if (isDebugModeEnable) {
-                                item {
-                                    Box(
-                                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
-                                    ) {
-                                        Text(
-                                            text = "Group id: ${group.id} | isHide: ${group.hide.collectAsState().value}",
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    }
+                        if (title != null && isCanScroll) {
+                            item(key = "big_title") {
+                                Spacer(Modifier.height(topbarHeight))
+                                Text(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center,
+                                    text = title.orEmpty(),
+                                    style = MaterialTheme.typography.displaySmall
+                                )
+                            }
+                            item {
+                                Spacer(Modifier.height(20.dp))
+                            }
+                        }
+                        if (currentScreen is CustomScreen) {
+                            item {
+                                Column(modifier = Modifier) {
+                                    currentScreen.Render()
                                 }
                             }
-                            if (!group.hide.value) {
+                        } else {
+                            settings.forEach { group ->
+                                if (group.hide.value) return@forEach
+                                item {
+
+                                    if (isDebugModeEnable) {
+                                        Box(
+                                            modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                                        ) {
+                                            Text(
+                                                text = "Group id: ${group.id} | isHide: ${group.hide.collectAsState().value}",
+                                                style = MaterialTheme.typography.labelMedium
+                                            )
+                                        }
+                                    }
+                                }
+
                                 when (group) {
                                     is FragmentedGroup -> {
                                         item(key = "group_title_${group.id}") {
@@ -306,7 +311,6 @@ fun SettingsScreen(
                                     }
 
                                     is Group -> {
-
                                         val groupItems = group.settings
                                         item(key = "group_title_${group.id}") {
                                             group.groupTitle?.UI(Modifier.animateItem())
@@ -314,7 +318,6 @@ fun SettingsScreen(
                                         val first = groupItems.firstOrNull()?.id ?: return@forEach
                                         val last = groupItems.last().id
                                         items(items = groupItems, key = { it.id }) { setting ->
-
                                             val groupPosition = when {
                                                 "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
                                                 last == first -> GroupItemClip.Full
@@ -345,7 +348,7 @@ fun SettingsScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(if (title == null) Color.Transparent else MaterialTheme.colorScheme.background)
+                        .background(if (title == null) Color.Transparent else topBarColor)
 //                        .animateContentSize()
                 ) {
 
@@ -359,7 +362,7 @@ fun SettingsScreen(
                             FilledIconButton(
                                 onClick = navigationModel::goBack,
                                 colors = IconButtonDefaults.iconButtonColors().copy(
-                                    containerColor = MaterialTheme.colorScheme.background
+                                    containerColor = topBarColor
                                 )
                             ) {
                                 Icon(

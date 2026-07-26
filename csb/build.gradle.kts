@@ -56,7 +56,7 @@ afterEvaluate {
 
                 groupId = "io.github.daniimazh-dev"
                 artifactId = "csb"
-                version = "1.0.1"
+                version = "1.0.2"
 
                 pom {
                     name.set("Compose Settings Builder")

@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -161,7 +162,9 @@ class CodeBlock internal constructor(
                                 }
                                 Text(
                                     text = code,
-                                    style = style.descriptionStyle.copy(fontSize = 10.sp)
+                                    style = style.descriptionStyle.copy(fontSize = 10.sp).copy(
+                                        fontFamily = FontFamily(Font(R.font.jetbrainsmono_regular))
+                                    )
                                 )
                             }
                         }

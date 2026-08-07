@@ -18,18 +18,19 @@ import kotlinx.serialization.KSerializer
 class Custom<T : Any> internal constructor(
     override var id: String,
     override val defaultValue: T,
-    override val title: String,
-    override val description: String?,
     enabled: Boolean = true,
     override var isSaveSetting: Boolean,
     val groupClip: GroupItemClip?,
     val onClick: () -> Unit,
+    val disableBackground: Boolean = false,
     val content: (@Composable () -> Unit)?,
     override val onChangeValue: (T) -> Unit,
     val serializer: KSerializer<T>? = null
 ) : ComposeSetting<T>() {
     private var _value = MutableStateFlow(this@Custom.defaultValue)
     override val value = _value.asStateFlow()
+    override val title: String = ""
+    override val description: String? = ""
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
@@ -59,10 +60,9 @@ class Custom<T : Any> internal constructor(
         var onChangeValue: (T) -> Unit = {}
         var groupClip: GroupItemClip? = null
         var onClick: () -> Unit = {}
-        var title: String? = null
-        var description: String? = null
         var enabled = true
         var isSaveSetting = true
+        var disableBackground = false
         var serializer: KSerializer<T>? = null
         fun setContent(content: @Composable () -> Unit): ContentConfiguredToken {
             this.content = content
@@ -82,7 +82,7 @@ class Custom<T : Any> internal constructor(
             data.builderScope()
             with(data) {
                 defaultValue ?: error("Default value must be not null in custom setting $id")
-                return Custom(id, defaultValue!!, title ?: id, description, enabled,  isSaveSetting, groupClip, onClick, content, onChangeValue, serializer)
+                return Custom(id, defaultValue!!, enabled,  isSaveSetting, groupClip, onClick, disableBackground, content, onChangeValue, serializer)
             }
         }
     }
@@ -98,6 +98,7 @@ class Custom<T : Any> internal constructor(
             isFocused = focusState,
             enabled = enabled,
             groupItemClip = position ?: groupClip,
+            disableBackground = disableBackground,
             onClick = onClick
         ) {
             content()

@@ -77,15 +77,18 @@ class MultiplySelect internal constructor(
         onChangeValue(newValue)
         _value.value = newValue
     }
-    @JvmName(name = "ChangeValueWitchId")
+    @JvmName(name = "ChangeValueWithId")
     fun changeValue(optionIds: List<String>) {
         val option = options.filter { it.id in optionIds }
+        onChangeValue(option)
         _value.value = option
     }
 
     fun changeValue(optionId: String) {
         val option = options.find { it.id == optionId } ?: return
-        _value.value = value.value + listOf(option)
+        val newValue = value.value + listOf(option)
+        onChangeValue(newValue)
+        _value.value = newValue
     }
 
 

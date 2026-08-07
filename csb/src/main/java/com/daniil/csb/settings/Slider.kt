@@ -52,7 +52,11 @@ class Slider internal constructor(
             value = defaultValue,
             steps = steps,
             valueRange = range,
-            onValueChangeFinished = { _value.value = sliderState.value.value }
+            onValueChangeFinished = {
+                val newValue = sliderState.value.value
+                _value.value = newValue
+                onChangeValue(newValue)
+            }
         )
     )
 
@@ -64,13 +68,17 @@ class Slider internal constructor(
     }
 
     override fun changeValue(newValue: Float) {
-        onChangeValue(newValue)
         _value.value = newValue
+        onChangeValue(newValue)
         sliderState.value = SliderState(
             value = newValue,
             steps = steps,
             valueRange = range,
-            onValueChangeFinished = { _value.value = sliderState.value.value }
+            onValueChangeFinished = {
+                val updatedValue = sliderState.value.value
+                _value.value = updatedValue
+                onChangeValue(updatedValue)
+            }
         )
     }
 
@@ -84,8 +92,8 @@ class Slider internal constructor(
         var description: String? = null
 
         var onChangeValue: (Float) -> Unit = {}
-        var startPointRange: String? = range.start.toString()
-        var endPointRange: String? = range.endInclusive.toString()
+        var startPointRange: String? = null
+        var endPointRange: String? = null
         var enabled = true
         var isSaveSetting = true
     }
@@ -101,8 +109,8 @@ class Slider internal constructor(
                 defaultValue,
                 range,
                 steps,
-                startPointRange,
-                endPointRange,
+                startPointRange ?: range.start.toString(),
+                endPointRange ?: range.endInclusive.toString(),
                 title ?: id,
                 description,
                 enabled,

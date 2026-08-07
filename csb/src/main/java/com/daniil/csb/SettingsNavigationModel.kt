@@ -26,7 +26,7 @@ class SettingsNavigationModel : ViewModel() {
         vararg screen: Screen
     ) {
         _screenHeap.value = screen.toList()
-        if (screenStack.value.isEmpty()) {
+        if (screenStack.value.isEmpty()) { // if restart Activity
             val primary = screenHeap.value.firstOrNull {
                 it.attribute?.contains(ScreenAttribute.Primary) == true ||
                 it.id == CSB.config.primaryScreenId
@@ -41,6 +41,8 @@ class SettingsNavigationModel : ViewModel() {
                     _currentScreen.value = targetScreen
                 } else error("Not found primary screen")
             } else {
+                val attribute = primary.attribute ?: listOf()
+                primary.attribute = attribute + listOf(ScreenAttribute.Primary)
                 _screenStack.value.add(primary)
                 _currentScreen.value = primary
             }

@@ -134,7 +134,6 @@ fun SettingsScreen(
                 val settingsScreenModel = currentScreen.settingsScreenModel
                 val title by settingsScreenModel.title.collectAsState()
                 val settings by settingsScreenModel.settings.collectAsState()
-                settings.forEach { it.hide.collectAsState() }
                 val lazyListState = settingsScreenModel.lazyListState
 
 
@@ -173,12 +172,8 @@ fun SettingsScreen(
                     }
                 }
 
-                val isPrimaryScreen = remember(currentScreen.id) {
-                    if (currentScreen.attribute.isNullOrEmpty()) return@remember true
-                    ScreenAttribute.Primary !in attributes
-                }
                 val isShowNavigation = remember(currentScreen.id) {
-                    ScreenAttribute.DisableNavigation !in attributes && isPrimaryScreen
+                    ScreenAttribute.DisableNavigation !in attributes && enableBackHandler
                 }
                 val topbarHeight = 52.dp
                 if (isDebugModeEnable) {
@@ -191,7 +186,7 @@ fun SettingsScreen(
                         )
                     }
                 }
-                key( settings.map { it.hide.collectAsState().value }) {
+//                key( settings.map { it.hide.collectAsState().value }) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
@@ -226,9 +221,7 @@ fun SettingsScreen(
                             }
                         } else {
                             settings.forEach { group ->
-                                if (group.hide.value) return@forEach
                                 item {
-
                                     if (isDebugModeEnable) {
                                         Box(
                                             modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
@@ -242,9 +235,12 @@ fun SettingsScreen(
                                 }
 
                                 when (group) {
+//                                    null -> {}
                                     is FragmentedGroup -> {
                                         item(key = "group_title_${group.id}") {
-                                            group.groupTitle?.UI(Modifier.animateItem())
+                                            if (!group.hide.collectAsState().value) {
+                                                group.groupTitle?.UI(Modifier.animateItem())
+                                            }
                                         }
                                         group.unfragmentedGroup?.also { gp ->
                                             val first = gp.settings.firstOrNull()?.id ?: return@also
@@ -260,15 +256,17 @@ fun SettingsScreen(
                                                     settingId = setting.id,
                                                     currentValue = setting.value
                                                 ).takeIf { isDebugModeEnable }
-                                                CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                                    CompositionLocalProvider(LocalDebugData provides debugData) {
-                                                        setting.UI(modifier = Modifier.animateItem())
+                                                if (!group.hide.collectAsState().value) {
+                                                    CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                        CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                            setting.UI(modifier = Modifier.animateItem())
+                                                        }
                                                     }
                                                 }
 
                                             }
                                         }
-                                        item {
+                                        item(key = group.id) {
                                             val fragment by group.currentFragment.collectAsState()
 
                                             val first =
@@ -297,9 +295,11 @@ fun SettingsScreen(
                                                             settingId = setting.id,
                                                             currentValue = setting.value
                                                         ).takeIf { isDebugModeEnable }
-                                                        CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                                            CompositionLocalProvider(LocalDebugData provides debugData) {
-                                                                setting.UI(modifier = Modifier.animateItem())
+                                                        if (!group.hide.collectAsState().value) {
+                                                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                                CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                                    setting.UI(modifier = Modifier.animateItem())
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -313,7 +313,9 @@ fun SettingsScreen(
                                     is Group -> {
                                         val groupItems = group.settings
                                         item(key = "group_title_${group.id}") {
-                                            group.groupTitle?.UI(Modifier.animateItem())
+                                            if (!group.hide.collectAsState().value) {
+                                                group.groupTitle?.UI(Modifier.animateItem())
+                                            }
                                         }
                                         val first = groupItems.firstOrNull()?.id ?: return@forEach
                                         val last = groupItems.last().id
@@ -330,9 +332,11 @@ fun SettingsScreen(
                                                 settingId = setting.id,
                                                 currentValue = setting.value
                                             ).takeIf { isDebugModeEnable }
-                                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                                CompositionLocalProvider(LocalDebugData provides debugData) {
-                                                    setting.UI(modifier = Modifier.animateItem())
+                                            if (!group.hide.collectAsState().value) {
+                                                CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                    CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                        setting.UI(modifier = Modifier.animateItem())
+                                                    }
                                                 }
                                             }
                                         }
@@ -342,7 +346,7 @@ fun SettingsScreen(
                             }
                         }
                     }
-                }
+
 
 
                 Box(
@@ -358,7 +362,7 @@ fun SettingsScreen(
                             .heightIn(min = topbarHeight),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (isPrimaryScreen && isShowNavigation) {
+                        if (isShowNavigation) {
                             FilledIconButton(
                                 onClick = navigationModel::goBack,
                                 colors = IconButtonDefaults.iconButtonColors().copy(

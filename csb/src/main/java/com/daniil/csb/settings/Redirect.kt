@@ -115,12 +115,13 @@ class Redirect internal constructor(
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         fun execute() {
+            val targetScreen = navigationModel.findScreenById(redirectToId)
             if (focus != null) {
                 navigationModel.navigateToSetting(focus)
             } else {
-                navigationModel.goToScreen(navigationModel.findScreenById(redirectToId))
+                navigationModel.goToScreen(targetScreen)
             }
-            onRedirect(value.value)
+            onRedirect(targetScreen)
         }
         DefaultSettingUI(
             modifier = modifier,

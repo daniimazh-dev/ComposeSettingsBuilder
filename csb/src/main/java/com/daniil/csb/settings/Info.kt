@@ -51,14 +51,14 @@ class Info internal constructor(
     class InfoBuilderScope() {
         var title: String? = null
         var description: String? = null
-        var icon: InfoIcon = InfoIconDefault.Massage
+        var icon: InfoIcon = InfoIconDefault.Message
         var enabled = true
         var onClick: () -> Unit = {}
     }
 
     object InfoIconDefault {
         val None = InfoIcon(null)
-        val Massage = InfoIcon(R.drawable.info_icon)
+        val Message = InfoIcon(R.drawable.info_icon)
         val Warning = InfoIcon(R.drawable.warning_icon, Color.Yellow, Color.Yellow)
         val Error = InfoIcon(R.drawable.error_icon, Color.Red, Color.Red)
         fun custom(res: Int?, tint: Color = Color.Unspecified, borderLight: Color = Color.Unspecified): InfoIcon {

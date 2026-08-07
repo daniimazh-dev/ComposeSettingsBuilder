@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.R
+import com.daniil.csb.registerSettingScreens
 import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.Material3

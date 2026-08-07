@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.daniil.csb.isInFlag
 import com.daniil.csb.screens.Screen
@@ -29,6 +30,7 @@ fun DefaultContainer(
     enabled: Boolean,
     paddingValues: PaddingValues = PaddingValues.Zero,
     onClick: (() -> Unit)?,
+    disableBackground: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val style = LocalSettingsStyle.current
@@ -61,7 +63,7 @@ fun DefaultContainer(
         GroupItemClip.Full -> baseShape
     }
 
-    val defaultColor = style.backgroundColor
+    val defaultColor = if (disableBackground) Color.Transparent else style.backgroundColor
     val focusColor = style.focusColor
 
 

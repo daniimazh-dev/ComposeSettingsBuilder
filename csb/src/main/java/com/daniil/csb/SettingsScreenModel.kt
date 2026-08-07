@@ -47,7 +47,7 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
     }
     fun focusToGroup(groupId: String) {
         val group = findGroupById(groupId)
-        settings.value.flatMap { it.settings }.firstOrNull()?.let { focusToSetting(it.id) }
+        group.settings.firstOrNull()?.let { focusToSetting(it.id) }
      }
 
 
@@ -59,7 +59,7 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
 
     fun disableGroup(groupId: String, isDisable: Boolean) {
         val group = findGroupById(groupId)
-        settings.value.flatMap { it.settings }.forEach { it.enabled(isDisable) }
+        group.settings.forEach { it.enabled(!isDisable) }
     }
 
 

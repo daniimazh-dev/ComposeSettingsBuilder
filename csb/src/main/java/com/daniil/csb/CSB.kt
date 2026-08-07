@@ -32,7 +32,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 object CSB {
-    lateinit var config: CSBConfig
+    var config: CSBConfig = defaultConfig()
     private var _applicationContext: Context? = null
     private val context: Context
         get() = _applicationContext
@@ -190,13 +190,14 @@ object CSB {
         }
     }
 
-    private fun defaultConfig() = with(ScreenBuilder()) {
-        config { /* Default param */ }
+    private fun defaultConfig(): CSBConfig = with(ScreenBuilder()) {
+        val scope = CSBConfigureScope().apply {
+            /* Default config */
+        }
+        return@with scope.createCSBConfig()
     }
 
     internal fun init(context: Context) {
-
-        defaultConfig()
         if (_applicationContext != null) return
         val app = context.applicationContext as Application
         _applicationContext = app
@@ -237,13 +238,13 @@ object CSB {
             val nullable: T = try {
                 null as T
             } catch (_: Throwable) {
-                val errorMassage = """
+                val errorMessage = """
                         Type "${T::class.qualifiedName}" not cast to null.
                         Setting "$id" not found but enabled "ignoreSettingNotFoundError" flag is set so return type is null.
                         But the requested is type: "${T::class.simpleName}"
                         Set the returned type to nullable: "${T::class.simpleName}?".
                     """.trimIndent()
-                error(errorMassage)
+                error(errorMessage)
             }
             return MutableStateFlow(nullable)
         }

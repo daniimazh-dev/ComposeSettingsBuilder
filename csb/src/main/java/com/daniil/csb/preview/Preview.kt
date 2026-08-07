@@ -5,10 +5,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,7 +32,6 @@ import com.daniil.csb.SettingsScreen
 import com.daniil.csb.local.LocalSettings
 import com.daniil.csb.local.rememberLocalSettingsController
 import com.daniil.csb.registerSettingScreens
-import com.daniil.csb.screens.customGroupTitle
 import com.daniil.csb.settings.ContentChoice
 import com.daniil.csb.settings.Info
 import com.daniil.csb.settings.Select
@@ -84,7 +80,7 @@ private fun previewInit() = registerSettingScreens {
     }
 
     createScreen("README") {
-        title = "Compose Settings Builder"
+        title = "Preview"
         group("Overview") {
             groupTitle = null
             createInfo("Description") {
@@ -492,7 +488,7 @@ private fun previewInit() = registerSettingScreens {
             createInfo("inf_p2") { title = "onClick: () -> Unit"; description = "Click handler." }
         }
         group("Icon Types") {
-            createInfo("demo_inf_m") { title = "Massage"; icon = Info.InfoIconDefault.Massage }
+            createInfo("demo_inf_m") { title = "Massage"; icon = Info.InfoIconDefault.Message }
             createInfo("demo_inf_w") { title = "Warning"; icon = Info.InfoIconDefault.Warning }
             createInfo("demo_inf_e") { title = "Error"; icon = Info.InfoIconDefault.Error }
         }

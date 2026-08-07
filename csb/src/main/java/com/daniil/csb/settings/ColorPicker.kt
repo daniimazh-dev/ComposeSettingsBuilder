@@ -164,7 +164,7 @@ class ColorPicker internal constructor(
                     isSaveSetting
                 )
 
-                else -> error("Not found redirect parameter")
+                else -> error("Default color not specified")
             }
             return res
         }

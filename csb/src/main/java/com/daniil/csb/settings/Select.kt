@@ -73,6 +73,7 @@ class Select(
 
     override fun changeValue(newValue: Option) {
         if (!options.contains(newValue)) return
+        onChangeValue(newValue)
         _value.value = newValue
     }
 

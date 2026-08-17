@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.CSB
 import com.daniil.csb.SettingsScreen
 import com.daniil.csb.local.LocalSettings
+import com.daniil.csb.local.rememberCustomLocalSettingsController
 import com.daniil.csb.local.rememberLocalSettingsController
 import com.daniil.csb.registerSettingScreens
 import com.daniil.csb.settings.ContentChoice
@@ -76,7 +77,27 @@ private fun Preview() {
 private fun previewInit() = registerSettingScreens {
     CSB.config {
         +"flag:disableStored"
-        primaryScreenId = "README"
+//        primaryScreenId = "README"
+    }
+    createCustomScreen("Test") {
+        setContent {
+            val custom = rememberLocalSettingsController() {
+                fragmentedGroup("tezt") {
+                    createTabBar("tabs") {
+                        controller = this@fragmentedGroup.controller
+                        tab("af")
+                        tab("bf")
+                    }
+                    fragment("af") {
+                        createInfo("A")
+                    }
+                    fragment("bf") {
+                        createInfo("b")
+                    }
+                }
+            }
+            LocalSettings(custom, scrollState = null)
+        }
     }
 
     createScreen("README") {

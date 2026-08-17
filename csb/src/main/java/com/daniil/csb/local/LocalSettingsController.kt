@@ -85,10 +85,15 @@ open class LocalSettingsController() {
         val setting = findById(id)
         setting.resetToDefault()
     }
+    fun resetAllToDefault(vararg ignoreId: String) {
+        getAllSettings().forEach { if (it.id !in ignoreId) it.resetToDefault()}
+    }
+
+    fun getAllSettings() = screen.settingsScreenModel.settings.value.flatMap { it.settings }
 
     fun generateLocalSave(): LocalSave {
         val packages =
-            screen.settingsScreenModel.settings.value.flatMap { it.settings }.map { it.saveLogic() }
+            getAllSettings().map { it.saveLogic() }
         return LocalSave(packages)
     }
 

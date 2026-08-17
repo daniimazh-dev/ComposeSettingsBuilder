@@ -40,7 +40,6 @@ fun LocalSettings(
     CompositionLocalProvider(LocalSettingsStyle provides style) {
         Column(
             modifier = modifier
-                .fillMaxSize()
                 .padding(paddingValues)
                 .padding(screen.paddingValues)
                 .then(scrollState?.let { Modifier.verticalScroll(it) } ?: Modifier),
@@ -59,13 +58,10 @@ fun LocalSettings(
                         group.groupTitle?.UI(Modifier)
                         val first = fragment.settings.firstOrNull()?.id ?: return@Column
                         val last = fragment.settings.last().id
-                        AnimatedContent(
-                            modifier = Modifier
-                                .then(group.modifier)
-                                .padding(group.paddingValues),
-                            targetState = fragment
-                        ) { fr ->
-                            fr.settings.forEach { setting ->
+                        group.unfragmentedGroup?.also { gp ->
+                            val first = gp.settings.firstOrNull()?.id ?: return@also
+                            val last = gp.settings.last().id
+                            gp.settings.forEach { setting ->
                                 val groupPosition = when {
                                     last == first -> GroupItemClip.Full
                                     setting.id == last -> GroupItemClip.Last
@@ -74,8 +70,32 @@ fun LocalSettings(
                                 }
                                 CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
 
-                                    setting.UI(modifier = Modifier)
+                                            setting.UI(modifier = Modifier)
 
+                                }
+                            }
+                        }
+                        AnimatedContent(
+                            modifier = Modifier
+                                .then(group.modifier)
+                                .padding(group.paddingValues),
+                            targetState = fragment
+                        ) { fr ->
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
+                            ) {
+                                fr.settings.forEach { setting ->
+                                    val groupPosition = when {
+                                        last == first -> GroupItemClip.Full
+                                        setting.id == last -> GroupItemClip.Last
+                                        setting.id == first -> GroupItemClip.First
+                                        else -> GroupItemClip.None
+                                    }
+                                    CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+
+                                        setting.UI(modifier = Modifier)
+
+                                    }
                                 }
                             }
                         }

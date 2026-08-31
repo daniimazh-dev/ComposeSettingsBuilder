@@ -1,14 +1,12 @@
 package com.daniil.csb.screens
 
-import com.daniil.csb.settings.utils.SettingBuilder
-
 interface ScreenDslInterface {
     fun createScreen(
         id: String,
         vararg screenAttribute: ScreenAttribute,
-        scope: CreateScreenScope.() -> Unit
+        scope: ScreenBuilderScope.() -> Unit
     ): Screen {
-        val data = CreateScreenScope().apply(scope)
+        val data = ScreenBuilderScope(id).apply(scope)
         val screen = Screen.Builder(id)
             .setTitle(data.title)
             .setModifier(data.modifier)
@@ -23,9 +21,9 @@ interface ScreenDslInterface {
     fun createCustomScreen(
         id: String,
         vararg screenAttribute: ScreenAttribute,
-        scope: CreateCustomScreenScope.() -> ContentConfiguredToken
+        scope: CustomBuilderScreenScope.() -> ContentConfiguredToken
     ): CustomScreen {
-        val data = CreateCustomScreenScope()
+        val data = CustomBuilderScreenScope(id)
         data.scope()
         val screen =
             CustomScreen.Builder(id).setTitle(data.title)
@@ -41,9 +39,9 @@ interface ScreenDslInterface {
 
     fun createAbstractScreen(
         id: String,
-        scope: CreateAbstractScreenScope.() -> Unit,
+        scope: AbstractScreenBuilderScope.() -> Unit,
     ): AbstractScreen {
-        val data = CreateAbstractScreenScope().apply(scope)
+        val data = AbstractScreenBuilderScope().apply(scope)
         val screen = AbstractScreen.Builder(id).setContent(*data.settings.toTypedArray()).build()
         screen.register()
         return screen

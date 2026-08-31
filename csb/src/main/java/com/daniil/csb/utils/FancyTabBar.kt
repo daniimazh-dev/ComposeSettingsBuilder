@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.daniil.csb.settingui.LocalSettingsStyle
 
 
 private fun ContentDrawScope.drawWithLayer(block: ContentDrawScope.() -> Unit) {
@@ -86,14 +87,11 @@ fun FancyTabBar(
     horizontal: Boolean = true,
     onSelected: (String) -> Unit
 ) {
-    if (entries.size < 2) return
-
-
     BoxWithConstraints(
         modifier
             .then(
                 if (horizontal) Modifier.height(52.dp)
-                else Modifier.width(52.dp)// можна винести параметром
+                else Modifier.width(52.dp)
             )
             .clip(MaterialTheme.shapes.large)
             .background(colors.bgColor)

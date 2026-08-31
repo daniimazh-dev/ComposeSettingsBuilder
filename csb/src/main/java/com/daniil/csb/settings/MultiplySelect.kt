@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +20,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -38,11 +43,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,9 +68,11 @@ class MultiplySelect internal constructor(
     override val title: String,
     val alertTitle: String,
     override val description: String?,
+    val uiMode: UIMode,
     enabled: Boolean = true,
-    override var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {},
-    override var isSaveSetting: Boolean
+    override var onChangeValue: (List<Option>) -> Unit = {},
+    override var isSaveSetting: Boolean,
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<List<MultiplySelect.Option>>() {
     private var _value = MutableStateFlow(this@MultiplySelect.defaultValue)
     override val value = _value.asStateFlow()
@@ -77,6 +89,7 @@ class MultiplySelect internal constructor(
         onChangeValue(newValue)
         _value.value = newValue
     }
+
     @JvmName(name = "ChangeValueWithId")
     fun changeValue(optionIds: List<String>) {
         val option = options.filter { it.id in optionIds }
@@ -92,7 +105,7 @@ class MultiplySelect internal constructor(
     }
 
 
-    override fun saveLogic(serializer: KSerializer<List<Option>>?): SaveSettingPackage? {
+    override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.StringListPackage(
             id = id,
@@ -101,12 +114,17 @@ class MultiplySelect internal constructor(
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<List<Option>>?) {
+    override fun loadLogic(pack: SaveSettingPackage) {
         if (isSaveSetting) changeValue(options.filter { it.id in pack.value as List<*> })
         enabled(pack.enable)
     }
 
-
+    enum class UIMode {
+        Dropdown,
+        Alert,
+        Chip,
+        List
+    }
 
     @Serializable
     data class Option(
@@ -117,44 +135,49 @@ class MultiplySelect internal constructor(
     }
 
     @CsbDslMarkers
-    class MultiplySelectBuilderScope() {
+    class MultiplySelectBuilderScope() : SettingDefaultScope() {
         var defaultValue: List<String> = emptyList()
         var options = mutableListOf<Option>()
-        var onChangeValue: (List<MultiplySelect.Option>) -> Unit = {}
+        var onChangeValue: (List<Option>) -> Unit = {}
         var title: String? = null
         var alertTitle = "Select multiple"
         var description: String? = null
-        var enabled = true
-        var isSaveSetting = true
+        var uiMode = UIMode.Alert
         fun option(id: String, title: String) {
             +Option(id, title)
         }
+
         operator fun Option.unaryPlus() {
             options.add(this)
         }
     }
 
-    class Builder(
-        val id: String,
-        builderScope: MultiplySelectBuilderScope.() -> Unit
-    ) {
-        val scope = MultiplySelectBuilderScope().apply(builderScope)
-        fun create(): MultiplySelect = with(scope) {
-            return MultiplySelect(
-                id,
-                options,
-                defaultValue = options.filter { it.id in defaultValue },
-                title ?: id,
-                alertTitle,
-                description,
-                enabled,
-                onChangeValue,
-                isSaveSetting
-            )
+    companion object : ComposeSettingInterface.Factory<MultiplySelect, MultiplySelectBuilderScope> {
+        override fun SettingDslInterface.create(
+            id: String,
+            scope: MultiplySelectBuilderScope.() -> Unit
+        ): SettingToken<MultiplySelect> {
+            val data = MultiplySelectBuilderScope().apply(scope)
+            return with(data) {
+                MultiplySelect(
+                    id,
+                    options,
+                    defaultValue = options.filter { it.id in defaultValue },
+                    title ?: id,
+                    alertTitle,
+                    description,
+                    uiMode,
+                    enabled,
+                    onChangeValue,
+                    isSaveSetting,
+                    customGrouping
+                ).register()
+            }
         }
     }
 
     override val focusState = MutableStateFlow(false)
+
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val style = LocalSettingsStyle.current
@@ -162,15 +185,113 @@ class MultiplySelect internal constructor(
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
         val selectList = retain { value.value.toMutableStateList() }
-
+        val isOpenMode = uiMode == UIMode.List || uiMode == UIMode.Chip
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
+            title = {
+                if (!title.isBlank()) Text(CSB.translator(title))
+                if (isOpenMode) description?.let {
+                    Text(text = CSB.translator(it), style = style.descriptionStyle)
+                }
+            },
+            description = {
+                when (uiMode) {
+                    UIMode.List -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            options.forEach { option ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(MaterialTheme.shapes.medium)
+                                        .clickable {
+                                            if (option in selectList) selectList.remove(option)
+                                            else selectList.add(option)
+                                        },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(8.dp)
+                                            .size(22.dp)
+                                            .border(
+                                                2.dp,
+                                                style.activeColor,
+                                                MaterialTheme.shapes.small
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row {
+                                            AnimatedVisibility(
+                                                visible = option.id in selectList.map { it.id },
+                                                exit = scaleOut(),
+                                                enter = scaleIn()
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(12.dp)
+                                                        .background(
+                                                            style.activeColor,
+                                                            RoundedCornerShape(3.dp)
+                                                        )
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = CSB.translator(option.title),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+
+                    }
+                    UIMode.Chip -> {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            options.forEach { option ->
+                                val isSelected = option.id in selectList.map { it.id }
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = {
+                                        if (option in selectList) selectList.remove(option)
+                                        else selectList.add(option)
+                                    },
+                                    label = {
+                                        Text(
+                                            text = CSB.translator(option.title),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    },
+                                    leadingIcon = if (isSelected) {
+                                        {
+                                            Icon(
+                                                painter = painterResource(R.drawable.check),
+                                                contentDescription = "Checked",
+                                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                            )
+                                        }
+                                    } else null
+                                )
+                            }
+                        }
+                    }
+                    else -> description?.let { Text(CSB.translator(it)) }
+                }
+            },
             display = {
+                if (isOpenMode) return@DefaultSettingUI
                 Row(
                     modifier = Modifier,
                     verticalAlignment = Alignment.CenterVertically
@@ -188,14 +309,49 @@ class MultiplySelect internal constructor(
                             contentDescription = "dropdown arrow"
                         )
                     }
+                    if (alertOpen && uiMode == UIMode.Dropdown) {
+                        DropdownMenu(
+                            expanded = alertOpen,
+                            shape = style.edgeGroupCorner,
+                            onDismissRequest = { alertOpen = false },
+                            content = {
+                                options.forEach { option ->
+                                    DropdownMenuItem(
+                                        trailingIcon = {
+                                            if (option in selectList) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.check),
+                                                    contentDescription = "Checked"
+                                                )
+                                            }
+                                        },
+                                        text = {
+                                            Text(
+                                                text = CSB.translator(option.title),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        },
+                                        onClick = {
+                                            if (option in selectList) {
+                                                selectList.remove(option)
+                                            } else {
+                                                selectList.add(option)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             },
-            onClick = { alertOpen = true }
+            onClick =  if (!isOpenMode) { { alertOpen = true } } else null
         )
-        if (alertOpen) {
+        if (alertOpen && uiMode == UIMode.Alert) {
             AlertDialog(
                 title = {
-                    if (!alertTitle.isBlank()) Text(alertTitle)
+                    if (!alertTitle.isBlank()) Text(CSB.translator(alertTitle))
                 },
                 text = {
 
@@ -252,7 +408,7 @@ class MultiplySelect internal constructor(
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = option.title,
+                                    text = CSB.translator(option.title),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )

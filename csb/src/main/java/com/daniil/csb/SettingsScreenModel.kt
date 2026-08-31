@@ -3,7 +3,7 @@ package com.daniil.csb
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.daniil.csb.screens.GroupSealed
+import com.daniil.csb.group.GroupSealed
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.settings.utils.ComposeSetting
 import kotlinx.coroutines.delay

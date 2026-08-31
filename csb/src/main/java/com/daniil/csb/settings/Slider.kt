@@ -20,9 +20,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultContainer
 import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +45,8 @@ class Slider internal constructor(
     override val description: String?,
     enabled: Boolean = true,
     override var onChangeValue: (Float) -> Unit = {},
-    override var isSaveSetting: Boolean = true
+    override var isSaveSetting: Boolean = true,
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<Float>() {
 
     private var _value = MutableStateFlow(defaultValue)
@@ -84,7 +90,7 @@ class Slider internal constructor(
 
 
     @CsbDslMarkers
-    class SliderBuilderScope() {
+    class SliderBuilderScope() : SettingDefaultScope() {
         var defaultValue = 0f
         var range: ClosedFloatingPointRange<Float> = 0f..1f
         var steps = 0
@@ -94,29 +100,30 @@ class Slider internal constructor(
         var onChangeValue: (Float) -> Unit = {}
         var startPointRange: String? = null
         var endPointRange: String? = null
-        var enabled = true
-        var isSaveSetting = true
     }
 
-    class Builder(
-        val id: String,
-        builderScope: SliderBuilderScope.() -> Unit = {}
-    ) {
-        val scope = SliderBuilderScope().apply(builderScope)
-        fun create(): Slider = with(scope) {
-            return Slider(
-                id,
-                defaultValue,
-                range,
-                steps,
-                startPointRange ?: range.start.toString(),
-                endPointRange ?: range.endInclusive.toString(),
-                title ?: id,
-                description,
-                enabled,
-                onChangeValue,
-                isSaveSetting
-            )
+    companion object : ComposeSettingInterface.Factory<Slider, SliderBuilderScope> {
+        override fun SettingDslInterface.create(
+            id: String,
+            scope: SliderBuilderScope.() -> Unit
+        ): SettingToken<Slider> {
+            val data = SliderBuilderScope().apply(scope)
+            return with(data) {
+                Slider(
+                    id,
+                    defaultValue,
+                    range,
+                    steps,
+                    startPointRange ?: range.start.toString(),
+                    endPointRange ?: range.endInclusive.toString(),
+                    title ?: id,
+                    description,
+                    enabled,
+                    onChangeValue,
+                    isSaveSetting,
+                    customGrouping
+                ).register()
+            }
         }
     }
 
@@ -134,8 +141,11 @@ class Slider internal constructor(
             enabled = enabled,
             groupItemClip = position,
             paddingValues =
-                PaddingValues(horizontal = style.horizontalPadding, vertical = style.verticalPadding),
-            onClick = {}
+                PaddingValues(
+                    horizontal = style.horizontalPadding,
+                    vertical = style.verticalPadding
+                ),
+            onClick = null
         ) {
             Column(
                 modifier = Modifier
@@ -143,16 +153,11 @@ class Slider internal constructor(
                     .heightIn(min = style.minHeight)
             ) {
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (!title.isBlank()) Text(text = title, style = style.titleStyle)
-                    val descriptionStyle = style.labelStyle
-                        .copy(color = MaterialTheme.colorScheme.outline)
-                    description?.let { Text(text = it, style = descriptionStyle) }
 
-                }
-
+                if (!title.isBlank()) Text(text = CSB.translator(title), style = style.titleStyle)
+                val descriptionStyle = style.labelStyle
+                    .copy(color = MaterialTheme.colorScheme.outline)
+                description?.let { Text(text = CSB.translator(it), style = descriptionStyle) }
 
                 Slider(
                     modifier = Modifier.fillMaxWidth(),
@@ -171,8 +176,8 @@ class Slider internal constructor(
                     ) {
                         val labelStile = MaterialTheme.typography.labelSmall
                             .copy(color = MaterialTheme.colorScheme.outline)
-                        Text(text = startPointRange, style = labelStile)
-                        Text(text = endPointRange, style = labelStile)
+                        Text(text = CSB.translator(startPointRange), style = labelStile)
+                        Text(text = CSB.translator(endPointRange), style = labelStile)
                     }
                 }
 

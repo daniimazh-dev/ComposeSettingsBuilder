@@ -4,11 +4,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.screens.AbstractScreen
-import com.daniil.csb.screens.FragmentController
-import com.daniil.csb.screens.FragmentedGroup
-import com.daniil.csb.screens.Group
-import com.daniil.csb.screens.GroupController
-import com.daniil.csb.screens.GroupSealed
+import com.daniil.csb.group.FragmentController
+import com.daniil.csb.group.FragmentedGroup
+import com.daniil.csb.group.Group
+import com.daniil.csb.group.GroupController
+import com.daniil.csb.group.GroupSealed
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.ScreenController
@@ -119,7 +119,9 @@ class SettingsNavigationModel : ViewModel() {
     }
     fun fragmentController(id: String): FragmentController {
         val fragmentedGroup = findGroupById(id)
-        return FragmentController((fragmentedGroup as? FragmentedGroup) ?: error("Group \"$id\" is not FragmentedGroup"))
+        val controller = FragmentController()
+        controller.bind((fragmentedGroup as? FragmentedGroup) ?: error("Group \"$id\" is not FragmentedGroup"))
+        return controller
     }
     fun groupController(id: String): GroupController {
         val fragmentedGroup = findGroupById(id)

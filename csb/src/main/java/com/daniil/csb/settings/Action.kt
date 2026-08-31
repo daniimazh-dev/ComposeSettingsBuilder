@@ -10,13 +10,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.String
 
 class Action internal constructor(
     override var id: String,
@@ -28,6 +32,7 @@ class Action internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<Unit>() {
     private var _value = MutableStateFlow(Unit)
     override val value = _value.asStateFlow()
@@ -48,34 +53,34 @@ class Action internal constructor(
     override val defaultValue: Unit = Unit
 
     @CsbDslMarkers
-    class ActionBuilderScope() {
+    class ActionBuilderScope(): SettingDefaultScope() {
         var requestAlert = false
-        var action: (result: Boolean) -> Unit = {}
+        var onAction: (result: Boolean) -> Unit = {}
         var icon: (@Composable () -> Unit)? = null
         var alertText: String? = null
         var alertTitle: String? = null
         var title: String? = null
         var description: String? = null
-        var enabled = true
+        @Deprecated("The Action setting dose not store any data. Changing the value to true is not necessary", level = DeprecationLevel.HIDDEN)
+        override var isSaveSetting: Boolean = false
     }
-
-    class Builder(
-        val id: String,
-        builderScope: ActionBuilderScope.() -> Unit
-    ) {
-        val scope = ActionBuilderScope().apply(builderScope)
-        fun create(): Action = with(scope) {
+    companion object : ComposeSettingInterface.Factory<Action, ActionBuilderScope> {
+        override fun SettingDslInterface.create(
+            id: String,
+            scope: ActionBuilderScope.() -> Unit
+        ): SettingToken<Action> = with(ActionBuilderScope().apply(scope)) {
             return Action(
                 id,
                 requestAlert,
-                action,
+                onAction,
                 alertTitle,
                 icon,
                 alertText,
                 title ?: id,
                 description,
                 enabled,
-            )
+                customGrouping
+            ).register()
         }
     }
 
@@ -90,10 +95,10 @@ class Action internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
+            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
+            description = { description?.let { Text(CSB.translator(it)) } },
             display = { icon?.invoke() },
             onClick = {
                 if (this@Action.requestAlert) {
@@ -106,10 +111,10 @@ class Action internal constructor(
         if (alertOpen && this@Action.requestAlert) {
             AlertDialog(
                 title = {
-                    if (alertTitle?.isBlank() == false) Text(alertTitle)
+                    if (alertTitle?.isBlank() == false) Text(CSB.translator(alertTitle))
                 },
                 text = {
-                    Text(text.orEmpty())
+                    Text(CSB.translator(text.orEmpty()))
                 },
                 confirmButton = {
                     TextButton(

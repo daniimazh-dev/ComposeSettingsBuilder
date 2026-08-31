@@ -25,5 +25,6 @@ class LocalCustomScreenBuilderScope internal constructor(
 
 @CsbDslMarkers
 class LocalScreenBuilderScope internal constructor(
-    val localSettingsController: LocalSettingsController
-) : ScreenBuilderScope()
+    val localSettingsController: LocalSettingsController,
+    id: String = "local_settings"
+) : ScreenBuilderScope(id)

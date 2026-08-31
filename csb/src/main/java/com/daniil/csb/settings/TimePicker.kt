@@ -24,10 +24,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.utils.LocalTimeSerializer
@@ -44,7 +49,8 @@ class TimePicker internal constructor(
     enabled: Boolean = true,
     val alertTitle: String,
     override var onChangeValue: (LocalTime) -> Unit = {},
-    override var isSaveSetting: Boolean = true
+    override var isSaveSetting: Boolean = true,
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<LocalTime>() {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
@@ -62,41 +68,39 @@ class TimePicker internal constructor(
         _value.value = newValue
     }
 
-    override fun saveLogic(serializer: KSerializer<LocalTime>?): SaveSettingPackage? {
-        return super.saveLogic(LocalTimeSerializer)
+    override fun saveLogic(): SaveSettingPackage? {
+        return saveJson(LocalTimeSerializer)
     }
 
-    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<LocalTime>?) {
-        super.loadLogic(pack, LocalTimeSerializer)
+    override fun loadLogic(pack: SaveSettingPackage) {
+       loadJson(pack, LocalTimeSerializer)
     }
 
     @CsbDslMarkers
-    class TimePickerBuilderScope() {
+    class TimePickerBuilderScope(): SettingDefaultScope() {
         var defaultValue = LocalTime.now()
         var title: String? = null
         var description: String? = null
         var alertTitle = "Select time"
-        var enabled = true
         var onChangeValue: (LocalTime) -> Unit = {}
-        var isSaveSetting = true
     }
 
-    class Builder(
-        val id: String,
-        builderScope: TimePickerBuilderScope.() -> Unit = {}
-    ) {
-        val scope = TimePickerBuilderScope().apply(builderScope)
-        fun create(): TimePicker = with(scope) {
-            return TimePicker(
-                id,
-                defaultValue,
-                title ?: id,
-                description,
-                enabled,
-                alertTitle,
-                onChangeValue,
-                isSaveSetting
-            )
+    companion object : ComposeSettingInterface.Factory<TimePicker, TimePickerBuilderScope> {
+        override fun SettingDslInterface.create(id: String, scope: TimePickerBuilderScope.() -> Unit): SettingToken<TimePicker> {
+            val data = TimePickerBuilderScope().apply(scope)
+            return with(data) {
+                TimePicker(
+                    id,
+                    defaultValue,
+                    title ?: id,
+                    description,
+                    enabled,
+                    alertTitle,
+                    onChangeValue,
+                    isSaveSetting,
+                    customGrouping
+                ).register()
+            }
         }
     }
 
@@ -120,10 +124,10 @@ class TimePicker internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
+            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
+            description = { description?.let { Text(CSB.translator(it)) } },
             display = {
                 TimePreview(value, is24Format = DateFormat.is24HourFormat(LocalContext.current))
             },
@@ -134,7 +138,7 @@ class TimePicker internal constructor(
         if (isAlertOpen) {
             AlertDialog(
                 title = {
-                    Text(alertTitle)
+                    Text(CSB.translator(alertTitle))
                 },
                 text = {
                     TimePicker(

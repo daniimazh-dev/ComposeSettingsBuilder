@@ -31,10 +31,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +53,8 @@ class Switch internal constructor(
     enabled: Boolean = true,
     override var onChangeValue: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean = true,
-    val uiMode: UIMode = UIMode.Switch
+    val uiMode: UIMode = UIMode.Switch,
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<Boolean>() {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
@@ -74,23 +80,20 @@ class Switch internal constructor(
     }
 
     @CsbDslMarkers
-    class SwitchBuilderScope() {
+    class SwitchBuilderScope(): SettingDefaultScope() {
         var defaultValue = false
         var title: String? = null
         var description: String? = null
-        var enabled = true
         var onChangeValue: (Boolean) -> Unit = {}
-        var isSaveSetting = true
         var uiMode = UIMode.Switch
     }
 
-    class Builder(
-        val id: String,
-        builderScope: SwitchBuilderScope.() -> Unit = {}
-    ) {
-        val scope = SwitchBuilderScope().apply(builderScope)
-        fun create(): Switch = with(scope) {
-            return Switch(id, defaultValue, title ?: id, description, enabled, onChangeValue,  isSaveSetting, uiMode)
+    companion object : ComposeSettingInterface.Factory<Switch, SwitchBuilderScope> {
+        override fun SettingDslInterface.create(id: String, scope: SwitchBuilderScope.() -> Unit): SettingToken<Switch> {
+            val data = SwitchBuilderScope().apply(scope)
+            return with(data) {
+                Switch(id, defaultValue, title ?: id, description, enabled, onChangeValue,  isSaveSetting, uiMode, customGrouping).register()
+            }
         }
     }
 
@@ -108,10 +111,10 @@ class Switch internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
+            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
+            description = { description?.let { Text(CSB.translator(it)) } },
             display = {
                 when (uiMode) {
                     UIMode.Switch -> {

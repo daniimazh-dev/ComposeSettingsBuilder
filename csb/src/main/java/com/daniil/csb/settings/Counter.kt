@@ -30,10 +30,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.R
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.delay
@@ -51,7 +56,8 @@ class Counter internal constructor(
     override val description: String?,
     enabled: Boolean = true,
     override var onChangeValue: (Int) -> Unit = {},
-    override var isSaveSetting: Boolean = true
+    override var isSaveSetting: Boolean = true,
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<Int>() {
 
     private var _value = MutableStateFlow(defaultValue)
@@ -71,7 +77,7 @@ class Counter internal constructor(
     }
 
     @CsbDslMarkers
-    class CounterBuilderScope() {
+    class CounterBuilderScope(): SettingDefaultScope() {
 
         var range: IntRange = 0..10
         var defaultValue = range.first
@@ -80,27 +86,25 @@ class Counter internal constructor(
         var description: String? = null
 
         var onChangeValue: (Int) -> Unit = {}
-        var enabled = true
-        var isSaveSetting = true
     }
 
-    class Builder(
-        val id: String,
-        builderScope: CounterBuilderScope.() -> Unit = {}
-    ) {
-        val scope = CounterBuilderScope().apply(builderScope)
-        fun create(): Counter = with(scope) {
-            return Counter(
-                id,
-                defaultValue,
-                range,
-                steps,
-                title ?: id,
-                description,
-                enabled,
-                onChangeValue,
-                isSaveSetting
-            )
+    companion object : ComposeSettingInterface.Factory<Counter, CounterBuilderScope> {
+        override fun SettingDslInterface.create(id: String, scope: CounterBuilderScope.() -> Unit): SettingToken<Counter> {
+            val data = CounterBuilderScope().apply(scope)
+            return with(data) {
+                Counter(
+                    id,
+                    defaultValue,
+                    range,
+                    steps,
+                    title ?: id,
+                    description,
+                    enabled,
+                    onChangeValue,
+                    isSaveSetting,
+                    customGrouping
+                ).register()
+            }
         }
     }
 
@@ -116,10 +120,10 @@ class Counter internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
+            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
+            description = { description?.let { Text(CSB.translator(it)) } },
             display = {
                 CounterImpl(value) {
                     if (enabled) {

@@ -60,11 +60,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.utils.FancyTabBar
@@ -83,7 +88,8 @@ class ColorPicker internal constructor(
     override val description: String?,
     enabled: Boolean = true,
     override var onChangeValue: (Color) -> Unit = {},
-    override var isSaveSetting: Boolean = true
+    override var isSaveSetting: Boolean = true,
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<Color>() {
     internal constructor(
         id: String,
@@ -92,9 +98,18 @@ class ColorPicker internal constructor(
         description: String?,
         enabled: Boolean = true,
         onChangeValue: (Color) -> Unit = {},
-        isSaveSetting: Boolean = true
-    ) : this(id, defaultValue = Color(defaultValueInt), title, description, enabled, onChangeValue, isSaveSetting)
-
+        isSaveSetting: Boolean = true,
+        customGrouping: GroupItemClip?
+    ) : this(
+        id,
+        defaultValue = Color(defaultValueInt),
+        title,
+        description,
+        enabled,
+        onChangeValue,
+        isSaveSetting,
+        customGrouping
+    )
 
     private var _value = MutableStateFlow(this@ColorPicker.defaultValue)
     override val value = _value.asStateFlow()
@@ -107,70 +122,71 @@ class ColorPicker internal constructor(
     }
 
     override fun changeValue(newValue: Color) {
-        onChangeValue(newValue)
         _value.value = newValue
+        onChangeValue(newValue)
     }
 
-    override fun saveLogic(serializer: KSerializer<Color>?): SaveSettingPackage? {
+    override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
-        return SaveSettingPackage.IntPackage(
+        return SaveSettingPackage.ColorPackage(
             id = id,
             enable = enabled.value,
-            value = value.value.toArgb()
+            value = value.value
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<Color>?) {
-        val data = pack.value as Int
+    override fun loadLogic(pack: SaveSettingPackage) {
+        val data = pack.value as Color
         enabled(pack.enable) // Enable
-        if (isSaveSetting) changeValue(Color(data))
+        if (isSaveSetting) changeValue(data)
     }
 
     @CsbDslMarkers
-    class ColorPickerBuilderScope() {
+    class ColorPickerBuilderScope() : SettingDefaultScope() {
         var defaultValue: Color? = null
         var defaultValueInt: Int? = null
         var onChangeValue: (Color) -> Unit = {}
         var title: String? = null
         var description: String? = null
-        var enabled = true
-        var isSaveSetting = true
     }
 
-    class Builder(
-        val id: String,
-        builderScope: ColorPickerBuilderScope.() -> Unit = {}
-    ) {
-        val scope = ColorPickerBuilderScope().apply(builderScope)
-        fun create(): ColorPicker = with(scope) {
-            val res = when {
-                defaultValueInt != null -> ColorPicker(
-                    id,
-                    defaultValueInt!!,
-                    title ?: id,
-                    description,
-                    enabled,
-                    onChangeValue,
-                    isSaveSetting
-                )
-
-                defaultValue != null -> ColorPicker(
-                    id,
-                    defaultValue!!,
-                    title ?: id,
-                    description,
-                    enabled,
-                    onChangeValue,
-                    isSaveSetting
-                )
-
-                else -> error("Default color not specified")
+    companion object : ComposeSettingInterface.Factory<ColorPicker, ColorPickerBuilderScope> {
+        override fun SettingDslInterface.create(
+            id: String,
+            scope: ColorPickerBuilderScope.() -> Unit
+        ): SettingToken<ColorPicker> {
+            val data = ColorPickerBuilderScope().apply(scope)
+            return with(data) {
+                val res = if (defaultValueInt != null) {
+                    ColorPicker(
+                        id,
+                        defaultValueInt!!,
+                        title ?: id,
+                        description,
+                        enabled,
+                        onChangeValue,
+                        isSaveSetting,
+                        customGrouping
+                    )
+                } else {
+                    ColorPicker(
+                        id,
+                        defaultValue ?: Color.Unspecified,
+                        title ?: id,
+                        description,
+                        enabled,
+                        onChangeValue,
+                        isSaveSetting,
+                        customGrouping
+                    )
+                }
+                res.register()
             }
-            return res
         }
     }
 
     override val focusState = MutableStateFlow(false)
+
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
@@ -181,10 +197,10 @@ class ColorPicker internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
+            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
+            description = { description?.let { Text(CSB.translator(it)) } },
             display = {
                 FilledIconButton(
                     enabled = enabled,
@@ -356,10 +372,13 @@ private fun ColorPickerDialog(
                                 horizontalArrangement = Arrangement.SpaceAround,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(painterResource(R.drawable.palette_icon), contentDescription = null)
+                                Icon(
+                                    painterResource(R.drawable.palette_icon),
+                                    contentDescription = null
+                                )
                                 Text("HSV")
                             }
-                          },
+                        },
                         FancyTabBarData(
                             id = PickerMode.Editor.name,
                         ) {
@@ -367,7 +386,10 @@ private fun ColorPickerDialog(
                                 horizontalArrangement = Arrangement.SpaceAround,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(painterResource(R.drawable.edit_icon), contentDescription = null)
+                                Icon(
+                                    painterResource(R.drawable.edit_icon),
+                                    contentDescription = null
+                                )
                                 Text("RGB")
                             }
                         }

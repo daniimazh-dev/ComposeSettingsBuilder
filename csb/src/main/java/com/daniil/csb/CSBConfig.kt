@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class CSBConfig(
     val savePatch: String,
     val configFlags: ArrayList<String>,
+    val debugMode: Boolean = false,
     val primaryScreenId: String?
 )
 internal fun String.isInFlag(): Boolean = this in CSB.getConfigFlags()

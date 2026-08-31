@@ -5,7 +5,6 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,11 +14,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.screens.CustomScreen
-import com.daniil.csb.screens.FragmentedGroup
-import com.daniil.csb.screens.Group
+import com.daniil.csb.group.FragmentedGroup
+import com.daniil.csb.group.Group
+import com.daniil.csb.group.title.GroupTitle
 import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.styles.CSBStyle
@@ -55,7 +54,7 @@ fun LocalSettings(
                 when (group) {
                     is FragmentedGroup -> {
                         val fragment by group.currentFragment.collectAsState()
-                        group.groupTitle?.UI(Modifier)
+                        group.groupTitle?.content?.let { it(GroupTitle.GroupTitleContentScope()) }
                         val first = fragment.settings.firstOrNull()?.id ?: return@Column
                         val last = fragment.settings.last().id
                         group.unfragmentedGroup?.also { gp ->
@@ -81,6 +80,7 @@ fun LocalSettings(
                                 .padding(group.paddingValues),
                             targetState = fragment
                         ) { fr ->
+                            if (fr.hide.collectAsState().value) return@AnimatedContent
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
                             ) {
@@ -104,7 +104,7 @@ fun LocalSettings(
                     is Group -> {
 
                         val groupItems = group.settings
-                        group.groupTitle?.UI(Modifier)
+                        group.groupTitle?.content?.let { it(GroupTitle.GroupTitleContentScope()) }
                         val first = groupItems.firstOrNull()?.id ?: return@Column
                         val last = groupItems.last().id
                         groupItems.forEach { setting ->
@@ -117,9 +117,7 @@ fun LocalSettings(
                             }
 
                             CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-
                                 setting.UI(modifier = Modifier)
-
                             }
                         }
 

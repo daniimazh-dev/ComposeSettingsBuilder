@@ -39,7 +39,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -52,10 +51,12 @@ import androidx.compose.ui.unit.dp
 import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.CustomScreen
-import com.daniil.csb.screens.FragmentedGroup
-import com.daniil.csb.screens.Group
+import com.daniil.csb.group.FragmentedGroup
+import com.daniil.csb.group.Group
+import com.daniil.csb.group.title.GroupTitle
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
+import com.daniil.csb.screens.title.ScreenTitle
 import com.daniil.csb.settingui.LocalDebugData
 import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
@@ -151,7 +152,7 @@ fun SettingsScreen(
 
                 val isDebugModeEnable =
                     remember(currentScreen) {
-                        attributes.contains(ScreenAttribute.Debag) || "enableDebugMode".isInFlag()
+                        attributes.contains(ScreenAttribute.Debag) || "enableDebugMode".isInFlag() || CSB.config.debugMode
                     }
 
                 val scrollFocusIndex by settingsScreenModel.scrollFocusIndex.collectAsState()
@@ -187,144 +188,75 @@ fun SettingsScreen(
                     }
                 }
 //                key( settings.map { it.hide.collectAsState().value }) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
-                        state = lazyListState,
-                        userScrollEnabled = remember { !"disableScroll".isInFlag() }
-                    ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
+                    state = lazyListState,
+                    userScrollEnabled = remember { !"disableScroll".isInFlag() }
+                ) {
 
-                        if (title == null && isShowNavigation || (title != null && !isCanScroll)) {
-                            item {
-                                Spacer(modifier = Modifier.height(topbarHeight))
-                            }
+                    if (title == null && isShowNavigation || (title != null && !isCanScroll)) {
+                        item {
+                            Spacer(modifier = Modifier.height(topbarHeight))
                         }
-                        if (title != null && isCanScroll) {
-                            item(key = "big_title") {
-                                Spacer(Modifier.height(topbarHeight))
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center,
-                                    text = title.orEmpty(),
-                                    style = MaterialTheme.typography.displaySmall
+                    }
+                    if (title != null && isCanScroll) {
+                        item(key = "big_title") {
+                            Spacer(Modifier.height(topbarHeight))
+                            val titleConfig = ScreenTitle.ScreenTitleConfig(
+                                alignment = Alignment.Center,
+                                style = MaterialTheme.typography.displaySmall,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2
+                            )
+                            title?.content?.let {
+                                it(
+                                    ScreenTitle.ScreenTitleContentScope(),
+                                    titleConfig
                                 )
                             }
-                            item {
-                                Spacer(Modifier.height(20.dp))
+                        }
+                        item {
+                            Spacer(Modifier.height(20.dp))
+                        }
+                    }
+                    if (currentScreen is CustomScreen) {
+                        item {
+                            Column(modifier = Modifier) {
+                                currentScreen.Render()
                             }
                         }
-                        if (currentScreen is CustomScreen) {
+                    } else {
+                        settings.forEach { group ->
                             item {
-                                Column(modifier = Modifier) {
-                                    currentScreen.Render()
+                                if (isDebugModeEnable) {
+                                    Box(
+                                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                                    ) {
+                                        Text(
+                                            text = "Group id: ${group.id} | isHide: ${group.hide.collectAsState().value}",
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
                                 }
                             }
-                        } else {
-                            settings.forEach { group ->
-                                item {
-                                    if (isDebugModeEnable) {
-                                        Box(
-                                            modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
-                                        ) {
-                                            Text(
-                                                text = "Group id: ${group.id} | isHide: ${group.hide.collectAsState().value}",
-                                                style = MaterialTheme.typography.labelMedium
-                                            )
+
+                            when (group) {
+                                is FragmentedGroup -> {
+                                    item(key = "group_title_${group.id}") {
+                                        if (!group.hide.collectAsState().value) {
+                                            group.groupTitle?.content?.let { it(GroupTitle.GroupTitleContentScope()) }
                                         }
                                     }
-                                }
-
-                                when (group) {
-//                                    null -> {}
-                                    is FragmentedGroup -> {
-                                        item(key = "group_title_${group.id}") {
-                                            if (!group.hide.collectAsState().value) {
-                                                group.groupTitle?.UI(Modifier.animateItem())
-                                            }
-                                        }
-                                        group.unfragmentedGroup?.also { gp ->
-                                            val first = gp.settings.firstOrNull()?.id ?: return@also
-                                            val last = gp.settings.last().id
-                                            items(gp.settings, key = { it.id }) { setting ->
-                                                val groupPosition = when {
-                                                    "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
-                                                    last == first || setting.id == first -> GroupItemClip.First
-                                                    else -> GroupItemClip.None
-                                                }
-                                                val debugData = DebugData(
-                                                    settingSimpleName = setting::class.simpleName,
-                                                    settingId = setting.id,
-                                                    currentValue = setting.value
-                                                ).takeIf { isDebugModeEnable }
-                                                if (!group.hide.collectAsState().value) {
-                                                    CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                                        CompositionLocalProvider(LocalDebugData provides debugData) {
-                                                            setting.UI(modifier = Modifier.animateItem())
-                                                        }
-                                                    }
-                                                }
-
-                                            }
-                                        }
-                                        item(key = group.id) {
-                                            val fragment by group.currentFragment.collectAsState()
-
-                                            val first =
-                                                fragment.settings.firstOrNull()?.id ?: return@item
-                                            val last = fragment.settings.last().id
-                                            AnimatedContent(
-                                                modifier = Modifier
-                                                    .then(group.modifier)
-                                                    .padding(group.paddingValues),
-                                                targetState = fragment,
-                                            ) { fr ->
-                                                Column(
-                                                    verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
-                                                ) {
-                                                    fr.settings.forEach { setting ->
-
-                                                        val groupPosition = when {
-                                                            "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
-                                                            last == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.Full
-                                                            setting.id == last -> GroupItemClip.Last
-                                                            setting.id == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.First
-                                                            else -> GroupItemClip.None
-                                                        }
-                                                        val debugData = DebugData(
-                                                            settingSimpleName = setting::class.simpleName,
-                                                            settingId = setting.id,
-                                                            currentValue = setting.value
-                                                        ).takeIf { isDebugModeEnable }
-                                                        if (!group.hide.collectAsState().value) {
-                                                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                                                CompositionLocalProvider(LocalDebugData provides debugData) {
-                                                                    setting.UI(modifier = Modifier.animateItem())
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
+                                    group.unfragmentedGroup?.also { gp ->
+                                        val first = gp.settings.firstOrNull()?.id ?: return@also
+                                        val last = gp.settings.last().id
+                                        items(gp.settings, key = { it.id }) { setting ->
 
 
-                                        }
-                                    }
-
-                                    is Group -> {
-                                        val groupItems = group.settings
-                                        item(key = "group_title_${group.id}") {
-                                            if (!group.hide.collectAsState().value) {
-                                                group.groupTitle?.UI(Modifier.animateItem())
-                                            }
-                                        }
-                                        val first = groupItems.firstOrNull()?.id ?: return@forEach
-                                        val last = groupItems.last().id
-                                        items(items = groupItems, key = { it.id }) { setting ->
                                             val groupPosition = when {
                                                 "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
-                                                last == first -> GroupItemClip.Full
-                                                setting.id == last -> GroupItemClip.Last
-                                                setting.id == first -> GroupItemClip.First
+                                                last == first || setting.id == first -> GroupItemClip.First
                                                 else -> GroupItemClip.None
                                             }
                                             val debugData = DebugData(
@@ -339,14 +271,90 @@ fun SettingsScreen(
                                                     }
                                                 }
                                             }
+
+                                        }
+                                    }
+                                    item(key = group.id) {
+                                        val fragment by group.currentFragment.collectAsState()
+
+                                        val first =
+                                            fragment.settings.firstOrNull()?.id ?: return@item
+                                        val last = fragment.settings.last().id
+                                        AnimatedContent(
+                                            modifier = Modifier
+                                                .then(group.modifier)
+                                                .padding(group.paddingValues),
+                                            targetState = fragment,
+                                        ) { fr ->
+                                            if (fr.hide.collectAsState().value) return@AnimatedContent
+                                            Column(
+                                                verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
+                                            ) {
+                                                fr.settings.forEach { setting ->
+
+                                                    val groupPosition = when {
+                                                        "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
+                                                        last == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.Full
+                                                        setting.id == last -> GroupItemClip.Last
+                                                        setting.id == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.First
+                                                        else -> GroupItemClip.None
+                                                    }
+                                                    val debugData = DebugData(
+                                                        settingSimpleName = setting::class.simpleName,
+                                                        settingId = setting.id,
+                                                        currentValue = setting.value
+                                                    ).takeIf { isDebugModeEnable }
+                                                    if (!group.hide.collectAsState().value) {
+                                                        CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                            CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                                setting.UI(modifier = Modifier.animateItem())
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
 
+
                                     }
+                                }
+
+                                is Group -> {
+                                    val groupItems = group.settings
+                                    item(key = "group_title_${group.id}") {
+                                        if (!group.hide.collectAsState().value) {
+                                            group.groupTitle?.content?.let { it(GroupTitle.GroupTitleContentScope()) }
+                                        }
+                                    }
+                                    val first = groupItems.firstOrNull()?.id ?: return@forEach
+                                    val last = groupItems.last().id
+                                    items(items = groupItems, key = { it.id }) { setting ->
+                                        val groupPosition = when {
+                                            "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
+                                            last == first -> GroupItemClip.Full
+                                            setting.id == last -> GroupItemClip.Last
+                                            setting.id == first -> GroupItemClip.First
+                                            else -> GroupItemClip.None
+                                        }
+                                        val debugData = DebugData(
+                                            settingSimpleName = setting::class.simpleName,
+                                            settingId = setting.id,
+                                            currentValue = setting.value
+                                        ).takeIf { isDebugModeEnable }
+                                        if (!group.hide.collectAsState().value) {
+                                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                    setting.UI(modifier = Modifier.animateItem())
+                                                }
+                                            }
+                                        }
+                                    }
+
                                 }
                             }
                         }
                     }
-
+                }
 
 
                 Box(
@@ -375,22 +383,23 @@ fun SettingsScreen(
                                 )
                             }
                         }
-                        AnimatedVisibility(
-                            visible = isShowTitleTopBar,
-                            enter = fadeIn(tween(200)),
-                            exit = fadeOut(tween(200))
-                        ) {
-                            Text(
-                                text = title.orEmpty(),
-                                style = MaterialTheme.typography.titleLarge
-                            )
+                        if (title != null) {
+                            AnimatedVisibility(
+                                visible = isShowTitleTopBar,
+                                enter = fadeIn(tween(200)),
+                                exit = fadeOut(tween(200))
+                            ) {
+                                title!!.content?.let {
+                                    it(
+                                        ScreenTitle.ScreenTitleContentScope(),
+                                        ScreenTitle.ScreenTitleConfig.Default
+                                    )
+                                }
+                            }
                         }
-
-
                     }
 
                 }
-
             }
         }
     }

@@ -1,8 +1,6 @@
 package com.daniil.csb.settings
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,12 +13,18 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.isInFlag
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.utils.clippedShape
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +36,7 @@ class Info internal constructor(
     enabled: Boolean = true,
     var icon: InfoIcon,
     var onClicked: () -> Unit = {},
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<Unit>() {
     private var _value = MutableStateFlow<Unit>(Unit)
     override val value = _value.asStateFlow()
@@ -48,12 +53,14 @@ class Info internal constructor(
     override fun changeValue(newValue: Unit) {}
 
     @CsbDslMarkers
-    class InfoBuilderScope() {
+    class InfoBuilderScope(): SettingDefaultScope() {
         var title: String? = null
         var description: String? = null
         var icon: InfoIcon = InfoIconDefault.Message
-        var enabled = true
         var onClick: () -> Unit = {}
+
+        @Deprecated("The Info setting dose not store any data. Changing the value to true is not necessary", level = DeprecationLevel.HIDDEN)
+        override var isSaveSetting: Boolean = false
     }
 
     object InfoIconDefault {
@@ -73,13 +80,12 @@ class Info internal constructor(
     )
 
 
-    class Builder(
-        val id: String,
-        builderScope: InfoBuilderScope.() -> Unit = {}
-    ) {
-        val scope = InfoBuilderScope().apply(builderScope)
-        fun create(): Info = with(scope) {
-            return Info(id, title.orEmpty(), description, enabled, icon, onClick)
+    companion object : ComposeSettingInterface.Factory<Info, InfoBuilderScope> {
+        override fun SettingDslInterface.create(id: String, scope: InfoBuilderScope.() -> Unit): SettingToken<Info> {
+            val data = InfoBuilderScope(); data.scope()
+            return with(data) {
+                Info(id, title.orEmpty(), description, enabled, icon, onClick, customGrouping).register()
+            }
         }
     }
 
@@ -92,47 +98,23 @@ class Info internal constructor(
         val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
+        val groupPosition = LocalGroupPosition.current
         val customStyle = if (title.isBlank()) style.copy(
-            verticalPadding = style.verticalPadding / 2,
-            minHeight = style.minHeight / 1.5f
+//            verticalPadding = style.verticalPadding / 2,
+            minHeight = style.minHeight / 2f
         ) else style
 
 
-
-        val baseShape = style.edgeGroupCorner as RoundedCornerShape
-        val gcs = style.containerCornerShape
-        val entries = if ("disableContainerGroupRound".isInFlag()) GroupItemClip.None else position
-
-        val groupClip = when (entries) {
-
-            GroupItemClip.First -> baseShape.copy(
-                bottomEnd = CornerSize(gcs),
-                bottomStart = CornerSize(gcs),
-            )
-
-            GroupItemClip.None -> baseShape.copy(
-                topStart = CornerSize(gcs),
-                topEnd = CornerSize(gcs),
-                bottomEnd = CornerSize(gcs),
-                bottomStart = CornerSize(gcs),
-            )
-
-            GroupItemClip.Last -> baseShape.copy(
-                topStart = CornerSize(gcs),
-                topEnd = CornerSize(gcs),
-            )
-
-            GroupItemClip.Full -> baseShape
-            else -> baseShape
-        }
         CompositionLocalProvider(LocalSettingsStyle provides customStyle) {
             DefaultSettingUI(
-                modifier = modifier.border(2.dp, this@Info.icon.borderLight, groupClip),
+                modifier = modifier
+                    then(if (icon.borderLight == Color.Unspecified) Modifier
+                else Modifier.border(2.dp, this@Info.icon.borderLight, (position ?: groupPosition).clippedShape(customStyle))),
                 isFocused = focusState,
-                groupItemClip = position,
+                groupItemClip = customGrouping ?: position,
                 enabled = enabled,
-                title = { if (!title.isBlank()) Text(title) },
-                description = { description?.let { Text(it) } },
+                title = { if (!title.isBlank()) Text(CSB.translator(title)) },
+                description = { description?.let { Text(CSB.translator(it)) } },
                 display = {
                     val res = remember { this@Info.icon.res }
                     if (res != null) {

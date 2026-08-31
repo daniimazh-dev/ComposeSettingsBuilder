@@ -1,7 +1,7 @@
-package com.daniil.csb.screens
+package com.daniil.csb.group
 
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.group.title.GroupTitle
 import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.settings.utils.SettingBuilder
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,18 +25,7 @@ class Group(
 }
 
 @CsbDslMarkers
-open class GroupScope() : SettingBuilder() {
-    var groupTitle: GroupTitle? = DefaultGroupTitle
-}
-
-class GroupController internal constructor(
-    private val group: Group,
-) {
-    val id = group.id
-    fun isShow(state: Boolean) { if (state) group.show() else group.hide() }
-    fun isDisable(state: Boolean) { getSetting().forEach { it.enabled(!state) }  }
-    fun resetToDefault(vararg ignoreId: String) {
-        getSetting().forEach { if (it.id !in ignoreId) it.resetToDefault() }
-    }
-    fun getSetting() = group.settings
+open class GroupScope(id: String) : SettingBuilder() {
+    var isHide: Boolean = false
+    open var groupTitle: GroupTitle? = GroupTitle.setText(id)
 }

@@ -35,7 +35,7 @@ open class LocalSettingsController() {
         id: String,
         scope: LocalScreenBuilderScope.() -> Unit
     ): Screen {
-        val data = LocalScreenBuilderScope(this).apply(scope)
+        val data = LocalScreenBuilderScope(this, id).apply(scope)
         val screen = Screen.Builder(id)
             .setGroupedContent(data.getData())
             .build()
@@ -55,12 +55,12 @@ open class LocalSettingsController() {
         return screen
     }
 
-    fun findById(id: String): ComposeSetting<*> {
+    fun findSettingById(id: String): ComposeSetting<*> {
         return screen.settingsScreenModel.findSettingById(id)
     }
 
     inline fun <reified T> getValue(id: String): StateFlow<T> {
-        val setting = findById(id)
+        val setting = findSettingById(id)
         if (setting.value.value is T) {
             @Suppress("UNCHECKED_CAST")
             return setting.value as StateFlow<T>
@@ -69,7 +69,7 @@ open class LocalSettingsController() {
     }
 
     inline fun <reified T> setValue(id: String, newValue: T) {
-        val setting = findById(id)
+        val setting = findSettingById(id)
 
         @Suppress("UNCHECKED_CAST")
         val target = setting as? ComposeSetting<T>
@@ -77,12 +77,12 @@ open class LocalSettingsController() {
     }
 
     fun enable(id: String, state: Boolean) {
-        val setting = findById(id)
+        val setting = findSettingById(id)
         setting.enabled(state)
     }
 
     fun resetToDefault(id: String) {
-        val setting = findById(id)
+        val setting = findSettingById(id)
         setting.resetToDefault()
     }
     fun resetAllToDefault(vararg ignoreId: String) {
@@ -101,7 +101,7 @@ open class LocalSettingsController() {
         val packages = localSave.savePackages
         packages.filterNotNull().forEach { pack ->
             try {
-                val setting = findById(pack.id)
+                val setting = findSettingById(pack.id)
                 setting.loadLogic(pack)
             } catch (_: Exception) {
             }

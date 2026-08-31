@@ -1,12 +1,11 @@
-package com.daniil.csb.screens
+package com.daniil.csb.group
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Modifier
 import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.group.title.GroupTitle
 import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.SettingBuilder
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -20,7 +19,7 @@ class FragmentedGroup(
     val onChangedGroup: (String) -> Unit = {},
     val unfragmentedGroup: Group? = null,
     val groups: Map<String, Group>,
-    private val controller: FragmentController? = null
+    private val controller: FragmentController
 ): GroupSealed() {
 
     private val _activeFragment = MutableStateFlow(groups[initialActive]!!.id)
@@ -28,11 +27,11 @@ class FragmentedGroup(
     val currentFragment = MutableStateFlow<Group>(groups[activeFragmentId.value]!!)
 
     init {
-        controller?.bind(this)
+        controller.bind(this)
     }
     fun changeFragment(key: String) {
         _activeFragment.value = key
-        controller?.updateId(key)
+        controller.updateCurrentFragmentId(key)
         currentFragment.update {
             onChangedGroup(key)
             groups[key]
@@ -49,12 +48,10 @@ class FragmentedGroup(
 }
 
 @CsbDslMarkers
-class FragmentScope() : GroupScope() {
-//    var groupTitle: GroupTitle? = DefaultGroupTitle
-}
+class FragmentScope(id: String) : GroupScope(id)
 
 @CsbDslMarkers
-class FragmentedScopeBuilder(): GroupScope() {
+class FragmentedScopeBuilder(id: String): GroupScope(id) {
     val fragmentsHeap: MutableMap<String, Group> = mutableMapOf()
     var onChangeFragment: (String) -> Unit = {}
     var initialFragmentId: String? = null
@@ -70,14 +67,19 @@ class FragmentedScopeBuilder(): GroupScope() {
         set(value) { _controller = value }
 
     fun fragment(id: String, fragmentedScope: FragmentScope.() -> Unit) {
-        val fragment = FragmentScope().apply(fragmentedScope)
-        val groupTitle = if (fragment.groupTitle is DefaultGroupTitle) GroupTitle(id) else fragment.groupTitle
-        fragmentsHeap[id] = Group(id, groupTitle, false, fragment.settings)
+        val fragment = FragmentScope(id).apply(fragmentedScope)
+        fragmentsHeap[id] = Group(id, fragment.groupTitle, fragment.isHide, fragment.settings)
     }
 
-    internal fun build(id: String, isHide: Boolean): FragmentedGroup {
-        val groupTitle = if (groupTitle is DefaultGroupTitle) null else groupTitle
-        val unfragmentedGroup = super.settings.takeIf { it.isNotEmpty() }?.let { Group("unfragmented_$id", null, false, super.settings) }
+    internal fun build(id: String): FragmentedGroup {
+        val unfragmentedGroup = super.settings.takeIf { it.isNotEmpty() }?.let {
+            Group(
+                "unfragmented_$id",
+                groupTitle,
+                false,
+                super.settings
+            )
+        }
         val fragmented = FragmentedGroup(
             id = id,
             isHide = isHide,
@@ -88,47 +90,8 @@ class FragmentedScopeBuilder(): GroupScope() {
             onChangedGroup = onChangeFragment,
             unfragmentedGroup = unfragmentedGroup,
             groups = fragmentsHeap,
-            controller = _controller
+            controller = controller
         )
         return fragmented
-    }
-}
-
-class FragmentController(fragmentedGroup: FragmentedGroup? = null) {
-    private var _fragmentedGroup: FragmentedGroup? = null
-
-    private val _groups = MutableStateFlow<Map<String, Group>>(emptyMap())
-    val groups: StateFlow<Map<String, Group>> = _groups.asStateFlow()
-
-    private val _currentFragmentId = MutableStateFlow("")
-    val currentFragmentId: StateFlow<String> = _currentFragmentId.asStateFlow()
-
-    init {
-        fragmentedGroup?.let { bind(it) }
-    }
-
-    internal val initialValue: String get() = _fragmentedGroup?.initialActive ?: ""
-
-    fun changeFragment(key: String) {
-        _fragmentedGroup?.changeFragment(key)
-        _currentFragmentId.value = key
-    }
-
-    fun isShow(state: Boolean) {
-        if (state) _fragmentedGroup?.show() else _fragmentedGroup?.hide()
-    }
-
-    fun isDisable(state: Boolean) {
-        _fragmentedGroup?.settings?.forEach { it.enabled(!state) }
-    }
-
-    internal fun bind(fragmentedGroup: FragmentedGroup) {
-        this._fragmentedGroup = fragmentedGroup
-        this._groups.value = fragmentedGroup.groups
-        this._currentFragmentId.value = fragmentedGroup.activeFragmentId.value
-    }
-
-    internal fun updateId(key: String) {
-        _currentFragmentId.value = key
     }
 }

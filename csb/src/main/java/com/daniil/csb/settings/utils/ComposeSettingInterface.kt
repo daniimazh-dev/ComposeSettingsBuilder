@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 
-interface ComposeSettingInterface <T> {
+interface ComposeSettingInterface<T> {
     val id: String
     val title: String
     val description: String?
@@ -16,24 +16,33 @@ interface ComposeSettingInterface <T> {
     val value: StateFlow<T>
     val enabled: StateFlow<Boolean>
     var isSaveSetting: Boolean
+    val customGrouping: GroupItemClip?
     val focusState: MutableStateFlow<Boolean>
     val onChangeValue: (T) -> Unit
 
 
-    fun saveOff() { isSaveSetting = false }
-    fun saveOn() { isSaveSetting = true }
+    fun saveOff() {
+        isSaveSetting = false
+    }
 
-    fun focus(state: Boolean) { focusState.value = state }
+    fun saveOn() {
+        isSaveSetting = true
+    }
+
+    fun focus(state: Boolean) {
+        focusState.value = state
+    }
 
     fun enabled(state: Boolean)
 
     fun changeValue(newValue: T)
     fun fetchValue(): StateFlow<T> = value
-    fun resetToDefault() { changeValue(defaultValue) }
+    fun resetToDefault() {
+        changeValue(defaultValue)
+    }
 
-    fun saveLogic(serializer: KSerializer<T>? = null): SaveSettingPackage? {
+    fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
-        if (serializer != null) return saveJson(serializer)
         val data = value.value ?: return null
         return when (data::class) {
             Unit::class -> SaveSettingPackage.UnitPackage(id, enabled.value)
@@ -44,19 +53,16 @@ interface ComposeSettingInterface <T> {
             else -> error("Save method for setting \"$id\" not found. Set serealizer paramerter")
         }
     }
-    fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<T>? = null) {
+
+    fun loadLogic(pack: SaveSettingPackage) {
         enabled(pack.enable) // Enable
         if (pack is SaveSettingPackage.UnitPackage) return // Pack is unit
-        if (pack is SaveSettingPackage.JsonPackage) {
-            if (serializer == null) error("Setting \"$id\" return JsonPackage but serializer for load not found")
-            loadJson(pack, serializer)
-        } else {
-            @Suppress("UNCHECKED_CAST")
-            if (isSaveSetting) changeValue(pack.value as T) // Set value
-        }
+        @Suppress("UNCHECKED_CAST")
+        if (isSaveSetting) changeValue(pack.value as T) // Set value
     }
 
-    fun saveJson(serializer: KSerializer<T>): SaveSettingPackage? {
+    fun saveJson(serializer: KSerializer<T>?): SaveSettingPackage? {
+        if (serializer == null) { return saveLogic() }
         if (!isSaveSetting) return null
         return SaveSettingPackage.JsonPackage(
             id = id,
@@ -65,20 +71,30 @@ interface ComposeSettingInterface <T> {
         )
     }
 
-    fun loadJson(pack: SaveSettingPackage, serializer: KSerializer<T>) {
+    fun loadJson(pack: SaveSettingPackage, serializer: KSerializer<T>?) {
+        if (serializer == null) { loadLogic(pack); return }
         enabled(pack.enable)
         if (pack is SaveSettingPackage.JsonPackage && isSaveSetting) {
             try {
                 val newValue = Json.decodeFromString(serializer, pack.value)
+                enabled(pack.enable)
                 changeValue(newValue)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
+    
     @Composable
     fun UI(
-        modifier: Modifier = Modifier.Companion,
+        modifier: Modifier = Modifier,
         position: GroupItemClip? = null,
     )
+    /** C - [ComposeSetting], S - BuilderScope of [ComposeSetting] */
+    interface Factory<C : ComposeSetting<*>, out S : SettingDefaultScope> {
+        fun SettingDslInterface.create(id: String, scope: S.() -> Unit): SettingToken<C>
+    }
+    interface FactoryWithToken<C : ComposeSetting<*>, out S : SettingDefaultScope, T: SettingConfiguredToken> {
+        fun SettingDslInterface.create(id: String, scope: S.() -> T): SettingToken<C>
+    }
 }

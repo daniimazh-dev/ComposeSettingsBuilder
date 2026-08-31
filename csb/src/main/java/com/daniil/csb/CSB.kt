@@ -5,18 +5,20 @@ import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import androidx.lifecycle.viewModelScope
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.screens.ScreenAttribute
-import com.daniil.csb.screens.ScreenBuilder
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
+import androidx.lifecycle.viewModelScope
 import com.daniil.csb.local.SettingsSerializer
 import com.daniil.csb.persistence.CSBStoredData
 import com.daniil.csb.persistence.SaveSettingPackage
-import com.daniil.csb.screens.FragmentController
-import com.daniil.csb.screens.GroupController
+import com.daniil.csb.group.FragmentController
+import com.daniil.csb.group.GroupController
+import com.daniil.csb.screens.ScreenAttribute
+import com.daniil.csb.screens.ScreenBuilder
 import com.daniil.csb.screens.ScreenController
+import com.daniil.csb.settings.utils.ComposeSetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,106 +28,41 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlin.io.path.exists
 import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 object CSB {
-    var config: CSBConfig = defaultConfig()
-    private var _applicationContext: Context? = null
-    private val context: Context
-        get() = _applicationContext
-            ?: error("CSB is not initialized. Ensure CSBInitializer is in your Manifest or call CSB.init(context).")
-
-    private val Context.csbDataStore: DataStore<CSBStoredData> by dataStore(
-        fileName = "csb_settings.json",
-        serializer = SettingsSerializer
-    )
-
-    private val globalScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    val navigationModel: SettingsNavigationModel by lazy {
-        SettingsNavigationModel()
-    }
-    lateinit var executeArray: ArrayList<String>
-
-    internal fun executeConfigAction() {
-        fun execute(expression: String) {
-            val ignoreFlag = expression.substringAfter("@") == "IgnoreFlags"
-            val oldEnableIgnore = isIgnoreFlags
-            if (ignoreFlag) isIgnoreFlags = true
-            try {
-                val pureExpression =
-                    if (ignoreFlag) expression.substringBeforeLast("@") else expression
-                val action = pureExpression.substringBefore('(')
-                val param = if (pureExpression.contains('(') && pureExpression.contains(')')) {
-                    pureExpression.substring(
-                        pureExpression.indexOf('(') + 1,
-                        pureExpression.indexOf(')')
-                    )
-                        .split(',').map { it.trim() }
-                } else emptyList()
-                try {
-                    when (action) {
-                        "setValue" -> {
-                            val setting = findSettingById(param[0]).getOrNull() ?: return
-                            val value = param.getOrElse(2) {
-                                setValue(setting.id, param[1])
-                                return
-                            }
-                            when (param[1]) {
-                                "Float", "float" -> setValue(setting.id, value.toFloat())
-                                "Long", "long" -> setValue(setting.id, value.toLong())
-                                "Boolean", "bool" -> setValue(setting.id, value.toBoolean())
-                                "Int", "int" -> setValue(setting.id, value.toInt())
-                                else -> setValue(setting.id, value)
-                            }
-                        }
-
-                        "saveData" -> navigationModel.viewModelScope.launch { save() }
-                        "loadData" -> load()
-                        "resetToDefault" -> resetToDefault(param[0])
-                        "resetAllToDefaults" -> resetAllSettingsToDefault()
-                        "storedMode" -> storedMode(param[0], param[1].toBoolean())
-                        "navigateToSetting" -> navigateToSetting(param[0])
-                        "enable" -> enable(param[0], param[1].toBoolean())
-                        "navigateToScreen" -> navigateToScreen(param[0])
-                        "navigateToGroup" -> navigateToGroup(param[0])
-                        "disableGroup" -> groupController(param[0]).isDisable(param[1].toBoolean())
-                        "hideGroup" -> groupController(param[0]).isShow(!param[1].toBoolean())
-                        else -> error("Action \"$action\" not found")
-                    }
-                } catch (_: IndexOutOfBoundsException) {
-                }
-            } finally {
-                isIgnoreFlags = oldEnableIgnore
-            }
-        }
-
-        executeArray.forEach { execute(it) }
-    }
-
+    private const val DEFAULT_PATH = "csb"
     private var isIgnoreFlags = false
 
-    fun config(scope: CSBConfigureScope.() -> Unit) {
-        val data = CSBConfigureScope().apply(scope)
-        this.config = data.createCSBConfig()
-        this.executeArray = data.executeArray
+    class DefaultCSBTranslator: CSBTranslator {
+        @Composable
+        override fun translate(key: String): String {
+            val prefix = "res:"
+            return if (key.startsWith(prefix)) {
+                val resId = key.substringAfter(prefix).toIntOrNull()
+                if (resId != null) stringResource(resId) else key
+            } else key
+        }
     }
+    internal var translator: CSBTranslator = DefaultCSBTranslator()
 
-    fun config(config: CSBConfig) {
-        this.config = config
-        this.executeArray
+    @Composable
+    internal fun translator(input: String): String {
+        return translator.translate(input)
     }
-
-    internal fun getConfigFlags(): ArrayList<String> =
-        if (isIgnoreFlags) arrayListOf() else config.configFlags
 
     class CSBConfigureScope internal constructor() {
         var savePatch = DEFAULT_PATH
         var primaryScreenId: String? = null
+        var debugMode: Boolean = false
+
+        var translator: CSBTranslator? = null
+
         private var configFlags: ArrayList<String>? = arrayListOf()
+
         internal val executeArray = arrayListOf<String>()
         fun flag(flag: String) {
             if (configFlags == null) return
@@ -134,6 +71,7 @@ object CSB {
                 configFlags!!.add(flag)
             } else error("Flag \"${flag}\" not found")
         }
+
 
         fun execute(expression: String) = executeArray.add(expression)
         fun execute(action: String, vararg param: String) {
@@ -181,10 +119,12 @@ object CSB {
         }
 
         internal fun createCSBConfig(): CSBConfig {
+            this.translator?.let { this@CSB.translator = it }
             val build = CSBConfig(
                 savePatch = savePatch,
                 configFlags = configFlags ?: arrayListOf(),
-                primaryScreenId = primaryScreenId
+                primaryScreenId = primaryScreenId,
+                debugMode = debugMode
             )
             return build
         }
@@ -197,12 +137,99 @@ object CSB {
         return@with scope.createCSBConfig()
     }
 
+    fun config(scope: CSBConfigureScope.() -> Unit) {
+        val data = CSBConfigureScope().apply(scope)
+        this.config = data.createCSBConfig()
+        this.executeArray = data.executeArray
+    }
+
+    fun config(config: CSBConfig) {
+        this.config = config
+    }
+
+    internal fun getConfigFlags(): ArrayList<String> =
+        if (isIgnoreFlags) arrayListOf() else config.configFlags
+
+    var config: CSBConfig = defaultConfig()
+    private var _applicationContext: Context? = null
+    private val context: Context
+        get() = _applicationContext
+            ?: error("CSB is not initialized. Ensure CSBInitializer is in your Manifest or call CSB.init(context).")
+
+    private val Context.csbDataStore: DataStore<CSBStoredData> by dataStore(
+        fileName = "csb_settings.json",
+        serializer = SettingsSerializer
+    )
+
+    private val globalScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    val navigationModel: SettingsNavigationModel by lazy {
+        SettingsNavigationModel()
+    }
+    var executeArray: ArrayList<String> = arrayListOf()
+        private set
+
+    fun executeNow(expression: String) {
+        val ignoreFlag = expression.substringAfter("@") == "IgnoreFlags"
+        val oldEnableIgnore = isIgnoreFlags
+        if (ignoreFlag) isIgnoreFlags = true
+        try {
+            val pureExpression =
+                if (ignoreFlag) expression.substringBeforeLast("@") else expression
+            val action = pureExpression.substringBefore('(')
+            val param = if (pureExpression.contains('(') && pureExpression.contains(')')) {
+                pureExpression.substring(
+                    pureExpression.indexOf('(') + 1,
+                    pureExpression.indexOf(')')
+                )
+                    .split(',').map { it.trim() }
+            } else emptyList()
+            try {
+                when (action) {
+                    "setValue" -> {
+                        val setting = findSettingById(param[0]).getOrNull() ?: return
+                        val value = param.getOrElse(2) {
+                            setValue(setting.id, param[1])
+                            return
+                        }
+                        when (param[1]) {
+                            "Float", "float" -> setValue(setting.id, value.toFloat())
+                            "Long", "long" -> setValue(setting.id, value.toLong())
+                            "Boolean", "bool" -> setValue(setting.id, value.toBoolean())
+                            "Int", "int" -> setValue(setting.id, value.toInt())
+                            else -> setValue(setting.id, value)
+                        }
+                    }
+                    "saveData" -> navigationModel.viewModelScope.launch { save() }
+                    "loadData" -> load()
+                    "resetToDefault" -> resetToDefault(param[0])
+                    "resetAllToDefaults" -> resetAllSettingsToDefault()
+                    "storedMode" -> storedMode(param[0], param[1].toBoolean())
+                    "navigateToSetting" -> navigateToSetting(param[0])
+                    "enable" -> enable(param[0], param[1].toBoolean())
+                    "navigateToScreen" -> navigateToScreen(param[0])
+                    "navigateToGroup" -> navigateToGroup(param[0])
+                    "disableGroup" -> groupController(param[0]).isDisable(param[1].toBoolean())
+                    "hideGroup" -> groupController(param[0]).isShow(!param[1].toBoolean())
+                    else -> error("Action \"$action\" not found")
+                }
+            } catch (_: IndexOutOfBoundsException) {
+            }
+        } finally {
+            isIgnoreFlags = oldEnableIgnore
+        }
+    }
+    internal fun executeConfigAction() {
+        executeArray.forEach { executeNow(it) }
+    }
+
+
     internal fun init(context: Context) {
         if (_applicationContext != null) return
-        val app = context.applicationContext as Application
-        _applicationContext = app
+        val app = context.applicationContext as? Application
+        _applicationContext = app ?: context.applicationContext ?: context
 
-        app.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+        app?.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityPaused(activity: Activity) {
                 globalScope.launch { save() }
             }
@@ -216,7 +243,7 @@ object CSB {
         })
     }
 
-    private const val DEFAULT_PATH = "csb"
+
     fun findSettingById(id: String): Result<ComposeSetting<*>> {
         return try {
             Result.success(navigationModel.findSettingById(id))
@@ -327,7 +354,6 @@ object CSB {
             when {
                 "useJsonSaveMethod".isInFlag() ->
                     if ("useOneFileJsonSaveMethod".isInFlag()) loadWithJsonOneFile() else loadDataWithJson()
-
                 else -> loadWithDataStore()
             }
         }
@@ -339,7 +365,6 @@ object CSB {
             when {
                 "useJsonSaveMethod".isInFlag() ->
                     if ("useOneFileJsonSaveMethod".isInFlag()) saveWithJsonOneFile() else saveDataWithJson()
-
                 else -> saveDataWithDataStore()
             }
         }

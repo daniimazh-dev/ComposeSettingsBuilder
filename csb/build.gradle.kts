@@ -56,7 +56,7 @@ afterEvaluate {
 
                 groupId = "io.github.daniimazh-dev"
                 artifactId = "csb"
-                version = "1.0.3"
+                version = "1.1.0"
 
                 pom {
                     name.set("Compose Settings Builder")
@@ -129,4 +129,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.datastore)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

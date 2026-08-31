@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,7 +21,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -38,16 +43,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingConfiguredToken
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 
 class Select(
@@ -57,9 +67,11 @@ class Select(
     override val title: String,
     val alertTitle: String,
     override val description: String?,
+    val uiMode: UIMode,
     enabled: Boolean = true,
     override var onChangeValue: (Option) -> Unit = {},
-    override var isSaveSetting: Boolean
+    override var isSaveSetting: Boolean,
+    override val customGrouping: GroupItemClip? = null
 ) : ComposeSetting<Select.Option>() {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
@@ -83,7 +95,7 @@ class Select(
         _value.value = option
     }
 
-    override fun saveLogic(serializer: KSerializer<Option>?): SaveSettingPackage? {
+    override fun saveLogic(): SaveSettingPackage? {
         if (!isSaveSetting) return null
         return SaveSettingPackage.StringPackage(
             id = id,
@@ -92,12 +104,17 @@ class Select(
         )
     }
 
-    override fun loadLogic(pack: SaveSettingPackage, serializer: KSerializer<Option>?) {
+    override fun loadLogic(pack: SaveSettingPackage) {
         if (isSaveSetting) changeValue(pack.value as String)
         enabled(pack.enable)
     }
 
-
+    enum class UIMode {
+        Alert,
+        List,
+        Chip,
+        Dropdown,
+    }
 
     @Serializable
     data class Option(
@@ -108,44 +125,47 @@ class Select(
     }
 
     @CsbDslMarkers
-    class SelectBuilderScope() {
+    class SelectBuilderScope() : SettingDefaultScope() {
         var options = mutableListOf<Option>()
         var defaultValueId: String? = null
         var title: String? = null
         var onChangeValue: (Option) -> Unit = {}
         var alertTitle = "Select item"
         var description: String? = null
-        var enabled = true
-        var isSaveSetting = true
-        fun option(id: String, title: String) {
-            +Option(id, title)
-        }
-        operator fun Option.unaryPlus() {
-            options.add(this)
+        var uiMode = UIMode.Alert
+        fun option(id: String, title: String): MoreThenZeroOptionToken {
+            options.add(Option(id, title))
+            return MoreThenZeroOptionToken()
         }
     }
-
-    class Builder(
-        val id: String,
-        builderScope: SelectBuilderScope.() -> Unit
-    ) {
-        val scope = SelectBuilderScope().apply(builderScope)
-        fun create(): Select = with(scope) {
-            return Select(
-                id,
-                options,
-                defaultValue = options.first { it.id == (defaultValueId ?: options[0].id) },
-                title ?: id,
-                alertTitle,
-                description,
-                enabled,
-                onChangeValue,
-                isSaveSetting
-            )
+    class MoreThenZeroOptionToken: SettingConfiguredToken()
+    companion object : ComposeSettingInterface.FactoryWithToken<Select, SelectBuilderScope, MoreThenZeroOptionToken> {
+        override fun SettingDslInterface.create(
+            id: String,
+            scope: SelectBuilderScope.() -> MoreThenZeroOptionToken
+        ): SettingToken<Select> {
+            val data = SelectBuilderScope()
+            data.scope()
+            return with(data) {
+                Select(
+                    id,
+                    options,
+                    defaultValue = options.first { it.id == (defaultValueId ?: options[0].id) },
+                    title ?: id,
+                    alertTitle,
+                    description,
+                    uiMode,
+                    enabled,
+                    onChangeValue,
+                    isSaveSetting,
+                    customGrouping
+                ).register()
+            }
         }
     }
 
     override val focusState = MutableStateFlow(false)
+
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val style = LocalSettingsStyle.current
@@ -155,14 +175,103 @@ class Select(
         val value by this.value.collectAsState()
         var selectId by retain(alertOpen) { mutableStateOf<String>(value.id) }
 
+        val isOpenMode = uiMode == UIMode.List || uiMode == UIMode.Chip
+
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
+            title = {
+                Column {
+                    if (!title.isBlank()) Text(CSB.translator(title))
+                    if (isOpenMode) description?.let {
+                        Text(CSB.translator(it), style = style.descriptionStyle)
+                    }
+                }
+            },
+            description = {
+                when (uiMode) {
+                    UIMode.List -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            options.forEach {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(MaterialTheme.shapes.medium)
+                                        .clickable { selectId = it.id },
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(8.dp)
+                                            .size(22.dp)
+                                            .border(2.dp, style.activeColor, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Row() {
+                                            AnimatedVisibility(
+                                                visible = it.id == selectId,
+                                                exit = scaleOut(),
+                                                enter = scaleIn()
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(12.dp)
+                                                        .background(style.activeColor, CircleShape)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = CSB.translator(it.title),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                            }
+                        }
+                    }
+                    UIMode.Chip -> {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            options.forEach {
+                                val isSelected = it.id == selectId
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { selectId = it.id },
+                                    label = {
+                                        Text(
+                                            text = CSB.translator(it.title),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    },
+                                    leadingIcon = if (isSelected) {
+                                        {
+                                            Icon(
+                                                painter = painterResource(R.drawable.check),
+                                                contentDescription = "Checked",
+                                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                            )
+                                        }
+                                    } else null
+                                )
+                            }
+                        }
+                    }
+                    else -> description?.let { Text(CSB.translator(it)) }
+                }
+            },
             display = {
+                if (isOpenMode) return@DefaultSettingUI
                 Row(
                     modifier = Modifier,
                     verticalAlignment = Alignment.CenterVertically
@@ -170,7 +279,7 @@ class Select(
                     Text(
                         modifier = Modifier
                             .widthIn(max = 112.dp),
-                        text = value.title,
+                        text = CSB.translator(value.title),
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                         style = style.titleStyle
@@ -189,14 +298,39 @@ class Select(
                             contentDescription = "dropdown arrow"
                         )
                     }
+                    if (alertOpen && uiMode == UIMode.Dropdown) {
+                        DropdownMenu(
+                            expanded = alertOpen,
+                            shape = style.edgeGroupCorner,
+                            onDismissRequest = { alertOpen = false },
+                            content = {
+                                options.forEach {
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text = CSB.translator(it.title),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        },
+                                        onClick = {
+                                            changeValue(it.id)
+                                            alertOpen = false
+                                        }
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             },
-            onClick = { alertOpen = true }
+            onClick = if (!isOpenMode) { { alertOpen = true } } else null
         )
-        if (alertOpen) {
+
+        if (alertOpen && uiMode == UIMode.Alert) {
             AlertDialog(
                 title = {
-                    if (!alertTitle.isBlank()) Text(alertTitle)
+                    if (!alertTitle.isBlank()) Text(CSB.translator(alertTitle))
                 },
                 text = {
 
@@ -217,12 +351,12 @@ class Select(
                                     },
                                 verticalAlignment = Alignment.CenterVertically,
 
-                            ) {
+                                ) {
                                 Box(
                                     modifier = Modifier
                                         .padding(8.dp)
                                         .size(22.dp)
-                                        .border(2.dp,  style.activeColor, CircleShape),
+                                        .border(2.dp, style.activeColor, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Row() {
@@ -234,14 +368,14 @@ class Select(
                                             Box(
                                                 modifier = Modifier
                                                     .size(12.dp)
-                                                    .background( style.activeColor, CircleShape)
+                                                    .background(style.activeColor, CircleShape)
                                             )
                                         }
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = it.title,
+                                    text = CSB.translator(it.title),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )

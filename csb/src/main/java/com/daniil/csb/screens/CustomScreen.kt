@@ -13,7 +13,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.DebugData
+import com.daniil.csb.group.Group
+import com.daniil.csb.group.GroupSealed
 import com.daniil.csb.screens.CustomScreen.CustomScreenScope
+import com.daniil.csb.screens.title.ScreenTitle
 import com.daniil.csb.settings.utils.ComposeSetting
 import com.daniil.csb.settings.utils.GroupItemClip
 import com.daniil.csb.settings.utils.SettingBuilder
@@ -22,7 +25,7 @@ import com.daniil.csb.settingui.LocalSettingsStyle
 
 open class CustomScreen internal constructor(
     override var id: String,
-    override var title: String?,
+    override var title: ScreenTitle?,
     settings: List<ComposeSetting<*>>,
     override var modifier: Modifier,
     override var paddingValues: PaddingValues,
@@ -99,7 +102,7 @@ open class CustomScreen internal constructor(
         private lateinit var content: @Composable CustomScreenScope.() -> Unit
         private var paddingValues = PaddingValues.Zero
         private var attribute: List<ScreenAttribute>? = null
-        private var title: String? = null
+        private var title: ScreenTitle? = null
         private var modifier: Modifier = Modifier
         private var onCloseScreen: () -> Unit = {}
 
@@ -107,7 +110,7 @@ open class CustomScreen internal constructor(
             this.builderSettings.addAll(items)
         }
 
-        fun setTitle(title: String?) = apply { this.title = title }
+        fun setTitle(title: ScreenTitle?) = apply { this.title = title }
         fun setModifier(modifier: Modifier) = apply { this.modifier = modifier }
         fun setOnCloseScreen(onCloseScreen: () -> Unit) = apply{ this.onCloseScreen = onCloseScreen }
         fun setContent(content: @Composable CustomScreenScope.() -> Unit) = apply {
@@ -137,12 +140,11 @@ open class CustomScreen internal constructor(
         scope.content()
     }
 }
-
 class ContentConfiguredToken internal constructor()
 @CsbDslMarkers
-open class CreateCustomScreenScope(): SettingBuilder() {
+open class CustomBuilderScreenScope(id: String): SettingBuilder() {
     var modifier: Modifier = Modifier
-    var title: String? = null
+    var title: ScreenTitle? = ScreenTitle.setText(id)
     var onCloseScreen: () -> Unit = {}
     var content: @Composable CustomScreenScope.() -> Unit  = { AllSettings() }
         private set

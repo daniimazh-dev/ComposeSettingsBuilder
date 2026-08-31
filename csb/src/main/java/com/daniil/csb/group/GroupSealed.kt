@@ -1,5 +1,6 @@
-package com.daniil.csb.screens
+package com.daniil.csb.group
 
+import com.daniil.csb.group.title.GroupTitle
 import com.daniil.csb.settings.utils.ComposeSetting
 import kotlinx.coroutines.flow.StateFlow
 

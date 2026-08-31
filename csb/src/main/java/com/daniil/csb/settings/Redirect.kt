@@ -1,6 +1,5 @@
 package com.daniil.csb.settings
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -13,75 +12,53 @@ import androidx.compose.ui.res.painterResource
 import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.utils.ComposeSettingInterface
 import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.utils.SettingConfiguredToken
+import com.daniil.csb.settings.utils.SettingDefaultScope
+import com.daniil.csb.settings.utils.SettingDslInterface
+import com.daniil.csb.settings.utils.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.KSerializer
 
 class Redirect internal constructor(
     override var id: String,
-    var redirectToId: String,
+    val redirectToId: String,
     val focus: String? = null,
     var showArrow: Boolean = true,
     override val title: String,
     override val description: String?,
     val labelIcon: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
-    var onRedirect: (Screen) -> Unit = {},
+    val onRedirect: (Screen) -> Unit = {},
     val navigationModel: SettingsNavigationModel = CSB.navigationModel,
-): ComposeSetting<Screen>() {
-    internal constructor(
-        id: String,
-        redirectTo: Screen,
-        focus: String? = null,
-        showArrow: Boolean = true,
-        title: String,
-        description: String?,
-        labelIcon: (@Composable () -> Unit)? = null,
-        enabled: Boolean = true,
-        onRedirect: (Screen) -> Unit = {},
-        navigationModel: SettingsNavigationModel = CSB.navigationModel,
-    ): this(id, redirectTo.id,  focus, showArrow, title, description, labelIcon, enabled, onRedirect, navigationModel)
+    override val customGrouping: GroupItemClip? = null
+): ComposeSetting<String>() {
+    override val defaultValue: String = redirectToId
 
-    override val defaultValue: Screen = Screen(
-        id = "", settings = listOf(),
-        title = "",
-        modifier = Modifier,
-        paddingValues = PaddingValues.Zero,
-    )
     private val _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
 
     private var _enable = MutableStateFlow(enabled)
     override val enabled = _enable.asStateFlow()
-    override val onChangeValue: (Screen) -> Unit
-        get() = { onRedirect(value.value) }
+    override val onChangeValue: (String) -> Unit
+        get() = { onRedirect(navigationModel.findScreenById(value.value)) }
     override var isSaveSetting: Boolean = false
 
     override fun enabled(state: Boolean) { _enable.value = state }
-    override fun changeValue(newValue: Screen) { redirectToId = newValue.id }
-    fun changeValue(newValue: String) { redirectToId = newValue }
-    override fun fetchValue(): StateFlow<Screen> = MutableStateFlow(navigationModel.findScreenById(redirectToId))
-    override fun resetToDefault() {}
-
-    override fun saveLogic(serializer: KSerializer<Screen>?): SaveSettingPackage {
-        return SaveSettingPackage.UnitPackage(id, enabled.value)
-    }
-
-
+    override fun changeValue(newValue: String) { _value.value = newValue }
+    fun changeValue(newValue: Screen) { _value.value = newValue.id }
 
     @CsbDslMarkers
-    class RedirectBuilderScope() {
-        var redirectTo: Screen? = null
+    class RedirectBuilderScope(): SettingDefaultScope() {
         var redirectToId: String? = null
+            private set
         var focus: String? = null
         var showArrow: Boolean = true
         var onRedirect: (Screen) -> Unit = {}
@@ -89,21 +66,30 @@ class Redirect internal constructor(
         var title: String? = null
         var description: String? = null
         var labelIcon: (@Composable () -> Unit)? = null
-        var enabled = true
-        var isSaveSetting = true
+        @Deprecated("The Redirect setting dose not store any data. Changing the value to true is not necessary", level = DeprecationLevel.HIDDEN)
+        override var isSaveSetting: Boolean = false
+        fun setRedirect(redirectToId: String): InitRedirectToken {
+            this.redirectToId = redirectToId
+            return InitRedirectToken()
+        }
+        fun setRedirect(redirectToScreen: Screen): InitRedirectToken {
+            this.redirectToId = redirectToScreen.id
+            return InitRedirectToken()
+        }
+        fun setEmptyRedirect(): InitRedirectToken {
+            redirectToId = ""
+            return InitRedirectToken()
+        }
     }
-    class Builder(
-        val id: String,
-        builderScope: RedirectBuilderScope.() -> Unit
-    ) {
-        val scope = RedirectBuilderScope().apply(builderScope)
-        fun create(): Redirect = with(scope) {
-            val res = when {
-                redirectToId != null -> Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, labelIcon, enabled, onRedirect, navigationModel)
-                redirectTo != null -> Redirect(id, redirectTo!!, focus, showArrow, title ?: id, description, labelIcon, enabled, onRedirect, navigationModel)
-                else -> error("Not found redirect parameter")
-            }
-            return res
+    class InitRedirectToken: SettingConfiguredToken()
+
+    companion object : ComposeSettingInterface.FactoryWithToken<Redirect, RedirectBuilderScope, InitRedirectToken> {
+        override fun SettingDslInterface.create(id: String, scope: RedirectBuilderScope.() -> InitRedirectToken): SettingToken<Redirect> {
+            val data = RedirectBuilderScope()
+            data.scope()
+            return with(data) {
+                Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, labelIcon, enabled, onRedirect, navigationModel, customGrouping)
+            }.register()
         }
     }
 
@@ -126,10 +112,10 @@ class Redirect internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if(!title.isBlank()) Text(title) },
-            description = { description?.let { Text(it) } },
+            title = { if(!title.isBlank()) Text(CSB.translator(title)) },
+            description = { description?.let { Text(CSB.translator(it)) } },
             icon = labelIcon,
             display = {
                 if (showArrow) {

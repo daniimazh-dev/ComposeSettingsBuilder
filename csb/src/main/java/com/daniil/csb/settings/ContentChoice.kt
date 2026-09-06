@@ -30,16 +30,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingConfiguredToken
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
-import com.daniil.csb.settingui.DefaultContainer
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingConfiguredToken
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
+import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,17 +57,13 @@ class ContentChoice(
     val gridCells: GridCells,
     val girdHeight: Dp,
     enabled: Boolean = true,
+    visible: Boolean = true,
     override var isSaveSetting: Boolean,
-    override val customGrouping: GroupItemClip?
-) : ComposeSetting<String>() {
+    override val customGrouping: GroupItemClip?,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<String>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private val _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
-    private val _enabled = MutableStateFlow(enabled)
-    override val enabled = _enabled.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enabled.value = state
-    }
 
     override fun changeValue(newValue: String) {
         onChangeValue(newValue)
@@ -91,18 +88,18 @@ class ContentChoice(
         var title: String? = null
         var onChangeValue: (String) -> Unit = {}
         var description: String? = null
-        fun option(id: String, content: @Composable (Boolean) -> Unit): MoreThenZeroComponentToken {
+        fun option(id: String, content: @Composable (Boolean) -> Unit): MoreThenZeroToken {
             contents.add(ChoiceOption(id, content))
-            return MoreThenZeroComponentToken()
+            return MoreThenZeroToken()
         }
     }
 
-    class MoreThenZeroComponentToken internal constructor(): SettingConfiguredToken()
+    class MoreThenZeroToken internal constructor(): SettingConfiguredToken()
     companion object :
-        ComposeSettingInterface.FactoryWithToken<ContentChoice, ChoiceContentBuilderScope, MoreThenZeroComponentToken> {
+        ComposeSettingInterface.FactoryWithToken<ContentChoice, ChoiceContentBuilderScope, MoreThenZeroToken> {
         override fun SettingDslInterface.create(
             id: String,
-            scope: ChoiceContentBuilderScope.() -> MoreThenZeroComponentToken
+            scope: ChoiceContentBuilderScope.() -> MoreThenZeroToken
         ): SettingToken<ContentChoice> {
             val data = ChoiceContentBuilderScope()
             data.scope()
@@ -120,8 +117,10 @@ class ContentChoice(
                     gridCells,
                     girdHeight,
                     enabled,
+                    visible,
                     isSaveSetting,
-                    customGrouping
+                    customGrouping,
+                    depends
                 ).register()
             }
         }
@@ -133,8 +132,6 @@ class ContentChoice(
         Grid
     }
 
-    override val focusState = MutableStateFlow(false)
-
     @Composable
     override fun UI(
         modifier: Modifier,
@@ -145,99 +142,85 @@ class ContentChoice(
         val enable by this.enabled.collectAsState()
         val value by this.value.collectAsState()
         val spacedBy = 6.dp
+        val translator = LocalCSBTranslator.current
 
-        DefaultContainer(
+        DefaultSettingUI(
             modifier = modifier,
             isFocused = focused,
-            groupItemClip = position,
-            paddingValues =
-                PaddingValues(
-                    horizontal = style.horizontalPadding,
-                    vertical = style.verticalPadding
-                ),
+            groupItemClip = customGrouping ?: position,
             enabled = enable,
-            onClick = null,
-            content = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        if (!title.isBlank()) Text(text = CSB.translator(title), style = style.titleStyle)
-                        description?.let { Text(text = CSB.translator(it), style = style.descriptionStyle) }
-                    }
-                    when (uiMode) {
-                        UIMode.Row -> {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState()),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(spacedBy)
-                            ) {
-                                contents.forEach { item ->
-                                    val isSelected = value == item.id
-                                    ChoiceItem(
-                                        modifier = Modifier,
-                                        isSelected = isSelected,
-                                        contentSize = this@ContentChoice.contentSize,
-                                        onClick = { if (enable) changeValue(item.id) }
-                                    ) {
-                                        item.content.invoke(isSelected)
-                                    }
-                                }
-                            }
-                        }
-
-                        UIMode.Column -> {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .verticalScroll(rememberScrollState()),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(spacedBy)
-                            ) {
-                                contents.forEach { item ->
-                                    val isSelected = value == item.id
-                                    ChoiceItem(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        isSelected = isSelected,
-                                        contentSize = this@ContentChoice.contentSize,
-                                        onClick = { if (enable) changeValue(item.id) }
-                                    ) {
-                                        item.content.invoke(isSelected)
-                                    }
-                                }
-                            }
-                        }
-
-                        UIMode.Grid -> {
-                            LazyVerticalGrid(
-                                modifier = Modifier.height(girdHeight),
-                                columns = gridCells,
-                                horizontalArrangement = Arrangement.spacedBy(spacedBy),
-                                verticalArrangement = Arrangement.spacedBy(spacedBy)
-                            ) {
-                                items(contents) { item ->
-                                    val isSelected = value == item.id
-                                    ChoiceItem(
-                                        modifier = Modifier,
-                                        isSelected = isSelected,
-                                        contentSize = this@ContentChoice.contentSize,
-                                        onClick = { if (enable) changeValue(item.id) }
-                                    ) {
-                                        item.content.invoke(isSelected)
-                                    }
+            title = { if (!title.isBlank()) Text(text = translator.translate(title)) },
+            description = { description?.let { Text(text = translator.translate(it)) } },
+            action = {},
+            display = {
+                when (uiMode) {
+                    UIMode.Row -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(spacedBy)
+                        ) {
+                            contents.forEach { item ->
+                                val isSelected = value == item.id
+                                ChoiceItem(
+                                    modifier = Modifier,
+                                    isSelected = isSelected,
+                                    contentSize = this@ContentChoice.contentSize,
+                                    onClick = { if (enable) changeValue(item.id) }
+                                ) {
+                                    item.content.invoke(isSelected)
                                 }
                             }
                         }
                     }
 
+                    UIMode.Column -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(spacedBy)
+                        ) {
+                            contents.forEach { item ->
+                                val isSelected = value == item.id
+                                ChoiceItem(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    isSelected = isSelected,
+                                    contentSize = this@ContentChoice.contentSize,
+                                    onClick = { if (enable) changeValue(item.id) }
+                                ) {
+                                    item.content.invoke(isSelected)
+                                }
+                            }
+                        }
+                    }
 
+                    UIMode.Grid -> {
+                        LazyVerticalGrid(
+                            modifier = Modifier.height(girdHeight),
+                            columns = gridCells,
+                            horizontalArrangement = Arrangement.spacedBy(spacedBy),
+                            verticalArrangement = Arrangement.spacedBy(spacedBy)
+                        ) {
+                            items(contents) { item ->
+                                val isSelected = value == item.id
+                                ChoiceItem(
+                                    modifier = Modifier,
+                                    isSelected = isSelected,
+                                    contentSize = this@ContentChoice.contentSize,
+                                    onClick = { if (enable) changeValue(item.id) }
+                                ) {
+                                    item.content.invoke(isSelected)
+                                }
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            onClick = null
         )
     }
 }
@@ -252,10 +235,10 @@ private fun ChoiceItem(
 ) {
     val style = LocalSettingsStyle.current
     val borderColor by animateColorAsState(
-        if (isSelected) style.activeColor else style.containerColor
+        if (isSelected) style.activeColor else style.containerColor, label = ""
     )
     val animateScale by animateFloatAsState(
-        if (isSelected) 1.1f else 1f
+        if (isSelected) 1.1f else 1f, label = ""
     )
     val shape = style.edgeGroupCorner
     Box(
@@ -278,5 +261,3 @@ private fun ChoiceItem(
         }
     }
 }
-
-

@@ -13,6 +13,7 @@ datastore = "1.2.1"
 junit = "4.13.2"
 coroutinesTest = "1.10.1"
 mockk = "1.13.12"
+espressoCore = "3.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,6 +33,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 
 [plugins]

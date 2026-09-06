@@ -1,29 +1,37 @@
 package com.daniil.csb.styles
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /** More rounded version of [Material3] */
 
 @SuppressLint("ComposableNaming")
 @Composable
-fun CSBStyle.Bobble() = SettingsStyle(
-    containerCornerShape = 12.dp,
-    edgeGroupCorner = MaterialTheme.shapes.extraLarge,
-    cardElevation = 4.dp,
-    itemSpacing = 6.dp,
-    horizontalPadding = 18.dp,
-    verticalPadding = 14.dp,
-    titleStyle = MaterialTheme.typography.titleMedium,
-    labelStyle = MaterialTheme.typography.labelSmall,
-    activeColor = MaterialTheme.colorScheme.primary,
-    descriptionStyle = MaterialTheme.typography.bodySmall.copy(
-        color = MaterialTheme.colorScheme.outline
-    ),
-    backgroundColor = MaterialTheme.colorScheme.surfaceContainer,
-    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-    focusColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    minHeight = 72.dp,
-)
+fun CSBStyle.Bobble(): SettingStyle {
+    return object : DefaultSettingStyle() {
+        override var backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainer
+        override var containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh
+        override var activeColor: Color = MaterialTheme.colorScheme.primary
+        override var focusColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest
+        override var titleStyle: TextStyle = MaterialTheme.typography.titleMedium
+        override var labelStyle: TextStyle = MaterialTheme.typography.labelSmall
+        override var descriptionStyle: TextStyle = MaterialTheme.typography.bodySmall.copy(
+            color = MaterialTheme.colorScheme.outline
+        )
+        override var edgeGroupCorner: Shape = MaterialTheme.shapes.extraLarge
+        override var containerCornerShape: Dp = 12.dp
+        override var horizontalPadding: Dp = 18.dp
+        override var verticalPadding: Dp = 14.dp
+        override var minHeight: Dp = 72.dp
+        override var itemSpacing: Dp = 6.dp
+        override var cardElevation: Dp = 4.dp
+    }
+}

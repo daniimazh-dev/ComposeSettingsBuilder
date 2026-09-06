@@ -1,8 +1,9 @@
-package com.daniil.csb.settings.utils
+package com.daniil.csb.settings.settingcore
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.daniil.csb.persistence.SaveSettingPackage
+import com.daniil.csb.settings.depend.Depends
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.KSerializer
@@ -19,7 +20,12 @@ interface ComposeSettingInterface<T> {
     val customGrouping: GroupItemClip?
     val focusState: MutableStateFlow<Boolean>
     val onChangeValue: (T) -> Unit
+    val depends: List<Depends>
+    val visible: StateFlow<Boolean>
 
+    fun show(state: Boolean)
+
+    fun enabled(state: Boolean)
 
     fun saveOff() {
         isSaveSetting = false
@@ -32,8 +38,6 @@ interface ComposeSettingInterface<T> {
     fun focus(state: Boolean) {
         focusState.value = state
     }
-
-    fun enabled(state: Boolean)
 
     fun changeValue(newValue: T)
     fun fetchValue(): StateFlow<T> = value

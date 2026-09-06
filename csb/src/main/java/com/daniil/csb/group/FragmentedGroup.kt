@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Modifier
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.group.title.GroupTitle
-import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSetting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -42,7 +42,7 @@ class FragmentedGroup(
     private val _hide = MutableStateFlow(isHide)
     override val settings: List<ComposeSetting<*>>
         get() = groups.flatMap { it.value.settings }
-    override val hide = _hide.asStateFlow()
+    override val visible = _hide.asStateFlow()
     override fun hide() { _hide.value = true }
     override fun show() { _hide.value = false }
 }
@@ -68,7 +68,7 @@ class FragmentedScopeBuilder(id: String): GroupScope(id) {
 
     fun fragment(id: String, fragmentedScope: FragmentScope.() -> Unit) {
         val fragment = FragmentScope(id).apply(fragmentedScope)
-        fragmentsHeap[id] = Group(id, fragment.groupTitle, fragment.isHide, fragment.settings)
+        fragmentsHeap[id] = Group(id, fragment.groupTitle, fragment.visible, fragment.settings)
     }
 
     internal fun build(id: String): FragmentedGroup {
@@ -76,13 +76,13 @@ class FragmentedScopeBuilder(id: String): GroupScope(id) {
             Group(
                 "unfragmented_$id",
                 groupTitle,
-                false,
+                true,
                 super.settings
             )
         }
         val fragmented = FragmentedGroup(
             id = id,
-            isHide = isHide,
+            isHide = visible,
             modifier = modifier,
             groupTitle = groupTitle,
             paddingValues = paddingValues,

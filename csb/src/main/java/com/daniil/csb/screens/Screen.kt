@@ -4,13 +4,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Modifier
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.SettingsScreenModel
+import com.daniil.csb.group.AbstractGroup
+import com.daniil.csb.group.AbstractGroupScope
 import com.daniil.csb.group.Group
 import com.daniil.csb.group.GroupSealed
 import com.daniil.csb.screens.title.ScreenTitle
-import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.group.FragmentedScopeBuilder
 import com.daniil.csb.group.GroupScope
-import com.daniil.csb.settings.utils.SettingBuilder
+import com.daniil.csb.group.title.GroupTitle
+import com.daniil.csb.isInFlag
+import com.daniil.csb.settings.settingcore.SettingBuilder
 import java.util.UUID
 
 open class Screen internal constructor(
@@ -74,7 +78,7 @@ open class ScreenBuilderScope(val id: String): SettingBuilder() {
     ) {
         val data = GroupScope(id).apply(groupScope)
         createNullableGroup()
-        val group = Group(id, data.groupTitle, data.isHide, data.settings)
+        val group = Group(id, data.groupTitle, data.visible, data.settings)
         groupsHeap.add(group)
     }
 
@@ -88,6 +92,17 @@ open class ScreenBuilderScope(val id: String): SettingBuilder() {
         }
     }
 
+    fun abstractGroup(id: String? = null, abstractGroupScope: AbstractGroupScope.() -> Unit) {
+        val id = id ?: UUID.randomUUID().toString()
+        val data = AbstractGroupScope(id).apply(abstractGroupScope)
+        createNullableGroup()
+        if ("allowDisplayAbstractGroup".isInFlag()) {
+            groupsHeap.add(Group(id, GroupTitle.setText(id), true, data.settings))
+        } else {
+            groupsHeap.add(AbstractGroup(id, data.settings))
+        }
+    }
+
     fun fragmentedGroup(id: String, fragmentScope: FragmentedScopeBuilder.() -> Unit) {
         val data = FragmentedScopeBuilder(id).apply(fragmentScope)
         createNullableGroup()
@@ -95,9 +110,8 @@ open class ScreenBuilderScope(val id: String): SettingBuilder() {
     }
 
     private fun createNullableGroup() {
-        val settings = super.settings
         if (settings.isNotEmpty()) {
-            groupsHeap.add(Group(UUID.randomUUID().toString(), null, false, settings.toList()))
+            groupsHeap.add(Group(UUID.randomUUID().toString(), null, true, super.settings.toList()))
             super.settings.clear()
         }
     }

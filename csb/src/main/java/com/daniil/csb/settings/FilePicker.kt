@@ -11,17 +11,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingConfiguredToken
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingConfiguredToken
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -32,22 +36,19 @@ class FilePicker<I, O> internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
     override var onChangeValue: (O) -> Unit = {},
     override var isSaveSetting: Boolean = false,
-    val icon: (@Composable () -> Unit)? = null,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
+    val actionIcon: SettingIcon?,
     val contract: ActivityResultContract<I, O>,
     val input: I,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<O>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<O>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: O) {
         onChangeValue(newValue)
@@ -59,8 +60,8 @@ class FilePicker<I, O> internal constructor(
         var defaultValue: O? = null
         var title: String? = null
         var description: String? = null
+        var actionIcon: SettingIcon? = null
         var onChangeValue: (O) -> Unit = {}
-        var icon: (@Composable () -> Unit)? = null
         var contract: ActivityResultContract<I, O>? = null
             private set
         fun setContract(contract: ActivityResultContract<I, O>?): InitContractToken {
@@ -95,11 +96,15 @@ class FilePicker<I, O> internal constructor(
                 title = data.title ?: id,
                 description = data.description,
                 enabled = data.enabled,
+                visible = data.visible,
                 onChangeValue = data.onChangeValue,
+                actionIcon = data.actionIcon,
                 icon = data.icon,
+                badge = data.badge,
                 contract = contract,
                 input = input,
-                customGrouping = data.customGrouping
+                customGrouping = data.customGrouping,
+                depends = data.depends
             ).register()
         }
     }
@@ -113,7 +118,6 @@ class FilePicker<I, O> internal constructor(
         modifier: Modifier,
         position: GroupItemClip?,
     ) {
-        val style = LocalSettingsStyle.current
         val enabled by this.enabled.collectAsState()
         val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()
@@ -123,17 +127,20 @@ class FilePicker<I, O> internal constructor(
             changeValue(result)
         }
 
+        val translator = LocalCSBTranslator.current
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            icon = icon,
+            badge = badge,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (title.isNotBlank()) Text(CSB.translator(title)) },
-            description = { description?.let { Text(CSB.translator(it)) } },
-            display = {
+            title = { if (title.isNotBlank()) Text(translator.translate(title)) },
+            description = { description?.let { Text(translator.translate(it)) } },
+            action = {
                 IconButton(onClick = { if (enabled) picker.launch(input) }) {
-                    if (icon != null) {
-                        icon()
+                    if (actionIcon != null) {
+                        actionIcon.content()
                     } else {
                         Icon(
                             painter = painterResource(R.drawable.files),

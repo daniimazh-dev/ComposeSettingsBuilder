@@ -23,21 +23,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.persistence.SaveSettingPackage
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import com.daniil.csb.utils.LocalDateSerializer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.KSerializer
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -47,22 +49,18 @@ class DatePicker internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     val alertTitle: String,
     val formatter: DateTimeFormatter,
     override var onChangeValue: (LocalDate) -> Unit = {},
     override var isSaveSetting: Boolean = true,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<LocalDate>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<LocalDate>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: LocalDate) {
         onChangeValue(newValue)
@@ -97,17 +95,19 @@ class DatePicker internal constructor(
                     title ?: id,
                     description,
                     enabled,
+                    visible,
+                    icon,
+                    badge,
                     alertTitle,
                     formatter,
                     onChangeValue,
                     isSaveSetting,
-                    customGrouping
+                    customGrouping,
+                    depends
                 ).register()
             }
         }
     }
-
-    override val focusState = MutableStateFlow(false)
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -118,6 +118,7 @@ class DatePicker internal constructor(
         val enabled by this.enabled.collectAsState()
         val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()
+        val translator = LocalCSBTranslator.current
         val state = rememberDatePickerState(
             initialSelectedDate = LocalDate.of(value.year, value.month, value.dayOfMonth)
         )
@@ -128,9 +129,11 @@ class DatePicker internal constructor(
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
-            description = { description?.let { Text(CSB.translator(it)) } },
-            display = {
+            icon = icon,
+            badge = badge,
+            title = { if (!title.isBlank()) Text(translator.translate(title)) },
+            description = { description?.let { Text(translator.translate(it)) } },
+            action = {
                 DatePreview(value, formatter)
             },
             onClick = {
@@ -140,7 +143,7 @@ class DatePicker internal constructor(
         if (isAlertOpen) {
             AlertDialog(
                 title = {
-                    Text(CSB.translator(alertTitle))
+                    Text(translator.translate(alertTitle))
                 },
                 text = {
                     DatePicker(
@@ -204,4 +207,3 @@ private fun DatePreview(
         }
     }
 }
-

@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -24,19 +26,21 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.CSB
-import com.daniil.csb.CSBTranslator
 import com.daniil.csb.R
 import com.daniil.csb.SettingsScreen
 import com.daniil.csb.registerSettingScreens
 import com.daniil.csb.screens.title.ScreenTitle
 import com.daniil.csb.settings.ContentChoice
 import com.daniil.csb.settings.Select
+import com.daniil.csb.settings.Switch
+import com.daniil.csb.settings.depend.value
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import com.daniil.csb.styles.Bobble
 import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.ClassicDark
@@ -54,7 +58,6 @@ private fun Preview() {
     val style = CSB.getValue<Select.Option>("theme_select").collectAsState().value
     val isDarkTheme = CSB.getValue<Boolean>("dark_mode").collectAsState().value
     val colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()
-
     MaterialTheme(
         colorScheme = colorScheme,
     ) {
@@ -75,29 +78,34 @@ private fun Preview() {
             )
         }
     }
-
 }
 
 private fun previewInit() = registerSettingScreens {
     CSB.config {
         flag("disableStored")
-        translator = object : CSBTranslator {
-            @Composable
-            override fun translate(key: String): String = key
-        }
     }
     createScreen("MainScreen") {
         title = ScreenTitle.setText(res(R.string.app_name))
         group("All settings") {
-            isHide = true
-            createSwitch("Switch") {}
+            createSwitch("Switch") {
+                badge = SettingBadge.point()
+                icon = SettingIcon.fromRes(R.drawable.info_icon)
+                title = "Notification"
+                description = "Enable notification for this app"
+                depends {
+                    subscribe<Switch>("ss") {
+                        visibleIf { it.value }
+                        onChangeValue {  }
+                    }
+                }
+            }
             createMultiplySelect("Multiply select")
             createTimePicker("Timer picker")
             createDatePicker("Date picker")
             createAction("Action")
             createColorPicker("Color picker")
 
-            createContentChoice(" Content choice") {
+            createContentChoice("Content choice") {
                 uiMode = ContentChoice.UIMode.Row
                 onChangeValue = { CSB.setValue<Boolean>("dark_mode", it == "1") }
                 defaultValueId = "1"
@@ -108,7 +116,9 @@ private fun previewInit() = registerSettingScreens {
             createCounter("Counter")
             createCustomSetting("Custom setting") {
                 defaultValue = Unit
-                useEmptyContent()
+               setWithArrangement {
+                   title = { Text("Custom") }
+               }
             }
             createInfo("Info")
             createRedirect("Redirect") { setRedirect("new") }
@@ -125,6 +135,8 @@ private fun previewInit() = registerSettingScreens {
 
             createTabBar("Tab bar") {
                 tab("1") { }
+                tab("2") { }
+                tab("3") { }
             }
 
             createCodePreview("Code preview")
@@ -132,10 +144,20 @@ private fun previewInit() = registerSettingScreens {
                 setContract(ActivityResultContracts.GetContent())
             }
         }
+        fragmentedGroup("fragmented_group") {
+            fragment("") {}
+        }
     }
-    createScreen("new") {
+    createCustomScreen("new") {
+        createSwitch("sw") {}
+        createUI("ux") {
+            HorizontalDivider()
+        }
+        setContent {
+            RegisteredSetting("ux")
+        }
+    }
 
-    }
     createAbstractScreen("Abstract") {
         createSelect("theme_select") {
             defaultValueId = "material"
@@ -146,6 +168,7 @@ private fun previewInit() = registerSettingScreens {
         createSwitch("dark_mode") { defaultValue = true }
     }
 }
+
 
 
 

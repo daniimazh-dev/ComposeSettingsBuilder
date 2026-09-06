@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import com.daniil.csb.screens.ScreenBuilder
+import com.daniil.csb.settings.ComposableComponent
 
 class CSBInitializer : ContentProvider() {
     override fun onCreate(): Boolean {
@@ -26,4 +27,20 @@ fun registerSettingScreens(
     CSB.navigationModel.setScreensHeap(*data.screenHeap.toTypedArray())
     CSB.load()
     CSB.executeConfigAction()
+
+    CSB.getAllSettings().filterIsInstance<ComposableComponent>()
+        .forEach {
+            it.setGlobalProvider { id ->
+                val setting = CSB.findSettingById(id).getOrNull()
+                if (setting is ComposableComponent) error(
+                    """
+                        Cannot call ComposableComponent (id: "$id") recursively, 
+                        otherwise there will be StackOverflow error
+                    """.trimIndent()
+                )
+                setting
+            }
+        }
+
+    CSB.navigationModel.wireDependencies()
 }

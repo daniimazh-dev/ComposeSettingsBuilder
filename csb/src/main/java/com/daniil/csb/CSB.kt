@@ -18,7 +18,7 @@ import com.daniil.csb.group.GroupController
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.ScreenBuilder
 import com.daniil.csb.screens.ScreenController
-import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -345,6 +345,38 @@ object CSB {
 
     fun screenController(id: String): ScreenController {
         return navigationModel.screenController(id)
+    }
+
+
+    fun exportToJson(): String {
+        val stringBuilder = StringBuilder()
+        for (screen in navigationModel.screenHeap.value) {
+            val jsonPackageList: List<SaveSettingPackage> = screen.settings.flatMap { it.settings }
+                .mapNotNull { it.saveLogic() }
+
+            if (jsonPackageList.isNotEmpty()) {
+                val json = Json.encodeToString(jsonPackageList)
+                stringBuilder.append(json)
+            }
+        }
+        return stringBuilder.toString()
+    }
+    fun importFromJson(json: String) {
+        val storedData = try {
+            Json.decodeFromString<CSBStoredData>(json)
+        } catch (e: Exception) {
+            Log.d("CSB", "Error loading settings from single file", e)
+            return
+        }
+        storedData.screenSettings.forEach { (_, packages) ->
+            packages.forEach { pack ->
+                try {
+                    val setting = findSettingById(pack.id).getOrNull() ?: return@forEach
+                    setting.loadLogic(pack)
+                } catch (_: Exception) {
+                }
+            }
+        }
     }
 
 

@@ -1,6 +1,8 @@
 package com.daniil.csb.local
 
-import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.CSB
+import com.daniil.csb.CSBTranslator
+import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.screens.ContentConfiguredToken
 import com.daniil.csb.screens.CustomScreen
 import com.daniil.csb.screens.Screen
@@ -29,6 +31,11 @@ open class LocalSettingsController() {
             id = UUID.randomUUID().toString(),
             scope = {}
         )
+    }
+
+    internal var translator: CSBTranslator = CSB.DefaultCSBTranslator()
+    fun setTranslator(translator: CSBTranslator) {
+        this.translator = translator
     }
 
     private fun createLocalScreen(

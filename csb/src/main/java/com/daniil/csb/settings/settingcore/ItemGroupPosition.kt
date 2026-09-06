@@ -1,4 +1,4 @@
-package com.daniil.csb.settings.utils
+package com.daniil.csb.settings.settingcore
 
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -6,8 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Shape
 import com.daniil.csb.isInFlag
 import com.daniil.csb.settingui.LocalSettingsStyle
-import com.daniil.csb.styles.CSBStyle
-import com.daniil.csb.styles.SettingsStyle
+import com.daniil.csb.styles.SettingStyle
 
 enum class GroupItemClip {
     First,
@@ -17,7 +16,7 @@ enum class GroupItemClip {
 }
 
 @Composable
-fun GroupItemClip.clippedShape(style: SettingsStyle = LocalSettingsStyle.current): Shape {
+fun GroupItemClip.clippedShape(style: SettingStyle = LocalSettingsStyle.current): Shape {
     val groupPosition = this
 
     val baseShape = style.edgeGroupCorner as RoundedCornerShape

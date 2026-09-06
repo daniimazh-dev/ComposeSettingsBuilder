@@ -2,39 +2,47 @@ package com.daniil.csb.styles
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
-
 /** Without material theme */
-val CSBStyle.ClassicLight: SettingsStyle
-    get() = SettingsStyle(
-        titleStyle = TextStyle.Default.copy(
-            fontSize = 16.sp
-        ),
-        labelStyle = TextStyle.Default.copy(
-            fontSize = 11.sp
-        ),
-        activeColor = Color.Cyan,
-        descriptionStyle = TextStyle.Default.copy(
-            fontSize = 12.sp,
-            color = Color.Gray
-        ),
-        edgeGroupCorner = RoundedCornerShape(6.dp),
-        containerCornerShape = 0.dp,
-        backgroundColor = Color.White,
-        focusColor = Color.Gray.copy(alpha = 0.4f),
-        horizontalPadding = 12.dp,
-        verticalPadding = 10.dp,
-        minHeight = 52.dp,
-        itemSpacing = 2.dp,
-        cardElevation = 0.dp,
-    )
+val CSBStyle.ClassicLight: SettingStyle
+    get() = object : DefaultSettingStyle() {
+        override var backgroundColor: Color = Color.White
+        override var containerColor: Color = Color.Transparent
+        override var activeColor: Color = Color.Cyan
+        override var focusColor: Color = Color.Gray.copy(alpha = 0.4f)
+        override var titleStyle: TextStyle = TextStyle.Default.copy(fontSize = 16.sp)
+        override var labelStyle: TextStyle = TextStyle.Default.copy(fontSize = 11.sp)
+        override var descriptionStyle: TextStyle = TextStyle.Default.copy(fontSize = 12.sp, color = Color.Gray)
+        override var edgeGroupCorner: Shape = RoundedCornerShape(6.dp)
+        override var containerCornerShape: Dp = 0.dp
+        override var horizontalPadding: Dp = 12.dp
+        override var verticalPadding: Dp = 10.dp
+        override var minHeight: Dp = 52.dp
+        override var itemSpacing: Dp = 2.dp
+        override var cardElevation: Dp = 0.dp
+    }
 
 /** Without material theme */
 val CSBStyle.ClassicDark
-    get() = ClassicLight.copy(
-        backgroundColor = Color(0xFF151515)
-    )
+    get() = object : DefaultSettingStyle() {
+        override var backgroundColor: Color = Color(0xFF151515)
+        override var containerColor: Color = Color.Transparent
+        override var activeColor: Color = Color.Cyan
+        override var focusColor: Color = Color.Gray.copy(alpha = 0.4f)
+        override var titleStyle: TextStyle = TextStyle.Default.copy(fontSize = 16.sp)
+        override var labelStyle: TextStyle = TextStyle.Default.copy(fontSize = 11.sp)
+        override var descriptionStyle: TextStyle = TextStyle.Default.copy(fontSize = 12.sp, color = Color.Gray)
+        override var edgeGroupCorner: Shape = RoundedCornerShape(6.dp)
+        override var containerCornerShape: Dp = 0.dp
+        override var horizontalPadding: Dp = 12.dp
+        override var verticalPadding: Dp = 10.dp
+        override var minHeight: Dp = 52.dp
+        override var itemSpacing: Dp = 2.dp
+        override var cardElevation: Dp = 0.dp
+    }

@@ -1,28 +1,2 @@
 package com.daniil.csb.styles
 
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.sp
-
-data class SettingsStyle(
-    val backgroundColor: Color = Color.Transparent,
-    val containerColor: Color = Color.Transparent,
-    val activeColor: Color = Color(0xFF03A9F4),
-    val focusColor: Color = Color.Transparent,
-    val titleStyle: TextStyle = TextStyle.Default,
-    val labelStyle: TextStyle = TextStyle.Default.copy(fontSize = 8.sp),
-    val descriptionStyle: TextStyle = TextStyle.Default,
-    val edgeGroupCorner: Shape = RoundedCornerShape(12.dp),
-    val containerCornerShape: Dp = 4.dp,
-    val horizontalPadding: Dp = 16.dp,
-    val verticalPadding: Dp = 12.dp,
-    val minHeight: Dp = 52.dp,
-    val itemSpacing: Dp = 8.dp,
-    val cardElevation: Dp = 2.dp,
-)
-

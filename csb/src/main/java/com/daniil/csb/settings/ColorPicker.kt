@@ -60,24 +60,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.persistence.SaveSettingPackage
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import com.daniil.csb.utils.FancyTabBar
 import com.daniil.csb.utils.FancyTabBarData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.serialization.KSerializer
 import kotlin.math.roundToInt
 import android.graphics.Color as AndroidColor
 
@@ -87,39 +89,44 @@ class ColorPicker internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     override var onChangeValue: (Color) -> Unit = {},
     override var isSaveSetting: Boolean = true,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<Color>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<Color>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     internal constructor(
         id: String,
         defaultValueInt: Int,
         title: String,
         description: String?,
         enabled: Boolean = true,
+        visible: Boolean = true,
+        icon: SettingIcon? = null,
+        badge: SettingBadge? = null,
         onChangeValue: (Color) -> Unit = {},
         isSaveSetting: Boolean = true,
-        customGrouping: GroupItemClip?
+        customGrouping: GroupItemClip?,
+        depends: List<Depends> = emptyList()
     ) : this(
         id,
         defaultValue = Color(defaultValueInt),
         title,
         description,
         enabled,
+        visible,
+        icon,
+        badge,
         onChangeValue,
         isSaveSetting,
-        customGrouping
+        customGrouping,
+        depends
     )
 
     private var _value = MutableStateFlow(this@ColorPicker.defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: Color) {
         _value.value = newValue
@@ -164,9 +171,13 @@ class ColorPicker internal constructor(
                         title ?: id,
                         description,
                         enabled,
+                        visible,
+                        icon,
+                        badge,
                         onChangeValue,
                         isSaveSetting,
-                        customGrouping
+                        customGrouping,
+                        depends
                     )
                 } else {
                     ColorPicker(
@@ -175,9 +186,13 @@ class ColorPicker internal constructor(
                         title ?: id,
                         description,
                         enabled,
+                        visible,
+                        icon,
+                        badge,
                         onChangeValue,
                         isSaveSetting,
-                        customGrouping
+                        customGrouping,
+                        depends
                     )
                 }
                 res.register()
@@ -185,7 +200,6 @@ class ColorPicker internal constructor(
         }
     }
 
-    override val focusState = MutableStateFlow(false)
 
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
@@ -193,15 +207,18 @@ class ColorPicker internal constructor(
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
+        val translator = LocalCSBTranslator.current
 
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
-            description = { description?.let { Text(CSB.translator(it)) } },
-            display = {
+            icon = icon,
+            badge = badge,
+            title = { if (!title.isBlank()) Text(translator.translate(title)) },
+            description = { description?.let { Text(translator.translate(it)) } },
+            action = {
                 FilledIconButton(
                     enabled = enabled,
                     colors = IconButtonDefaults.iconButtonColors()

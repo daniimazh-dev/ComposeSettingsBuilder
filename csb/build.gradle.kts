@@ -120,6 +120,7 @@ kotlin {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.espresso.core)
     implementation(libs.material)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.kotlinx.serialization.json)

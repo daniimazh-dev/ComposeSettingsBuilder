@@ -2,7 +2,6 @@ package com.daniil.csb.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -20,16 +19,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
-import com.daniil.csb.settingui.DefaultContainer
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
+import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -44,10 +46,14 @@ class Slider internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     override var onChangeValue: (Float) -> Unit = {},
     override var isSaveSetting: Boolean = true,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<Float>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<Float>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
 
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
@@ -65,13 +71,6 @@ class Slider internal constructor(
             }
         )
     )
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: Float) {
         _value.value = newValue
@@ -110,81 +109,74 @@ class Slider internal constructor(
             val data = SliderBuilderScope().apply(scope)
             return with(data) {
                 Slider(
-                    id,
-                    defaultValue,
-                    range,
-                    steps,
-                    startPointRange ?: range.start.toString(),
-                    endPointRange ?: range.endInclusive.toString(),
-                    title ?: id,
-                    description,
-                    enabled,
-                    onChangeValue,
-                    isSaveSetting,
-                    customGrouping
+                    id = id,
+                    defaultValue = defaultValue,
+                    range = range,
+                    steps = steps,
+                    startPointRange = startPointRange ?: range.start.toString(),
+                    endPointRange = endPointRange ?: range.endInclusive.toString(),
+                    title = title ?: id,
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    onChangeValue = onChangeValue,
+                    isSaveSetting = isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends
                 ).register()
             }
         }
     }
-
-    override val focusState = MutableStateFlow(false)
 
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
+        val translator = LocalCSBTranslator.current
 
-        DefaultContainer(
+        DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
             enabled = enabled,
-            groupItemClip = position,
-            paddingValues =
-                PaddingValues(
-                    horizontal = style.horizontalPadding,
-                    vertical = style.verticalPadding
-                ),
-            onClick = null
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = style.minHeight)
-            ) {
-
-
-                if (!title.isBlank()) Text(text = CSB.translator(title), style = style.titleStyle)
-                val descriptionStyle = style.labelStyle
-                    .copy(color = MaterialTheme.colorScheme.outline)
-                description?.let { Text(text = CSB.translator(it), style = descriptionStyle) }
-
-                Slider(
+            groupItemClip = customGrouping ?: position,
+            icon = icon,
+            badge = badge,
+            title = { if (title.isNotBlank()) Text(text = translator.translate(title)) },
+            description = { description?.let { Text(text = translator.translate(it)) } },
+            action = {},
+            display = {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    state = sliderState.value,
-                    colors = SliderDefaults.colors().copy(
-                        activeTrackColor = style.activeColor,
-                        thumbColor = style.activeColor
-                    ),
-                    enabled = enabled,
-                )
-                if (startPointRange != null && endPointRange != null) {
-                    Row(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Slider(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val labelStile = MaterialTheme.typography.labelSmall
-                            .copy(color = MaterialTheme.colorScheme.outline)
-                        Text(text = CSB.translator(startPointRange), style = labelStile)
-                        Text(text = CSB.translator(endPointRange), style = labelStile)
+                        state = sliderState.value,
+                        colors = SliderDefaults.colors().copy(
+                            activeTrackColor = style.activeColor,
+                            thumbColor = style.activeColor
+                        ),
+                        enabled = enabled,
+                    )
+                    if (startPointRange != null && endPointRange != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            val labelStile = MaterialTheme.typography.labelSmall
+                                .copy(color = MaterialTheme.colorScheme.outline)
+                            Text(text = translator.translate(startPointRange), style = labelStile)
+                            Text(text = translator.translate(endPointRange), style = labelStile)
+                        }
                     }
                 }
-
-            }
-        }
-
+            },
+            onClick = null
+        )
     }
 
 }
-

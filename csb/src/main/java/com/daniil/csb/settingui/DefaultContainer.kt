@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -20,10 +17,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.daniil.csb.isInFlag
 import com.daniil.csb.screens.Screen
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.clippedShape
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.clippedShape
 
 @Composable
 fun DefaultContainer(
@@ -33,14 +29,13 @@ fun DefaultContainer(
     enabled: Boolean,
     paddingValues: PaddingValues = PaddingValues.Zero,
     onClick: (() -> Unit)?,
-    disableBackground: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val style = LocalSettingsStyle.current
     val debagData = LocalDebugData.current
     val groupPosition = LocalGroupPosition.current
 
-    val defaultColor = if (disableBackground) Color.Transparent else style.backgroundColor
+    val defaultColor = style.backgroundColor
     val focusColor = style.focusColor
     val shape = (groupItemClip ?: groupPosition).clippedShape(style)
 

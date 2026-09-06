@@ -1,27 +1,18 @@
 package com.daniil.csb.settingui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import com.daniil.csb.R
-import com.daniil.csb.registerSettingScreens
-import com.daniil.csb.settings.utils.GroupItemClip
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.clippedShape
 import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.Material3
 
@@ -31,52 +22,38 @@ fun DefaultSettingUI(
     isFocused: Boolean = false,
     groupItemClip: GroupItemClip? = null,
     enabled: Boolean = true,
+    paddingValues: PaddingValues =
+        LocalSettingsStyle.current.let {
+            PaddingValues(it.horizontalPadding, it.verticalPadding) },
+    minHeight: Dp = LocalSettingsStyle.current.minHeight,
     title: @Composable () -> Unit,
-    icon: (@Composable () -> Unit)? = null,
     description: @Composable () -> Unit = {},
-    display: @Composable () -> Unit,
-    onClick: (() -> Unit)?
+    icon: SettingIcon? = null,
+    badge: SettingBadge? = null,
+    action: @Composable () -> Unit = {},
+    onClick: (() -> Unit)?,
+    display: @Composable () -> Unit = {}
 ) {
     val style = LocalSettingsStyle.current
-    
-    DefaultContainer(
+    style.ContainerSlot(
         modifier = modifier,
         isFocused = isFocused,
-        groupItemClip = groupItemClip,
+        shape = (groupItemClip ?: LocalGroupPosition.current).clippedShape(),
         enabled = enabled,
-        onClick = onClick
-    ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = style.minHeight)
-                .padding(horizontal = style.horizontalPadding, vertical = style.verticalPadding),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                icon?.let {
-                    it()
-                    Spacer(modifier = Modifier.width(4.dp))
-                }
-                Column {
-                    CompositionLocalProvider(LocalTextStyle provides style.titleStyle) {
-                        title()
-                    }
-                    CompositionLocalProvider(LocalTextStyle provides style.descriptionStyle) {
-                        description()
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.width(4.dp))
-            display()
+        onClick = onClick,
+        minHeight = minHeight,
+        content = {
+            style.ItemLayoutSlot(
+                title = title,
+                description = description,
+                action = action,
+                display = display,
+                icon = icon?.let { { it.content() } },
+                badge = badge?.let { { it.content() } },
+                paddingValues = paddingValues
+            )
         }
-
-    }
+    )
 }
 
 
@@ -88,17 +65,17 @@ private fun Preview() {
             title = {
                 Text("Preview")
             },
-            icon = {
-                Icon(painter = painterResource(R.drawable.info_icon), contentDescription = null)
-            },
+            icon = SettingIcon.fromRes(R.drawable.info_icon),
             description = {
                 Text("Preview settings default container")
             },
-            display = {
+            action = {
                 Switch(checked = true, onCheckedChange = {})
             },
+            badge = SettingBadge.icon(R.drawable.star),
             enabled = true,
-            groupItemClip = GroupItemClip.Full
-        ) {}
+            groupItemClip = GroupItemClip.Full,
+            onClick = null
+        )
     }
 }

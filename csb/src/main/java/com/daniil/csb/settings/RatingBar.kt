@@ -2,18 +2,14 @@ package com.daniil.csb.settings
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -22,18 +18,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
-import com.daniil.csb.settingui.DefaultContainer
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -45,20 +43,17 @@ class RatingBar internal constructor(
     val stars: Int,
     val size: Dp = 32.dp,
     enabled: Boolean,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     val ratingItem: (@Composable (isActive: Boolean, number: Int) -> Unit)?,
     override var isSaveSetting: Boolean = true,
     override val onChangeValue: (Int) -> Unit,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<Int>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<Int>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private val _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
-
-    private val _enabled = MutableStateFlow(enabled)
-    override val enabled = _enabled.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enabled.value = state
-    }
 
     override fun changeValue(newValue: Int) {
         _value.value = newValue.coerceIn(0, stars)
@@ -90,11 +85,15 @@ class RatingBar internal constructor(
                     defaultValue = defaultValue,
                     stars = stars,
                     enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
                     size = size,
                     isSaveSetting = isSaveSetting,
                     ratingItem = ratingItem,
                     onChangeValue = onChangeValue,
-                    customGrouping = customGrouping
+                    customGrouping = customGrouping,
+                    depends = depends
                 ).register()
             }
         }
@@ -102,40 +101,27 @@ class RatingBar internal constructor(
     }
 
 
-    override val focusState: MutableStateFlow<Boolean> = MutableStateFlow(false)
-
     @Composable
     override fun UI(
         modifier: Modifier,
         position: GroupItemClip?
     ) {
-        val style = LocalSettingsStyle.current
         val enabled by this.enabled.collectAsState()
         val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()
-        DefaultContainer(
+        val translator = LocalCSBTranslator.current
+        
+        DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
             enabled = enabled,
-            groupItemClip = position,
-            paddingValues =
-                PaddingValues(
-                    horizontal = style.horizontalPadding,
-                    vertical = style.verticalPadding
-                ),
-            onClick = null
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = style.minHeight)
-            ) {
-
-                if (!title.isBlank()) Text(text = CSB.translator(title), style = style.titleStyle)
-
-                description?.let { Text(text = CSB.translator(it), style = style.descriptionStyle) }
-
-
+            groupItemClip = customGrouping ?: position,
+            icon = icon,
+            badge = badge,
+            title = { if (title.isNotBlank()) Text(text = translator.translate(title)) },
+            description = { description?.let { Text(text = translator.translate(it)) } },
+            action = {},
+            display = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -146,7 +132,7 @@ class RatingBar internal constructor(
                         val activeTint = Color.Yellow
                         val unactiveTint = LocalContentColor.current
                         val animateColor by animateColorAsState(
-                            if (isActive) activeTint else unactiveTint
+                            if (isActive) activeTint else unactiveTint, label = ""
                         )
                         IconButton(
                             modifier = Modifier.size(size),
@@ -184,10 +170,9 @@ class RatingBar internal constructor(
                         }
                     }
                 }
-            }
-        }
-
-
+            },
+            onClick = null
+        )
     }
 
 }

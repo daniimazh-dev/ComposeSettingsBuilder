@@ -48,21 +48,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.screens.AbstractScreen
-import com.daniil.csb.screens.CustomScreen
+import com.daniil.csb.group.AbstractGroup
 import com.daniil.csb.group.FragmentedGroup
 import com.daniil.csb.group.Group
 import com.daniil.csb.group.title.GroupTitle
+import com.daniil.csb.screens.AbstractScreen
+import com.daniil.csb.screens.CustomScreen
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.title.ScreenTitle
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalDebugData
 import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.Material3
-import com.daniil.csb.styles.SettingsStyle
+import com.daniil.csb.styles.SettingStyle
 import kotlinx.coroutines.flow.StateFlow
 
 typealias ScreenTransitionSpec = AnimatedContentTransitionScope<Screen>.() -> ContentTransform
@@ -95,8 +98,9 @@ fun SettingsScreen(
     screenTransitionForward: ScreenTransitionSpec = defaultSettingsScreenTransitionSpecForward,
     screenTransitionBack: ScreenTransitionSpec = defaultSettingsScreenTransitionSpecBack,
     topBarColor: Color = MaterialTheme.colorScheme.background,
-    style: SettingsStyle = CSBStyle.Material3()
+    style: SettingStyle = CSBStyle.Material3()
 ) {
+
     CompositionLocalProvider(LocalSettingsStyle provides style) {
         val navigationModel = CSB.navigationModel
         val currentScreen by navigationModel.currentScreen.collectAsState()
@@ -114,149 +118,231 @@ fun SettingsScreen(
             currentScreen?.onCloseScreen()
             navigationModel.goBack()
         }
-
-
-        AnimatedContent(
-            modifier = modifier,
-            contentKey = { it.id },
-            targetState = currentScreen ?: return@CompositionLocalProvider,
-            transitionSpec = if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Forward)
-                screenTransitionForward else screenTransitionBack
-        ) { currentScreen ->
-            if (currentScreen is AbstractScreen && !"allowDisplayAbstractScreen".isInFlag())
-                error("Cannot display abstract screens")
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(currentScreen.paddingValues)
-                    .then(currentScreen.modifier)
-            ) {
-                val settingsScreenModel = currentScreen.settingsScreenModel
-                val title by settingsScreenModel.title.collectAsState()
-                val settings by settingsScreenModel.settings.collectAsState()
-                val lazyListState = settingsScreenModel.lazyListState
-
-
-                val isCanScroll by remember {
-                    derivedStateOf { lazyListState.canScrollForward || lazyListState.canScrollBackward }
-                }
-
-                val isShowTitleTopBar by remember {
-                    derivedStateOf {
-                        val isBigTitleVisible =
-                            lazyListState.layoutInfo.visibleItemsInfo.any { it.key == "big_title" }
-                        if (isCanScroll) !isBigTitleVisible else true
-                    }
-                }
-
-                val isDebugModeEnable =
-                    remember(currentScreen) {
-                        attributes.contains(ScreenAttribute.Debag) || "enableDebugMode".isInFlag() || CSB.config.debugMode
-                    }
-
-                val scrollFocusIndex by settingsScreenModel.scrollFocusIndex.collectAsState()
-                LaunchedEffect(scrollFocusIndex) {
-                    if (scrollFocusIndex != null) {
-                        settingsScreenModel.lazyListState.animateScrollToItem(scrollFocusIndex!!)
-                    }
-                }
-
-                if (isDebugModeEnable) {
-                    Box(
-                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
-                    ) {
-                        Text(
-                            text = "${currentScreen::class.simpleName} id: ${currentScreen.id}",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
-                }
-
-                val isShowNavigation = remember(currentScreen.id) {
-                    ScreenAttribute.DisableNavigation !in attributes && enableBackHandler
-                }
-                val topbarHeight = 52.dp
-                if (isDebugModeEnable) {
-                    Box(
-                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
-                    ) {
-                        Text(
-                            text = "${currentScreen::class.simpleName} id: ${currentScreen.id}",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
-                }
-//                key( settings.map { it.hide.collectAsState().value }) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
-                    state = lazyListState,
-                    userScrollEnabled = remember { !"disableScroll".isInFlag() }
+        CompositionLocalProvider(LocalCSBTranslator provides CSB.translator) {
+            AnimatedContent(
+                modifier = modifier,
+                contentKey = { it.id },
+                targetState = currentScreen ?: return@CompositionLocalProvider,
+                transitionSpec = if (lastNavigateAction == SettingsNavigationModel.LastNavigateAction.Forward)
+                    screenTransitionForward else screenTransitionBack
+            ) { currentScreen ->
+                if (currentScreen is AbstractScreen && !"allowDisplayAbstractScreen".isInFlag())
+                    error("Cannot display abstract screens")
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(currentScreen.paddingValues)
+                        .then(currentScreen.modifier)
                 ) {
+                    val settingsScreenModel = currentScreen.settingsScreenModel
+                    val title by settingsScreenModel.title.collectAsState()
+                    val settings by settingsScreenModel.settings.collectAsState()
+                    val lazyListState = settingsScreenModel.lazyListState
 
-                    if (title == null && isShowNavigation || (title != null && !isCanScroll)) {
-                        item {
-                            Spacer(modifier = Modifier.height(topbarHeight))
+
+                    val isCanScroll by remember {
+                        derivedStateOf { lazyListState.canScrollForward || lazyListState.canScrollBackward }
+                    }
+
+                    val isShowTitleTopBar by remember {
+                        derivedStateOf {
+                            val isBigTitleVisible =
+                                lazyListState.layoutInfo.visibleItemsInfo.any { it.key == "big_title" }
+                            if (isCanScroll) !isBigTitleVisible else true
                         }
                     }
-                    if (title != null && isCanScroll) {
-                        item(key = "big_title") {
-                            Spacer(Modifier.height(topbarHeight))
-                            val titleConfig = ScreenTitle.ScreenTitleConfig(
-                                alignment = Alignment.Center,
-                                style = MaterialTheme.typography.displaySmall,
-                                textAlign = TextAlign.Center,
-                                maxLines = 2
+
+                    val isDebugModeEnable =
+                        remember(currentScreen) {
+                            attributes.contains(ScreenAttribute.Debag) || "enableDebugMode".isInFlag() || CSB.config.debugMode
+                        }
+
+                    val scrollFocusIndex by settingsScreenModel.scrollFocusIndex.collectAsState()
+                    LaunchedEffect(scrollFocusIndex) {
+                        if (scrollFocusIndex != null) {
+                            settingsScreenModel.lazyListState.animateScrollToItem(scrollFocusIndex!!)
+                        }
+                    }
+
+                    if (isDebugModeEnable) {
+                        Box(
+                            modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                        ) {
+                            Text(
+                                text = "${currentScreen::class.simpleName} id: ${currentScreen.id}",
+                                style = MaterialTheme.typography.labelMedium
                             )
-                            title?.content?.let {
-                                it(
-                                    ScreenTitle.ScreenTitleContentScope(),
-                                    titleConfig
-                                )
-                            }
-                        }
-                        item {
-                            Spacer(Modifier.height(20.dp))
                         }
                     }
-                    if (currentScreen is CustomScreen) {
-                        item {
-                            Column(modifier = Modifier) {
-                                currentScreen.Render()
+
+                    val isShowNavigation = remember(currentScreen.id) {
+                        ScreenAttribute.DisableNavigation !in attributes && enableBackHandler
+                    }
+                    val topbarHeight = 52.dp
+                    if (isDebugModeEnable) {
+                        Box(
+                            modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                        ) {
+                            Text(
+                                text = "${currentScreen::class.simpleName} id: ${currentScreen.id}",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+//                key( settings.map { it.hide.collectAsState().value }) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(style.itemSpacing),
+                        state = lazyListState,
+                        userScrollEnabled = remember { !"disableScroll".isInFlag() }
+                    ) {
+
+                        if (title == null && isShowNavigation || (title != null && !isCanScroll)) {
+                            item {
+                                Spacer(modifier = Modifier.height(topbarHeight))
                             }
                         }
-                    } else {
-                        settings.forEach { group ->
-                            item {
-                                if (isDebugModeEnable) {
-                                    Box(
-                                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
-                                    ) {
-                                        Text(
-                                            text = "Group id: ${group.id} | isHide: ${group.hide.collectAsState().value}",
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    }
+                        if (title != null && isCanScroll) {
+                            item(key = "big_title") {
+                                Spacer(Modifier.height(topbarHeight))
+                                val titleConfig = ScreenTitle.ScreenTitleConfig(
+                                    alignment = Alignment.Center,
+                                    style = MaterialTheme.typography.displaySmall,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2
+                                )
+                                title?.content?.let {
+                                    it(
+                                        ScreenTitle.ScreenTitleContentScope(),
+                                        titleConfig
+                                    )
                                 }
                             }
-
-                            when (group) {
-                                is FragmentedGroup -> {
-                                    item(key = "group_title_${group.id}") {
-                                        if (!group.hide.collectAsState().value) {
-                                            group.groupTitle?.content?.let { it(GroupTitle.GroupTitleContentScope()) }
+                            item {
+                                Spacer(Modifier.height(20.dp))
+                            }
+                        }
+                        if (currentScreen is CustomScreen) {
+                            item {
+                                Column(modifier = Modifier) {
+                                    currentScreen.Render()
+                                }
+                            }
+                        } else {
+                            settings.forEach { group ->
+                                item {
+                                    if (isDebugModeEnable) {
+                                        Box(
+                                            modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                                        ) {
+                                            Text(
+                                                text = "Group id: ${group.id} | isHide: ${group.visible.collectAsState().value}",
+                                                style = MaterialTheme.typography.labelMedium
+                                            )
                                         }
                                     }
-                                    group.unfragmentedGroup?.also { gp ->
-                                        val first = gp.settings.firstOrNull()?.id ?: return@also
-                                        val last = gp.settings.last().id
-                                        items(gp.settings, key = { it.id }) { setting ->
+                                }
+
+                                when (group) {
+                                    is FragmentedGroup -> {
+                                        item(key = "group_title_${group.id}") {
+                                            if (group.visible.collectAsState().value) {
+                                                group.groupTitle?.content?.let { it(GroupTitle.GroupTitleContentScope()) }
+                                            }
+                                        }
+                                        group.unfragmentedGroup?.also { gp ->
+                                            val first = gp.settings.firstOrNull()?.id ?: return@also
+                                            val last = gp.settings.last().id
+                                            items(gp.settings, key = { it.id }) { setting ->
 
 
+                                                val groupPosition = when {
+                                                    "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
+                                                    last == first || setting.id == first -> GroupItemClip.First
+                                                    else -> GroupItemClip.None
+                                                }
+                                                val debugData = DebugData(
+                                                    settingSimpleName = setting::class.simpleName,
+                                                    settingId = setting.id,
+                                                    currentValue = setting.value
+                                                ).takeIf { isDebugModeEnable }
+                                                val isVisible = (setting as ComposeSettingInterface<*>).visible.collectAsState().value
+                                                if (group.visible.collectAsState().value && isVisible) {
+                                                    CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
+                                                        CompositionLocalProvider(LocalDebugData provides debugData) {
+                                                            setting.UI(modifier = Modifier)
+                                                        }
+                                                    }
+                                                }
+
+                                            }
+                                        }
+                                        item(key = group.id) {
+                                            val fragment by group.currentFragment.collectAsState()
+
+                                            val first =
+                                                fragment.settings.firstOrNull()?.id ?: return@item
+                                            val last = fragment.settings.last().id
+                                            AnimatedContent(
+                                                modifier = Modifier
+                                                    .then(group.modifier)
+                                                    .padding(group.paddingValues),
+                                                targetState = fragment,
+                                            ) { fr ->
+                                                if (fr.visible.collectAsState().value) return@AnimatedContent
+                                                Column(
+                                                    verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
+                                                ) {
+                                                    fr.settings.forEach { setting ->
+
+                                                        val groupPosition = when {
+                                                            "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
+                                                            last == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.Full
+                                                            setting.id == last -> GroupItemClip.Last
+                                                            setting.id == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.First
+                                                            else -> GroupItemClip.None
+                                                        }
+                                                        val debugData = DebugData(
+                                                            settingSimpleName = setting::class.simpleName,
+                                                            settingId = setting.id,
+                                                            currentValue = setting.value
+                                                        ).takeIf { isDebugModeEnable }
+                                                        val isVisible = (setting as ComposeSettingInterface<*>).visible.collectAsState().value
+                                                        if (group.visible.collectAsState().value && isVisible) {
+                                                            CompositionLocalProvider(
+                                                                LocalGroupPosition provides groupPosition
+                                                            ) {
+                                                                CompositionLocalProvider(
+                                                                    LocalDebugData provides debugData
+                                                                ) {
+                                                                    setting.UI(modifier = Modifier)
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+
+                                        }
+                                    }
+
+                                    is Group -> {
+                                        val groupItems = group.settings
+                                        item(key = "group_title_${group.id}") {
+                                            if (group.visible.collectAsState().value) {
+                                                group.groupTitle?.content?.let { it(GroupTitle.GroupTitleContentScope()) }
+                                            }
+                                        }
+                                        val first = groupItems.firstOrNull()?.id ?: return@forEach
+                                        val last = groupItems.last().id
+                                        items(items = groupItems, key = { it.id }) { setting ->
                                             val groupPosition = when {
                                                 "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
-                                                last == first || setting.id == first -> GroupItemClip.First
+                                                last == first -> GroupItemClip.Full
+                                                setting.id == last -> GroupItemClip.Last
+                                                setting.id == first -> GroupItemClip.First
                                                 else -> GroupItemClip.None
                                             }
                                             val debugData = DebugData(
@@ -264,141 +350,66 @@ fun SettingsScreen(
                                                 settingId = setting.id,
                                                 currentValue = setting.value
                                             ).takeIf { isDebugModeEnable }
-                                            if (!group.hide.collectAsState().value) {
+                                            val isVisible = (setting as ComposeSettingInterface<*>).visible.collectAsState().value
+                                            if (group.visible.collectAsState().value && isVisible) {
                                                 CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
                                                     CompositionLocalProvider(LocalDebugData provides debugData) {
-                                                        setting.UI(modifier = Modifier.animateItem())
-                                                    }
-                                                }
-                                            }
-
-                                        }
-                                    }
-                                    item(key = group.id) {
-                                        val fragment by group.currentFragment.collectAsState()
-
-                                        val first =
-                                            fragment.settings.firstOrNull()?.id ?: return@item
-                                        val last = fragment.settings.last().id
-                                        AnimatedContent(
-                                            modifier = Modifier
-                                                .then(group.modifier)
-                                                .padding(group.paddingValues),
-                                            targetState = fragment,
-                                        ) { fr ->
-                                            if (fr.hide.collectAsState().value) return@AnimatedContent
-                                            Column(
-                                                verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
-                                            ) {
-                                                fr.settings.forEach { setting ->
-
-                                                    val groupPosition = when {
-                                                        "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
-                                                        last == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.Full
-                                                        setting.id == last -> GroupItemClip.Last
-                                                        setting.id == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.First
-                                                        else -> GroupItemClip.None
-                                                    }
-                                                    val debugData = DebugData(
-                                                        settingSimpleName = setting::class.simpleName,
-                                                        settingId = setting.id,
-                                                        currentValue = setting.value
-                                                    ).takeIf { isDebugModeEnable }
-                                                    if (!group.hide.collectAsState().value) {
-                                                        CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                                            CompositionLocalProvider(LocalDebugData provides debugData) {
-                                                                setting.UI(modifier = Modifier.animateItem())
-                                                            }
-                                                        }
+                                                        setting.UI(modifier = Modifier)
                                                     }
                                                 }
                                             }
                                         }
-
-
                                     }
-                                }
-
-                                is Group -> {
-                                    val groupItems = group.settings
-                                    item(key = "group_title_${group.id}") {
-                                        if (!group.hide.collectAsState().value) {
-                                            group.groupTitle?.content?.let { it(GroupTitle.GroupTitleContentScope()) }
-                                        }
-                                    }
-                                    val first = groupItems.firstOrNull()?.id ?: return@forEach
-                                    val last = groupItems.last().id
-                                    items(items = groupItems, key = { it.id }) { setting ->
-                                        val groupPosition = when {
-                                            "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
-                                            last == first -> GroupItemClip.Full
-                                            setting.id == last -> GroupItemClip.Last
-                                            setting.id == first -> GroupItemClip.First
-                                            else -> GroupItemClip.None
-                                        }
-                                        val debugData = DebugData(
-                                            settingSimpleName = setting::class.simpleName,
-                                            settingId = setting.id,
-                                            currentValue = setting.value
-                                        ).takeIf { isDebugModeEnable }
-                                        if (!group.hide.collectAsState().value) {
-                                            CompositionLocalProvider(LocalGroupPosition provides groupPosition) {
-                                                CompositionLocalProvider(LocalDebugData provides debugData) {
-                                                    setting.UI(modifier = Modifier.animateItem())
-                                                }
-                                            }
-                                        }
-                                    }
-
+                                    is AbstractGroup -> {}
                                 }
                             }
                         }
                     }
-                }
 
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(if (title == null) Color.Transparent else topBarColor)
-//                        .animateContentSize()
-                ) {
-
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = topbarHeight),
-                        verticalAlignment = Alignment.CenterVertically
+                            .background(if (title == null) Color.Transparent else topBarColor)
+//                        .animateContentSize()
                     ) {
-                        if (isShowNavigation) {
-                            FilledIconButton(
-                                onClick = navigationModel::goBack,
-                                colors = IconButtonDefaults.iconButtonColors().copy(
-                                    containerColor = topBarColor
-                                )
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.arrow_back_icon),
-                                    contentDescription = "back"
-                                )
-                            }
-                        }
-                        if (title != null) {
-                            AnimatedVisibility(
-                                visible = isShowTitleTopBar,
-                                enter = fadeIn(tween(200)),
-                                exit = fadeOut(tween(200))
-                            ) {
-                                title!!.content?.let {
-                                    it(
-                                        ScreenTitle.ScreenTitleContentScope(),
-                                        ScreenTitle.ScreenTitleConfig.Default
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = topbarHeight),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (isShowNavigation) {
+                                FilledIconButton(
+                                    onClick = navigationModel::goBack,
+                                    colors = IconButtonDefaults.iconButtonColors().copy(
+                                        containerColor = topBarColor
+                                    )
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.arrow_back_icon),
+                                        contentDescription = "back"
                                     )
                                 }
                             }
+                            if (title != null) {
+                                AnimatedVisibility(
+                                    visible = isShowTitleTopBar,
+                                    enter = fadeIn(tween(200)),
+                                    exit = fadeOut(tween(200))
+                                ) {
+                                    title!!.content?.let {
+                                        it(
+                                            ScreenTitle.ScreenTitleContentScope(),
+                                            ScreenTitle.ScreenTitleConfig.Default
+                                        )
+                                    }
+                                }
+                            }
                         }
-                    }
 
+                    }
                 }
             }
         }

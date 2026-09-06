@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.daniil.csb.CSB
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 
 open class GroupTitle internal constructor(
@@ -21,13 +22,14 @@ open class GroupTitle internal constructor(
         fun setText(text: String): GroupTitle {
             val content: @Composable GroupTitleContentScope.() -> Unit = {
                 val style = LocalSettingsStyle.current
+                val translator = LocalCSBTranslator.current
+                val textStyle = style.titleStyle.copy(fontWeight = FontWeight.Bold)
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    val textStyle = style.titleStyle.copy(fontWeight = FontWeight.Bold)
                     Text(
-                        text = CSB.translator(text),
+                        text = translator.translate(text),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = textStyle

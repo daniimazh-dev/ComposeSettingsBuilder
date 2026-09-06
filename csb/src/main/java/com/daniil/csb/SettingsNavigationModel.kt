@@ -2,20 +2,23 @@ package com.daniil.csb
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.screens.AbstractScreen
+import androidx.lifecycle.viewModelScope
 import com.daniil.csb.group.FragmentController
 import com.daniil.csb.group.FragmentedGroup
 import com.daniil.csb.group.Group
 import com.daniil.csb.group.GroupController
 import com.daniil.csb.group.GroupSealed
+import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.ScreenController
+import com.daniil.csb.settings.depend.SubscribeData
+import com.daniil.csb.settings.settingcore.ComposeSetting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
-import kotlin.error
+import kotlinx.coroutines.launch
 
 class SettingsNavigationModel : ViewModel() {
 
@@ -160,4 +163,39 @@ class SettingsNavigationModel : ViewModel() {
         goToScreen(screenStack.value.dropLast(1).last())
     }
 
+    fun wireDependencies() {
+        val allSettings = screenHeap.value.flatMap { it.settings.flatMap { it.settings } }
+        allSettings.forEach { setting ->
+            setting.depends.forEach { dep ->
+                val target = allSettings.find { it.id == dep.id } ?: return@forEach
+                if (dep is SubscribeData) {
+                    viewModelScope.launch {
+                        target.value.collect { dep.onChangeValue(target) }
+                    }
+                    viewModelScope.launch {
+                        target.enabled.collect { dep.onChangeEnabled(it) }
+                    }
+                    viewModelScope.launch {
+                        target.visible.collect { dep.onSettingVisible(it) }
+                    }
+                    
+                    viewModelScope.launch {
+                        combine(target.value, target.enabled, target.visible) { _, _, _ ->
+                            dep.visibleIf(target)
+                        }.collect { isVisible ->
+                            setting.show(isVisible)
+                        }
+                    }
+                    viewModelScope.launch {
+                        combine(target.value, target.enabled, target.visible) { _, _, _ ->
+                            dep.enableIf(target)
+                        }.collect { isEnabled ->
+                            setting.enabled(isEnabled)
+                        }
+                    }
+                }
+
+            }
+        }
+    }
 }

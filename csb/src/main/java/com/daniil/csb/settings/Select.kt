@@ -43,19 +43,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.persistence.SaveSettingPackage
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingConfiguredToken
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingConfiguredToken
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
@@ -69,19 +72,16 @@ class Select(
     override val description: String?,
     val uiMode: UIMode,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     override var onChangeValue: (Option) -> Unit = {},
     override var isSaveSetting: Boolean,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<Select.Option>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<Select.Option>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: Option) {
         if (!options.contains(newValue)) return
@@ -156,15 +156,17 @@ class Select(
                     description,
                     uiMode,
                     enabled,
+                    visible,
+                    icon,
+                    badge,
                     onChangeValue,
                     isSaveSetting,
-                    customGrouping
+                    customGrouping,
+                    depends
                 ).register()
             }
         }
     }
-
-    override val focusState = MutableStateFlow(false)
 
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
@@ -173,6 +175,7 @@ class Select(
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
+        val translator = LocalCSBTranslator.current
         var selectId by retain(alertOpen) { mutableStateOf<String>(value.id) }
 
         val isOpenMode = uiMode == UIMode.List || uiMode == UIMode.Chip
@@ -182,11 +185,13 @@ class Select(
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
+            icon = icon,
+            badge = badge,
             title = {
                 Column {
-                    if (!title.isBlank()) Text(CSB.translator(title))
+                    if (!title.isBlank()) Text(translator.translate(title))
                     if (isOpenMode) description?.let {
-                        Text(CSB.translator(it), style = style.descriptionStyle)
+                        Text(translator.translate(it), style = style.descriptionStyle)
                     }
                 }
             },
@@ -203,7 +208,7 @@ class Select(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(MaterialTheme.shapes.medium)
-                                        .clickable { selectId = it.id },
+                                        .clickable {  changeValue(it.id) },
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Box(
@@ -215,7 +220,7 @@ class Select(
                                     ) {
                                         Row() {
                                             AnimatedVisibility(
-                                                visible = it.id == selectId,
+                                                visible = it.id == value.id,
                                                 exit = scaleOut(),
                                                 enter = scaleIn()
                                             ) {
@@ -229,7 +234,7 @@ class Select(
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = CSB.translator(it.title),
+                                        text = translator.translate(it.title),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -243,13 +248,13 @@ class Select(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             options.forEach {
-                                val isSelected = it.id == selectId
+                                val isSelected = it.id == value.id
                                 FilterChip(
                                     selected = isSelected,
-                                    onClick = { selectId = it.id },
+                                    onClick = { changeValue(it.id) },
                                     label = {
                                         Text(
-                                            text = CSB.translator(it.title),
+                                            text = translator.translate(it.title),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
@@ -267,10 +272,10 @@ class Select(
                             }
                         }
                     }
-                    else -> description?.let { Text(CSB.translator(it)) }
+                    else -> description?.let { Text(translator.translate(it)) }
                 }
             },
-            display = {
+            action = {
                 if (isOpenMode) return@DefaultSettingUI
                 Row(
                     modifier = Modifier,
@@ -279,7 +284,7 @@ class Select(
                     Text(
                         modifier = Modifier
                             .widthIn(max = 112.dp),
-                        text = CSB.translator(value.title),
+                        text = translator.translate(value.title),
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                         style = style.titleStyle
@@ -308,7 +313,7 @@ class Select(
                                     DropdownMenuItem(
                                         text = {
                                             Text(
-                                                text = CSB.translator(it.title),
+                                                text = translator.translate(it.title),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
@@ -330,7 +335,7 @@ class Select(
         if (alertOpen && uiMode == UIMode.Alert) {
             AlertDialog(
                 title = {
-                    if (!alertTitle.isBlank()) Text(CSB.translator(alertTitle))
+                    if (!alertTitle.isBlank()) Text(translator.translate(alertTitle))
                 },
                 text = {
 
@@ -375,7 +380,7 @@ class Select(
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = CSB.translator(it.title),
+                                    text = translator.translate(it.title),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -413,5 +418,3 @@ class Select(
         }
     }
 }
-
-

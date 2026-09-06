@@ -1,3 +1,3 @@
-package com.daniil.csb.settings.utils
+package com.daniil.csb.settings.settingcore
 
 open class SettingConfiguredToken internal constructor()

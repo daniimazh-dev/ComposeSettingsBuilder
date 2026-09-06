@@ -43,21 +43,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.persistence.SaveSettingPackage
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 
 
@@ -70,19 +72,16 @@ class MultiplySelect internal constructor(
     override val description: String?,
     val uiMode: UIMode,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     override var onChangeValue: (List<Option>) -> Unit = {},
     override var isSaveSetting: Boolean,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<List<MultiplySelect.Option>>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<List<MultiplySelect.Option>>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private var _value = MutableStateFlow(this@MultiplySelect.defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: List<Option>) {
         if (!newValue.all { options.contains(it) }) return
@@ -144,11 +143,7 @@ class MultiplySelect internal constructor(
         var description: String? = null
         var uiMode = UIMode.Alert
         fun option(id: String, title: String) {
-            +Option(id, title)
-        }
-
-        operator fun Option.unaryPlus() {
-            options.add(this)
+            options.add(Option(id, title))
         }
     }
 
@@ -168,15 +163,17 @@ class MultiplySelect internal constructor(
                     description,
                     uiMode,
                     enabled,
+                    visible,
+                    icon,
+                    badge,
                     onChangeValue,
                     isSaveSetting,
-                    customGrouping
+                    customGrouping,
+                    depends
                 ).register()
             }
         }
     }
-
-    override val focusState = MutableStateFlow(false)
 
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
@@ -184,17 +181,20 @@ class MultiplySelect internal constructor(
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
-        val selectList = retain { value.value.toMutableStateList() }
+        val translator = LocalCSBTranslator.current
+        val selectList = value.collectAsState().value.toMutableStateList()
         val isOpenMode = uiMode == UIMode.List || uiMode == UIMode.Chip
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
+            icon = icon,
+            badge = badge,
             title = {
-                if (!title.isBlank()) Text(CSB.translator(title))
+                if (!title.isBlank()) Text(translator.translate(title))
                 if (isOpenMode) description?.let {
-                    Text(text = CSB.translator(it), style = style.descriptionStyle)
+                    Text(text = translator.translate(it), style = style.descriptionStyle)
                 }
             },
             description = {
@@ -213,6 +213,7 @@ class MultiplySelect internal constructor(
                                         .clickable {
                                             if (option in selectList) selectList.remove(option)
                                             else selectList.add(option)
+                                            changeValue(selectList)
                                         },
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
@@ -246,7 +247,7 @@ class MultiplySelect internal constructor(
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = CSB.translator(option.title),
+                                        text = translator.translate(option.title),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -266,10 +267,11 @@ class MultiplySelect internal constructor(
                                     onClick = {
                                         if (option in selectList) selectList.remove(option)
                                         else selectList.add(option)
+                                        changeValue(selectList)
                                     },
                                     label = {
                                         Text(
-                                            text = CSB.translator(option.title),
+                                            text = translator.translate(option.title),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
@@ -287,10 +289,10 @@ class MultiplySelect internal constructor(
                             }
                         }
                     }
-                    else -> description?.let { Text(CSB.translator(it)) }
+                    else -> description?.let { Text(translator.translate(it)) }
                 }
             },
-            display = {
+            action = {
                 if (isOpenMode) return@DefaultSettingUI
                 Row(
                     modifier = Modifier,
@@ -327,7 +329,7 @@ class MultiplySelect internal constructor(
                                         },
                                         text = {
                                             Text(
-                                                text = CSB.translator(option.title),
+                                                text = translator.translate(option.title),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
@@ -338,6 +340,7 @@ class MultiplySelect internal constructor(
                                             } else {
                                                 selectList.add(option)
                                             }
+                                            changeValue(selectList)
                                         }
                                     )
                                 }
@@ -351,7 +354,7 @@ class MultiplySelect internal constructor(
         if (alertOpen && uiMode == UIMode.Alert) {
             AlertDialog(
                 title = {
-                    if (!alertTitle.isBlank()) Text(CSB.translator(alertTitle))
+                    if (!alertTitle.isBlank()) Text(translator.translate(alertTitle))
                 },
                 text = {
 
@@ -408,7 +411,7 @@ class MultiplySelect internal constructor(
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = CSB.translator(option.title),
+                                    text = translator.translate(option.title),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -446,4 +449,3 @@ class MultiplySelect internal constructor(
         }
     }
 }
-

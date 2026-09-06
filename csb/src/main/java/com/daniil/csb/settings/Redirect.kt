@@ -14,15 +14,19 @@ import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.SettingsNavigationModel
 import com.daniil.csb.screens.Screen
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingConfiguredToken
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingConfiguredToken
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -33,25 +37,24 @@ class Redirect internal constructor(
     var showArrow: Boolean = true,
     override val title: String,
     override val description: String?,
-    val labelIcon: (@Composable () -> Unit)? = null,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     val onRedirect: (Screen) -> Unit = {},
     val navigationModel: SettingsNavigationModel = CSB.navigationModel,
-    override val customGrouping: GroupItemClip? = null
-): ComposeSetting<String>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+): ComposeSetting<String>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     override val defaultValue: String = redirectToId
 
     private val _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
     override val onChangeValue: (String) -> Unit
         get() = { onRedirect(navigationModel.findScreenById(value.value)) }
     override var isSaveSetting: Boolean = false
 
-    override fun enabled(state: Boolean) { _enable.value = state }
     override fun changeValue(newValue: String) { _value.value = newValue }
     fun changeValue(newValue: Screen) { _value.value = newValue.id }
 
@@ -65,7 +68,6 @@ class Redirect internal constructor(
         var navigationModel: SettingsNavigationModel = CSB.navigationModel
         var title: String? = null
         var description: String? = null
-        var labelIcon: (@Composable () -> Unit)? = null
         @Deprecated("The Redirect setting dose not store any data. Changing the value to true is not necessary", level = DeprecationLevel.HIDDEN)
         override var isSaveSetting: Boolean = false
         fun setRedirect(redirectToId: String): InitRedirectToken {
@@ -88,18 +90,18 @@ class Redirect internal constructor(
             val data = RedirectBuilderScope()
             data.scope()
             return with(data) {
-                Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, labelIcon, enabled, onRedirect, navigationModel, customGrouping)
+                Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, enabled, visible, icon, badge, onRedirect, navigationModel, customGrouping, depends)
             }.register()
         }
     }
 
 
-    override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
+        val translator = LocalCSBTranslator.current
         fun execute() {
             val targetScreen = navigationModel.findScreenById(redirectToId)
             if (focus != null) {
@@ -114,10 +116,11 @@ class Redirect internal constructor(
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if(!title.isBlank()) Text(CSB.translator(title)) },
-            description = { description?.let { Text(CSB.translator(it)) } },
-            icon = labelIcon,
-            display = {
+            icon = icon,
+            badge = badge,
+            title = { if(!title.isBlank()) Text(translator.translate(title)) },
+            description = { description?.let { Text(translator.translate(it)) } },
+            action = {
                 if (showArrow) {
                     FilledIconButton(
                         enabled = enabled,
@@ -135,4 +138,3 @@ class Redirect internal constructor(
         )
     }
 }
-

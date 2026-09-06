@@ -15,6 +15,7 @@ internal val allFlags = setOf(
     // [flag:] Set specific / experimental parameter
     "ignoreSettingNotFoundError",
     "allowDisplayAbstractScreen",
+    "allowDisplayAbstractGroup",
     "disableContainerGroupRound",
     "enableDebugMode",
 //    "useExperimentalApi", // TODO

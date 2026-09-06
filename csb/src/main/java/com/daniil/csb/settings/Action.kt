@@ -10,15 +10,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -27,22 +30,19 @@ class Action internal constructor(
     var requestAlert: Boolean,
     var onAction: (Boolean) -> Unit,
     val alertTitle: String?,
-    val icon: @Composable (() -> Unit)?,
-    val text: String?,
+    val alertText: String?,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
+    val actionIcon: SettingIcon?,
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<Unit>() {
+    visible: Boolean = true,
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<Unit>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private var _value = MutableStateFlow(Unit)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override var isSaveSetting: Boolean = false
 
@@ -56,10 +56,10 @@ class Action internal constructor(
     class ActionBuilderScope(): SettingDefaultScope() {
         var requestAlert = false
         var onAction: (result: Boolean) -> Unit = {}
-        var icon: (@Composable () -> Unit)? = null
         var alertText: String? = null
         var alertTitle: String? = null
         var title: String? = null
+        var actionIcon: SettingIcon? = null
         var description: String? = null
         @Deprecated("The Action setting dose not store any data. Changing the value to true is not necessary", level = DeprecationLevel.HIDDEN)
         override var isSaveSetting: Boolean = false
@@ -74,32 +74,36 @@ class Action internal constructor(
                 requestAlert,
                 onAction,
                 alertTitle,
-                icon,
                 alertText,
+                icon,
+                badge,
+                actionIcon,
                 title ?: id,
                 description,
                 enabled,
-                customGrouping
+                visible,
+                customGrouping,
+                depends
             ).register()
         }
     }
-
-    override val focusState = MutableStateFlow(false)
 
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val focusState by this.focusState.collectAsState()
         var alertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
-
+        val translator = LocalCSBTranslator.current
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
-            description = { description?.let { Text(CSB.translator(it)) } },
-            display = { icon?.invoke() },
+            icon = icon,
+            badge = badge,
+            title = { if (!title.isBlank()) Text(translator.translate(title)) },
+            description = { description?.let { Text(translator.translate(it)) } },
+            action = { actionIcon?.content() },
             onClick = {
                 if (this@Action.requestAlert) {
                     alertOpen = true
@@ -111,10 +115,10 @@ class Action internal constructor(
         if (alertOpen && this@Action.requestAlert) {
             AlertDialog(
                 title = {
-                    if (alertTitle?.isBlank() == false) Text(CSB.translator(alertTitle))
+                    if (alertTitle?.isBlank() == false) Text(translator.translate(alertTitle))
                 },
                 text = {
-                    Text(CSB.translator(text.orEmpty()))
+                    Text(translator.translate(alertText.orEmpty()))
                 },
                 confirmButton = {
                     TextButton(
@@ -145,4 +149,3 @@ class Action internal constructor(
         }
     }
 }
-

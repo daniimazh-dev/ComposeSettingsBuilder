@@ -31,17 +31,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -51,16 +54,17 @@ class Switch internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
     override var onChangeValue: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean = true,
     val uiMode: UIMode = UIMode.Switch,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<Boolean>() {
+    override val customGrouping: GroupItemClip? = null,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<Boolean>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
 
     enum class UIMode {
         Switch,
@@ -70,17 +74,13 @@ class Switch internal constructor(
         OnOffState
     }
 
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
-
     override fun changeValue(newValue: Boolean) {
         onChangeValue(newValue)
         _value.value = newValue
     }
 
     @CsbDslMarkers
-    class SwitchBuilderScope(): SettingDefaultScope() {
+    class SwitchBuilderScope() : SettingDefaultScope() {
         var defaultValue = false
         var title: String? = null
         var description: String? = null
@@ -89,15 +89,31 @@ class Switch internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<Switch, SwitchBuilderScope> {
-        override fun SettingDslInterface.create(id: String, scope: SwitchBuilderScope.() -> Unit): SettingToken<Switch> {
+        override fun com.daniil.csb.settings.settingcore.SettingDslInterface.create(
+            id: String,
+            scope: SwitchBuilderScope.() -> Unit
+        ): SettingToken<Switch> {
             val data = SwitchBuilderScope().apply(scope)
             return with(data) {
-                Switch(id, defaultValue, title ?: id, description, enabled, onChangeValue,  isSaveSetting, uiMode, customGrouping).register()
+                Switch(
+                    id,
+                    defaultValue = defaultValue,
+                    title = title ?: id,
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    onChangeValue = onChangeValue,
+                    isSaveSetting = isSaveSetting,
+                    uiMode = uiMode,
+                    customGrouping = customGrouping,
+                    icon = icon,
+                    badge = badge,
+                    depends = depends
+                ).register()
             }
         }
     }
 
-    override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(
         modifier: Modifier,
@@ -107,15 +123,18 @@ class Switch internal constructor(
         val enabled by this.enabled.collectAsState()
         val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()
+        val translator = LocalCSBTranslator.current
 
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
-            description = { description?.let { Text(CSB.translator(it)) } },
-            display = {
+            icon = icon,
+            badge = badge,
+            title = { if (!title.isBlank()) Text(translator.translate(title)) },
+            description = { description?.let { Text(translator.translate(it)) } },
+            action = {
                 when (uiMode) {
                     UIMode.Switch -> {
                         Switch(
@@ -127,6 +146,7 @@ class Switch internal constructor(
                             enabled = enabled
                         )
                     }
+
                     UIMode.CheckBox -> {
                         val shape = RoundedCornerShape(6.dp)
                         Box(
@@ -153,8 +173,10 @@ class Switch internal constructor(
                             }
                         }
                     }
+
                     UIMode.RadioButton, UIMode.SquareRadioButton -> {
-                        val shape = if (uiMode == UIMode.RadioButton) CircleShape else RoundedCornerShape(6.dp)
+                        val shape =
+                            if (uiMode == UIMode.RadioButton) CircleShape else RoundedCornerShape(6.dp)
                         Box(
                             modifier = Modifier
                                 .padding(8.dp)
@@ -173,14 +195,18 @@ class Switch internal constructor(
                                     Box(
                                         modifier = Modifier
                                             .size(17.dp)
-                                            .background(style.activeColor,
-                                                if (uiMode == UIMode.RadioButton) CircleShape else RoundedCornerShape(4.dp)
+                                            .background(
+                                                style.activeColor,
+                                                if (uiMode == UIMode.RadioButton) CircleShape else RoundedCornerShape(
+                                                    4.dp
+                                                )
                                             )
                                     )
                                 }
                             }
                         }
                     }
+
                     UIMode.OnOffState -> {
                         val animateColor by animateColorAsState(
                             targetValue = if (value) style.activeColor else style.containerColor,
@@ -188,9 +214,9 @@ class Switch internal constructor(
                         )
                         Box(
                             modifier = Modifier
-                            .clip(RoundedCornerShape(style.containerCornerShape))
-                            .background(color = animateColor)
-                            .clickable { if (enabled) changeValue(!value) },
+                                .clip(RoundedCornerShape(style.containerCornerShape))
+                                .background(color = animateColor)
+                                .clickable { if (enabled) changeValue(!value) },
                         ) {
                             AnimatedContent(
                                 targetState = value
@@ -215,4 +241,3 @@ class Switch internal constructor(
         )
     }
 }
-

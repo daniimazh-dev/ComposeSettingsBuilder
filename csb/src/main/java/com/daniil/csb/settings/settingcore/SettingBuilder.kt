@@ -1,8 +1,7 @@
-package com.daniil.csb.settings.utils
+package com.daniil.csb.settings.settingcore
 
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.TranslatableScope
-import com.daniil.csb.screens.ScreenBuilder
 
 @CsbDslMarkers
 open class SettingBuilder: SettingDslInterface, TranslatableScope {

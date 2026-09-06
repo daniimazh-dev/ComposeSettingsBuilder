@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -37,24 +36,24 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
-import com.daniil.csb.settings.utils.clippedShape
-import com.daniil.csb.settingui.DefaultContainer
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
+import com.daniil.csb.settings.settingcore.clippedShape
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -68,20 +67,17 @@ class TextField internal constructor(
     val label: (@Composable () -> Unit)?,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     override var onChangeValue: (String) -> Unit = {},
     val onFocusChange: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<String>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<String>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private var _value = MutableStateFlow(this@TextField.defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: String) {
         onChangeValue(newValue)
@@ -111,32 +107,36 @@ class TextField internal constructor(
                     label,
                     description,
                     enabled,
+                    visible,
+                    icon,
+                    badge,
                     onChangeValue,
                     onFocusChange,
                     isSaveSetting,
-                    customGrouping
+                    customGrouping,
+                    depends
                 ).register()
             }
         }
     }
 
-    override val focusState = MutableStateFlow(false)
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
         val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         var isAlertOpen by retain { mutableStateOf(false) }
         val enabled by this.enabled.collectAsState()
+        val translator = LocalCSBTranslator.current
         val groupPosition = LocalGroupPosition.current
         var text by retain { mutableStateOf(value.value) }
         val focusRequest = remember { FocusRequester() }
         if (isAlertOpen && !openAlert) {
-            DefaultContainer(
-                modifier = modifier,
+            LocalSettingsStyle.current.ContainerSlot(
+                modifier = modifier.fillMaxWidth(),
                 isFocused = focusState,
-                groupItemClip = position,
+                shape = (position ?: customGrouping ?: groupPosition).clippedShape(),
                 enabled = enabled,
-                paddingValues = PaddingValues(2.dp),
+                minHeight = style.minHeight,
                 onClick = null
             ) {
                 LaunchedEffect(Unit) {
@@ -187,9 +187,11 @@ class TextField internal constructor(
                 isFocused = focusState,
                 groupItemClip = customGrouping ?: position,
                 enabled = enabled,
-                title = { if (!title.isBlank()) Text(CSB.translator(title)) },
-                description = { description?.let { Text(CSB.translator(it)) } },
-                display = {
+                icon = icon,
+                badge = badge,
+                title = { if (!title.isBlank()) Text(translator.translate(title)) },
+                description = { description?.let { Text(translator.translate(it)) } },
+                action = {
                     Row(
                         modifier = Modifier,
                         verticalAlignment = Alignment.CenterVertically
@@ -225,7 +227,7 @@ class TextField internal constructor(
         if (isAlertOpen && openAlert) {
             AlertDialog(
                 title = {
-                    if (!alertTitle.isBlank()) Text(CSB.translator(alertTitle))
+                    if (!alertTitle.isBlank()) Text(translator.translate(alertTitle))
                 },
                 text = {
 
@@ -270,4 +272,3 @@ class TextField internal constructor(
         }
     }
 }
-

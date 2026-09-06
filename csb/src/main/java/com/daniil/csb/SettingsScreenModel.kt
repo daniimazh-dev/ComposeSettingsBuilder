@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.daniil.csb.group.GroupSealed
 import com.daniil.csb.screens.Screen
-import com.daniil.csb.settings.utils.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSetting
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

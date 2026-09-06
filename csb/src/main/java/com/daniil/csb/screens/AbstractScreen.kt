@@ -3,11 +3,13 @@ package com.daniil.csb.screens
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Modifier
 import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.group.AbstractGroup
 import com.daniil.csb.group.Group
 import com.daniil.csb.group.GroupSealed
+import com.daniil.csb.isInFlag
 import com.daniil.csb.screens.title.ScreenTitle
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.SettingBuilder
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.SettingBuilder
 
 class AbstractScreen
 internal constructor(
@@ -16,7 +18,9 @@ internal constructor(
 ) : Screen(id, ScreenTitle.setText(id), Modifier, PaddingValues.Zero) {
 
     override val settings: List<GroupSealed>
-        get() = listOf(Group(id, null, false, abstractSettings))
+        get() = if ("allowDisplayAbstractScreen".isInFlag())
+            listOf(Group(id, null, true, abstractSettings))
+        else listOf(AbstractGroup(id, abstractSettings))
 
     class Builder(
         val id: String

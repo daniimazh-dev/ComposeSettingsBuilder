@@ -24,21 +24,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.persistence.SaveSettingPackage
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import com.daniil.csb.utils.LocalTimeSerializer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.KSerializer
 import java.time.LocalTime
 
 class TimePicker internal constructor(
@@ -47,21 +49,17 @@ class TimePicker internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     val alertTitle: String,
     override var onChangeValue: (LocalTime) -> Unit = {},
     override var isSaveSetting: Boolean = true,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<LocalTime>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<LocalTime>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: LocalTime) {
         onChangeValue(newValue)
@@ -95,16 +93,18 @@ class TimePicker internal constructor(
                     title ?: id,
                     description,
                     enabled,
+                    visible,
+                    icon,
+                    badge,
                     alertTitle,
                     onChangeValue,
                     isSaveSetting,
-                    customGrouping
+                    customGrouping,
+                    depends
                 ).register()
             }
         }
     }
-
-    override val focusState = MutableStateFlow(false)
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -115,6 +115,7 @@ class TimePicker internal constructor(
         val enabled by this.enabled.collectAsState()
         val focusState by this.focusState.collectAsState()
         val value by this.value.collectAsState()
+        val translator = LocalCSBTranslator.current
         val state = rememberTimePickerState(
             initialHour = value.hour,
             initialMinute = value.minute,
@@ -126,9 +127,11 @@ class TimePicker internal constructor(
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
-            description = { description?.let { Text(CSB.translator(it)) } },
-            display = {
+            icon = icon,
+            badge = badge,
+            title = { if (!title.isBlank()) Text(translator.translate(title)) },
+            description = { description?.let { Text(translator.translate(it)) } },
+            action = {
                 TimePreview(value, is24Format = DateFormat.is24HourFormat(LocalContext.current))
             },
             onClick = {
@@ -138,7 +141,7 @@ class TimePicker internal constructor(
         if (isAlertOpen) {
             AlertDialog(
                 title = {
-                    Text(CSB.translator(alertTitle))
+                    Text(translator.translate(alertTitle))
                 },
                 text = {
                     TimePicker(
@@ -243,4 +246,3 @@ private fun TimePreview(
         }
     }
 }
-

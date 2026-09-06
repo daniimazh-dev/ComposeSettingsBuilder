@@ -1,4 +1,4 @@
-package com.daniil.csb.settings.utils
+package com.daniil.csb.settings.settingcore
 
 /**
  * A token confirming that the configuration was successfully registered in the builder.

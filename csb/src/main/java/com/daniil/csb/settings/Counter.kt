@@ -30,17 +30,20 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.R
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
 import com.daniil.csb.CsbDslMarkers
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,20 +58,17 @@ class Counter internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     override var onChangeValue: (Int) -> Unit = {},
     override var isSaveSetting: Boolean = true,
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<Int>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<Int>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
 
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: Int) {
         val coercedValue = newValue.coerceIn(range)
@@ -100,31 +100,35 @@ class Counter internal constructor(
                     title ?: id,
                     description,
                     enabled,
+                    visible,
+                    icon,
+                    badge,
                     onChangeValue,
                     isSaveSetting,
-                    customGrouping
+                    customGrouping,
+                    depends
                 ).register()
             }
         }
     }
 
-    override val focusState = MutableStateFlow(false)
-
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
-        val style = LocalSettingsStyle.current
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
+        val translator = LocalCSBTranslator.current
 
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            title = { if (!title.isBlank()) Text(CSB.translator(title)) },
-            description = { description?.let { Text(CSB.translator(it)) } },
-            display = {
+            icon = icon,
+            badge = badge,
+            title = { if (!title.isBlank()) Text(translator.translate(title)) },
+            description = { description?.let { Text(translator.translate(it)) } },
+            action = {
                 CounterImpl(value) {
                     if (enabled) {
                         val newValue = if (it) value + steps else value - steps
@@ -150,8 +154,8 @@ private fun CounterImpl(
     val removeInteraction = remember { MutableInteractionSource() }
     val addInteraction = remember { MutableInteractionSource() }
 
-    val isAddPress = addInteraction.collectIsPressedAsState()
     val isRemovePress = removeInteraction.collectIsPressedAsState()
+    val isAddPress = addInteraction.collectIsPressedAsState()
 
     val currentOnChangeValue by rememberUpdatedState(onChangeValue)
     val currentValue by rememberUpdatedState(value)
@@ -160,10 +164,10 @@ private fun CounterImpl(
     var removeButtonClicked by remember { mutableStateOf(false) }
 
     val animateAddScale by animateFloatAsState(
-        if (addButtonClicked) 0.8f else 1f
+        if (addButtonClicked) 0.8f else 1f, label = ""
     )
     val animateRemoveScale by animateFloatAsState(
-        if (removeButtonClicked) 0.8f else 1f
+        if (removeButtonClicked) 0.8f else 1f, label = ""
     )
     LaunchedEffect(addButtonClicked, removeButtonClicked) {
         if (addButtonClicked) {
@@ -273,4 +277,3 @@ private fun CounterImpl(
 
     }
 }
-

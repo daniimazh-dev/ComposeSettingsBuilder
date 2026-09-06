@@ -1,31 +1,27 @@
 package com.daniil.csb.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.daniil.csb.CSB
 import com.daniil.csb.CsbDslMarkers
-import com.daniil.csb.settings.utils.ComposeSetting
-import com.daniil.csb.settings.utils.ComposeSettingInterface
-import com.daniil.csb.settings.utils.GroupItemClip
-import com.daniil.csb.settings.utils.SettingDefaultScope
-import com.daniil.csb.settings.utils.SettingDslInterface
-import com.daniil.csb.settings.utils.SettingToken
-import com.daniil.csb.settingui.DefaultContainer
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.settingcore.ComposeSetting
+import com.daniil.csb.settings.settingcore.ComposeSettingInterface
+import com.daniil.csb.settings.settingcore.GroupItemClip
+import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
+import com.daniil.csb.settings.settingcore.SettingToken
+import com.daniil.csb.settingui.DefaultSettingUI
+import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.settingui.SettingBadge
+import com.daniil.csb.settingui.SettingIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -37,22 +33,18 @@ class ProgressBar internal constructor(
     override val title: String,
     override val description: String?,
     enabled: Boolean = true,
+    visible: Boolean = true,
+    val icon: SettingIcon? = null,
+    val badge: SettingBadge? = null,
     override var onChangeValue: (Float?) -> Unit = {},
-    override val customGrouping: GroupItemClip? = null
-) : ComposeSetting<Float?>() {
+    override val customGrouping: GroupItemClip? = null,
+    override val depends: List<Depends> = emptyList()
+) : ComposeSetting<Float?>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
 
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
     override var isSaveSetting: Boolean = false
-
-
-    private var _enable = MutableStateFlow(enabled)
-    override val enabled = _enable.asStateFlow()
-
-    override fun enabled(state: Boolean) {
-        _enable.value = state
-    }
 
     override fun changeValue(newValue: Float?) {
         _value.value = newValue?.coerceIn(0f, 1f)
@@ -87,14 +79,16 @@ class ProgressBar internal constructor(
                     title ?: id,
                     description,
                     enabled,
+                    visible,
+                    icon,
+                    badge,
                     onChangeValue,
-                    customGrouping
+                    customGrouping,
+                    depends
                 ).register()
             }
         }
     }
-
-    override val focusState = MutableStateFlow(false)
 
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
@@ -102,27 +96,19 @@ class ProgressBar internal constructor(
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         val value by this.value.collectAsState()
+        val translator = LocalCSBTranslator.current
 
-        DefaultContainer(
+        DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
             enabled = enabled,
-            groupItemClip = position,
-            paddingValues =
-                PaddingValues(
-                    horizontal = style.horizontalPadding,
-                    vertical = style.verticalPadding
-                ),
-            onClick = null
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = style.minHeight / 2)
-            ) {
-
-                if (!title.isBlank()) Text(text = CSB.translator(title), style = style.titleStyle)
-                description?.let { Text(text = CSB.translator(it), style = style.descriptionStyle) }
+            groupItemClip = customGrouping ?: position,
+            icon = icon,
+            badge = badge,
+            title = { if (title.isNotBlank()) Text(text = translator.translate(title)) },
+            description = { description?.let { Text(text = translator.translate(it)) } },
+            action = {},
+            display = {
                 if (value != null) {
                     LinearProgressIndicator(
                         modifier = Modifier
@@ -141,10 +127,10 @@ class ProgressBar internal constructor(
                         trackColor = style.containerColor,
                     )
                 }
-            }
-        }
+            },
+            onClick = null
+        )
     }
 
 
 }
-

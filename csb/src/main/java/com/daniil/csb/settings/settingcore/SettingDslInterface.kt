@@ -1,9 +1,11 @@
-package com.daniil.csb.settings.utils
+package com.daniil.csb.settings.settingcore
 
+import androidx.compose.runtime.Composable
 import com.daniil.csb.group.FragmentController
 import com.daniil.csb.settings.Action
 import com.daniil.csb.settings.CodePreview
 import com.daniil.csb.settings.ColorPicker
+import com.daniil.csb.settings.ComposableComponent
 import com.daniil.csb.settings.ContentChoice
 import com.daniil.csb.settings.Counter
 import com.daniil.csb.settings.Custom
@@ -63,7 +65,7 @@ interface SettingDslInterface {
 
     fun createContentChoice(
         id: String,
-        builder: ContentChoice.ChoiceContentBuilderScope.() -> ContentChoice.MoreThenZeroComponentToken
+        builder: ContentChoice.ChoiceContentBuilderScope.() -> ContentChoice.MoreThenZeroToken
     ): SettingToken<ContentChoice> =
         with(ContentChoice) { create(id, builder) }
 
@@ -160,6 +162,14 @@ interface SettingDslInterface {
         builder: FilePicker.FilePickerBuilderScope<I, O>.() -> FilePicker.InitContractToken
     ): SettingToken<FilePicker<I, O>> =
         with(FilePicker) { create(id, builder) }
+
+    fun createUI(
+        id: String? = null,
+        enabled: Boolean = true,
+        visible: Boolean = true,
+        content: @Composable ComposableComponent.ComposableComponentScope.() -> Unit
+    ): SettingToken<ComposableComponent>
+        = with(ComposableComponent) { create(id, enabled, visible, content) }
     
     fun <T : ComposeSetting<*>> T.register(): SettingToken<T>
 }

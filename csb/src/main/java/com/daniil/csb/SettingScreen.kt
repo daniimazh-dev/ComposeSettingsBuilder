@@ -230,9 +230,6 @@ fun SettingsScreen(
                                     item(key = group.id) {
                                         val isGroupVisible by group.visible.collectAsState()
                                         if (!isGroupVisible) return@item
-
-                                        Spacer(modifier = Modifier.height(style.groupSpacing))
-
                                         val fragment by group.currentFragment.collectAsState()
                                         val first =
                                             fragment.settings.firstOrNull()?.id ?: return@item
@@ -244,20 +241,19 @@ fun SettingsScreen(
                                                 .then(group.modifier),
                                             targetState = fragment,
                                         ) { fr ->
-                                            if (fr.visible.collectAsState().value) return@AnimatedContent
+
+                                            if (!fr.visible.collectAsState().value) return@AnimatedContent
                                             Column(
                                                 verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
                                             ) {
                                                 fr.settings.forEach { setting ->
-
                                                     val isVisible by setting.visible.collectAsState()
                                                     if (isVisible) {
-
                                                         val groupPosition = when {
                                                             "disableContainerGroupRound".isInFlag() -> GroupItemClip.None
                                                             last == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.Full
                                                             setting.id == last -> GroupItemClip.Last
-                                                            setting.id == first -> if (group.unfragmentedGroup != null) GroupItemClip.Last else GroupItemClip.First
+                                                            setting.id == first -> if (group.unfragmentedGroup != null) GroupItemClip.None else GroupItemClip.First
                                                             else -> GroupItemClip.None
                                                         }
 

@@ -53,11 +53,9 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-
                 groupId = "io.github.daniimazh-dev"
                 artifactId = "csb"
-                version = "1.1.0"
-
+                version = "1.2.0"
                 pom {
                     name.set("Compose Settings Builder")
                     description.set("Compose Settings Builder is a powerful and flexible library for creating settings using kotlin DSL for your Jetpack Compose project")
@@ -130,7 +128,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.datastore)
-
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)

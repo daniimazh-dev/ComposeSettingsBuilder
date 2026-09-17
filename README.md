@@ -1,17 +1,16 @@
 # Compose Settings Builder (CSB)
 
-Compose Settings Builder is a powerful and flexible library for creating settings screens in Jetpack Compose. It allows you to build complex, hierarchical settings with ease using a DSL, handles data persistence automatically, and supports custom styling.
+Compose Settings Builder is a powerful, flexible, and type-safe library for creating settings screens in Jetpack Compose. It allows you to build complex, hierarchical settings using a clean DSL, handles data persistence automatically, and provides full programmatic control over your settings UI.
 
 ## Features
 
-- **🚀 Quick Setup**: Build complex settings screens in minutes with a clean DSL.
-- **💾 Auto-Persistence**: Settings are automatically saved to local storage and restored on app launch.
-- **🎨 Custom Styling**: Highly customizable UI with built-in themes (Material3, Bobble, Classic).
-- **🛠️ Rich Set of Components**: Includes Switch, Slider, Color Picker, Time Picker, Counter, and more.
-- **📱 Navigation Support**: Built-in hierarchical navigation between settings screens.
-- **🧩 Custom Settings**: Easily create and register your own custom setting types.
-- **🏠 Local Settings**: Support for settings that are not part of the global navigation tree.
-- **🌍 Multi-language**: Built-in support for translations using Android resources.
+- **Declarative DSL**: Build hierarchical settings screens in minutes.
+- **Auto-Persistence**: Seamlessly save and restore settings using DataStore or JSON.
+- **Dynamic UI**: Use `depends` blocks for conditional visibility and interactivity.
+- **Rich Component Library**: 20+ built-in setting types including Pickers, Selectors, and Inputs.
+- **Fragmented Groups**: Switch between sets of settings dynamically using TabBars.
+- **Customizable Styling**: Built-in Material3, Bobble, and Classic themes, plus full custom styling support.
+- **Programmatic Control**: Access and modify any setting value or state from code.
 
 ## Installation
 
@@ -19,64 +18,41 @@ Add the library to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.github.daniimazh-dev:csb:1.1.0")
+    implementation("io.github.daniimazh-dev:csb:1.2.0")
 }
 ```
 
-## Quick Start
+## Getting Started
 
-### 1. Initialize and Register Settings
+### 1. Initialization and Configuration
 
-Define your settings structure using `registerSettingScreens`. You can use the `res()` helper for automatic translation.
+Initialize CSB in your `Application` or main `Activity`. Use `CSB.config` to set global behavior and flags.
 
 ```kotlin
-fun initSettings() = registerSettingScreens {
+registerSettingScreens {
     CSB.config {
         debugMode = true
-        translator = object : CSBTranslator {
-            @Composable
-            override fun translate(key: String): String = {
-                // Implementation of the transfer
-                return key
-            }
-        }
+        savePatch = "my_app_settings"
+        flag("useJsonSaveMethod")
     }
 
-    createScreen("Main") {
-        title = ScreenTitle.setText(res(R.string.settings_title))
-
-        group("General") {
+    createScreen("main_screen") {
+        topBar = TopScreenBar.text("Settings")
             
-            createSwitch("notifications_enabled") {
-                title = res(R.string.enable_notifications)
+        group("general") {
+            createSwitch("notifications") {
+                title = "Notifications"
                 defaultValue = true
             }
-
-            createSelect("theme_mode") {
-                title = "Theme"
-                option("system", "System")
-                option("dark", "Dark")
-                option("light", "Light")
-            }
         }
     }
 }
+
 ```
 
-### 2. Multi-language Support
+### 2. Displaying the Screen
 
-CSB comes with a built-in translator. You can use the `res(R.string.key)` helper in your DSL, and the library will automatically fetch the translated string from your Android resources.
-
-```kotlin
-createSwitch("my_switch") {
-    title = res(R.string.switch_label)
-    description = res(R.string.switch_desc)
-}
-```
-
-### 3. Display the Settings Screen
-
-Use the `SettingsScreen` Composable in your UI.
+Simply call `SettingsScreen` in your Composable hierarchy.
 
 ```kotlin
 setContent {
@@ -86,82 +62,187 @@ setContent {
 }
 ```
 
-### 4. Fragmented Groups
+## DSL Structure
 
-Use `fragmentedGroup` when you need to switch between different sets of settings dynamically (e.g., using a TabBar).
+### Screens
+
+- **`createScreen`**: Standard settings screen with automatic layout and sticky headers.
+- **`createCustomScreen`**: A screen where you define the layout manually using `setContent`.
+- **`createAbstractScreen`**: A background screen used for storing settings that don't need a UI.
+
+### Groups
+
+- **`group`**: A standard collection of settings with an optional title.
+- **`fragmentedGroup`**: A group that can switch between different "fragments" of settings, usually controlled by a `TabBar`.
+- **`abstractGroup`**: A group used for organization without visual separation.
+
+### Example: Fragmented Group
 
 ```kotlin
-createScreen("Advanced") {
-    val fragController = FragmentController()
+createScreen("advanced") {
+    val controller = FragmentController()
     
-    fragmentedGroup("switcher") {
-        this.controller = fragController
-        createTabBar("tabs", fragController)
+    fragmentedGroup("tabs_group") {
+        this.controller = controller
+        createTabBar("tabs", controller)
         
-        fragment("General") {
-            createSwitch("s1")
+        fragment("Basic") {
+            createSwitch("s1") { title = "Basic Switch" }
         }
-        fragment("Extra") {
-            createSlider("s2")
+        fragment("Pro") {
+            createSlider("s2") { title = "Pro Slider" }
         }
     }
 }
 ```
 
-## Available Setting Types
+## Setting Dependencies (`depends`)
 
-| Type                | Function               | Description                                         |
-|:--------------------|:-----------------------|:----------------------------------------------------|
-| **Switch**          | `createSwitch`         | Boolean toggle (Switch, Radio, Checkbox, etc.)      |
-| **Slider**          | `createSlider`         | Range selection                                     |
-| **Range Slider**    | `createRangeSlider`    | Multi-point range selection                         |
-| **Counter**         | `createCounter`        | Increment/Decrement values                          |
-| **Select**          | `createSelect`         | Single choice from list                             |
-| **Multiply Select** | `createMultiplySelect` | Multiple choices from list                          |
-| **Color Picker**    | `createColorPicker`    | HSV/RGB color selection                             |
-| **Time Picker**     | `createTimePicker`     | Time selection                                      |
-| **Date Picker**     | `createDatePicker`     | Date selection                                      |
-| **TextField**       | `createTextField`      | Text input                                          |
-| **PasswordField**   | `createPasswordField`  | Secure text input                                   |
-| **SearchField**     | `createSearchField`    | Expandable search input                             |
-| **RatingBar**       | `createRatingBar`      | Star-based rating input                             |
-| **ProgressBar**     | `crateProgressBar`     | Visual progress indicator                           |
-| **Content Choice**  | `createContentChoice`  | Choice between multiple options with Icon/UI        |
-| **Code Preview**    | `createCodePreview`    | Display code with syntax highlighting               |
-| **File Picker**     | `createFilePicker`     | Generic picker for files, folders, etc.             |
-| **TabBar**          | `createTabBar`         | Horizontal tab navigation                           |
-| **Action**          | `createAction`         | Trigger a function with optional confirmation alert |
-| **Redirect**        | `createRedirect`       | Navigate to another settings screen                 |
-| **Info**            | `createInfo`           | Display informational text                          |
-| **Custom**          | `createCustomSetting`  | Fully custom UI component                           |
-
-## Access Setting Values
-
-You can easily get or set values from anywhere in your code using the `CSB` object.
+Make your settings reactive by using the `depends` block.
 
 ```kotlin
-// Get a StateFlow of the value
-val isEnabledFlow = CSB.getValue<Boolean>("notifications_enabled")
+createSwitch("enable_advanced") { title = "Advanced Mode" }
 
-// Set a value programmatically
-CSB.setValue("notifications_enabled", false)
-```
-
-## Local Settings
-
-If you need to create settings that should not be part of the main hierarchical navigation tree, use `LocalSettings`.
-
-```kotlin
-val localController = rememberLocalSettingsController {
-      createSwitch("local_switch") {
-          title = "Local Toggle"
-          defaultValue = false 
-      }
+createSlider("power_level") {
+    title = "Power Level"
+    depends {
+        subscribe<Switch>("enable_advanced") {
+            visibleIf { it.value } // Only visible when Switch is ON
+            enableIf { it.value }  // Only enabled when Switch is ON
+            onChangeValue { setting ->
+                if (!setting.value) CSB.setValue("power_level", 0f)
+            }
+        }
+    }
 }
-// Display anywhere in your UI
-LocalSettings(localController = localController)
 ```
 
-## License
+## Text Translation
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+CSB supports flexible text translation. You can use the built-in `res()` helper or provide your own translation logic.
+
+### 1. Built-in Translation (`res`)
+
+The `res(R.string.id)` helper marks a string for translation. By default, CSB will look up the string resource using the application context.
+
+```kotlin
+createSwitch("notifications") {
+    title = res(R.string.notif_title)
+    description = res(R.string.notif_desc)
+}
+```
+
+### 2. Custom Translator
+
+If you use a custom translation system (e.g., a server-side CMS or a custom library), implement the `CSBTranslator` interface.
+
+```kotlin
+class MyCustomTranslator : CSBTranslator {
+    @Composable
+    override fun translate(key: String): String {
+        return key // Translation logic 
+    }
+}
+
+// Register in config
+CSB.config {
+    translator = MyCustomTranslator()
+}
+```
+
+## Programmatic API
+
+### The `CSB` Object
+
+Access your settings from anywhere in your app:
+
+- `CSB.getValue<T>(id)`: Returns a `StateFlow<T>` of the setting value.
+- `CSB.setValue(id, value)`: Updates the setting value programmatically.
+- `CSB.navigateToScreen(id)`: Changes the current visible screen.
+- `CSB.resetAllSettingsToDefault()`: Resets all registered settings.
+
+### Controllers
+
+Gain fine-grained control over UI components:
+
+- `GroupController`: Show/hide or enable/disable entire groups.
+- `FragmentController`: Switch active fragments programmatically.
+- `ScreenController`: Control screen-specific behavior.
+
+```kotlin
+CSB.groupController("general").isShow(false)
+CSB.fragmentController("tabs_group").setFragment("Pro")
+```
+
+## 🎨 Styling
+
+CSB uses the `SettingStyle` interface to define the look and feel of the settings UI.
+
+### 1. Built-in Styles
+
+You can choose from several pre-defined styles provided by `CSBStyle`:
+
+- `CSBStyle.Material3()`: The default theme following Material Design 3 guidelines.
+- `CSBStyle.Bobble()`: A more rounded, "bubbly" theme.
+- `CSBStyle.ClassicLight` / `ClassicDark`: A traditional settings look.
+
+Pass the style to the `SettingsScreen` composable:
+
+```kotlin
+SettingsScreen(
+    style = CSBStyle.Bobble()
+)
+```
+
+### 2. Custom Styling
+
+To create your own style, extend `DefaultSettingStyle` and override the properties you want to change.
+
+```kotlin
+val myStyle = object : DefaultSettingStyle() {
+    override var activeColor = Color.Red
+    override var containerCorner = 0.dp
+    // Override colors, shapes, typography, or even layout slots
+}
+
+SettingsScreen(style = myStyle)
+```
+
+## Setting Types Reference
+
+| Function | Type | Description |
+| :--- | :--- | :--- |
+| `createSwitch` | `Boolean` | Toggle, Radio, or Checkbox. |
+| `createSlider` | `Float` | Single range selection. |
+| `createRangeSlider`| `Range` | Multi-point range selection. |
+| `createCounter` | `Int` | Increment/Decrement counter. |
+| `createSelect` | `Option` | Single choice from a list. |
+| `createMultiplySelect`| `List<Option>`| Multiple choices from a list. |
+| `createColorPicker` | `Color` | HSV/RGB color selector. |
+| `createTimePicker` | `LocalTime` | Time selection dialog. |
+| `createDatePicker` | `LocalDate` | Date selection dialog. |
+| `createTextField` | `String` | Standard text input. |
+| `createPasswordField`| `String` | Secure text input. |
+| `createSearchField` | `String` | Expandable search bar. |
+| `createRatingBar` | `Int` | Star-based rating. |
+| `crateProgressBar` | `Float` | Visual progress indicator. |
+| `createContentChoice`| `String` | Choice with custom Icon/UI. |
+| `createTabBar` | `String` | Horizontal tab navigation. |
+| `createAction` | `Unit` | Button to trigger a function. |
+| `createRedirect` | `String` | Navigation link to another screen. |
+| `createInfo` | `Unit` | Display-only info text. |
+| `createUI` | `Unit` | Custom Composable block. |
+
+## ⚙️ Configuration Flags
+
+Use `CSB.config { flag("...") }` to tweak library behavior:
+
+- `disableStored`: Disables automatic persistence.
+- `useJsonSaveMethod`: Saves settings as JSON files instead of DataStore.
+- `useOneFileJsonSaveMethod`: Combines all settings into a single JSON file.
+- `ignoreSettingNotFoundError`: Prevents crashes if a setting ID is missing.
+- `allowDisplayAbstractScreen`: Renders abstract screens for debugging.
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -8,7 +8,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -78,7 +77,7 @@ class ContentChoice(
     }
 
     @CsbDslMarkers
-    class ChoiceContentBuilderScope() : SettingDefaultScope() {
+    class ChoiceContentBuilderScope() : SettingDefaultScope<ContentChoice>() {
         var contents = mutableListOf<ChoiceOption>()
         var defaultValueId: String? = null
         var minContentHeight: Dp = 78.dp
@@ -240,7 +239,7 @@ private fun ChoiceItem(
     val animateScale by animateFloatAsState(
         if (isSelected) 1.1f else 1f, label = ""
     )
-    val shape = style.edgeGroupCorner
+    val shape = style.edgeGroupShape
     Box(
         modifier = modifier
             .clip(shape)

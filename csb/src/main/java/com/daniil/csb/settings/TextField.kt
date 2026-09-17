@@ -85,7 +85,7 @@ class TextField internal constructor(
     }
 
     @CsbDslMarkers
-    class TextFieldBuilderScope(): SettingDefaultScope() {
+    class TextFieldBuilderScope(): SettingDefaultScope<TextField>() {
         var defaultValue: String = ""
         var title: String? = null
         var label: (@Composable () -> Unit)? = null

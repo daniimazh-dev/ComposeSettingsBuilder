@@ -6,5 +6,4 @@ enum class ScreenAttribute {
     NonRedirectable,
     Unstored,
     Debag,
-    DisableNavigation,
 }

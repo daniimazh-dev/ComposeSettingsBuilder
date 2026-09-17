@@ -76,7 +76,7 @@ class DatePicker internal constructor(
     }
 
     @CsbDslMarkers
-    class DatePickerBuilderScope(): SettingDefaultScope() {
+    class DatePickerBuilderScope(): SettingDefaultScope<DatePicker>() {
         var defaultValue = LocalDate.now()
         var title: String? = null
         var description: String? = null
@@ -185,7 +185,7 @@ private fun DatePreview(
     modifier: Modifier = Modifier
 ) {
     val style = LocalSettingsStyle.current
-    val shape = RoundedCornerShape(style.containerCornerShape)
+    val shape = RoundedCornerShape(style.containerCorner)
 
     Row(
         modifier = modifier,

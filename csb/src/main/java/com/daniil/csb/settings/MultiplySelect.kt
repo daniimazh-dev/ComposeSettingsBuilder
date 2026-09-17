@@ -134,7 +134,7 @@ class MultiplySelect internal constructor(
     }
 
     @CsbDslMarkers
-    class MultiplySelectBuilderScope() : SettingDefaultScope() {
+    class MultiplySelectBuilderScope() : SettingDefaultScope<MultiplySelect>() {
         var defaultValue: List<String> = emptyList()
         var options = mutableListOf<Option>()
         var onChangeValue: (List<Option>) -> Unit = {}
@@ -314,7 +314,7 @@ class MultiplySelect internal constructor(
                     if (alertOpen && uiMode == UIMode.Dropdown) {
                         DropdownMenu(
                             expanded = alertOpen,
-                            shape = style.edgeGroupCorner,
+                            shape = style.edgeGroupShape,
                             onDismissRequest = { alertOpen = false },
                             content = {
                                 options.forEach { option ->

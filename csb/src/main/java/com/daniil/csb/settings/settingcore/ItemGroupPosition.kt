@@ -19,8 +19,8 @@ enum class GroupItemClip {
 fun GroupItemClip.clippedShape(style: SettingStyle = LocalSettingsStyle.current): Shape {
     val groupPosition = this
 
-    val baseShape = style.edgeGroupCorner as RoundedCornerShape
-    val gcs = style.containerCornerShape
+    val baseShape = style.edgeGroupShape as RoundedCornerShape
+    val gcs = style.containerCorner
     val entries = if ("disableContainerGroupRound".isInFlag()) GroupItemClip.None else groupPosition
 
     val groupClip = when (entries) {

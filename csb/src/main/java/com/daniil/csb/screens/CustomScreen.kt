@@ -15,10 +15,8 @@ import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.DebugData
 import com.daniil.csb.group.AbstractGroup
 import com.daniil.csb.group.Group
-import com.daniil.csb.group.GroupSealed
 import com.daniil.csb.isInFlag
 import com.daniil.csb.screens.CustomScreen.CustomContentScreenScope
-import com.daniil.csb.screens.title.ScreenTitle
 import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.settings.settingcore.GroupItemClip
 import com.daniil.csb.settings.settingcore.SettingBuilder
@@ -26,23 +24,32 @@ import com.daniil.csb.settingui.LocalDebugData
 import com.daniil.csb.settingui.LocalSettingsStyle
 
 open class CustomScreen internal constructor(
-    override var id: String,
-    override var title: ScreenTitle?,
-    settings: List<ComposeSetting<*>>,
-    override var modifier: Modifier,
-    override var paddingValues: PaddingValues,
-    var content: @Composable CustomContentScreenScope.() -> Unit,
-    override var attribute: List<ScreenAttribute>? = null,
-    override var onCloseScreen: () -> Unit = {},
-) : Screen(id, title, modifier, paddingValues) {
-
-
-    private var registeredSettings: MutableList<ComposeSetting<*>> = settings.toMutableList()
-
-    override val settings: List<GroupSealed>
-        get() = if ("allowDisplayAbstractScreen".isInFlag())
+    id: String,
+) : Screen(id) {
+     internal constructor(
+         id: String,
+         registeredSettings: List<ComposeSetting<*>>,
+         modifier: Modifier,
+         paddingValues: PaddingValues,
+         attribute: List<ScreenAttribute>,
+         onCloseScreen: () -> Unit,
+         topBar: TopScreenBar?,
+         content:  @Composable CustomContentScreenScope.() -> Unit
+     ): this(id) {
+         this.modifier = modifier
+         this.paddingValues = paddingValues
+         this.topBar = topBar
+         this.attribute = attribute
+         this.registeredSettings = registeredSettings
+         this.settings = if ("allowDisplayAbstractScreen".isInFlag())
             listOf(Group(id, null, true, registeredSettings))
             else listOf(AbstractGroup(id, registeredSettings))
+         this.onCloseScreen = onCloseScreen
+         this.content = content
+     }
+
+    internal var content: @Composable CustomContentScreenScope.() -> Unit = {}
+    private var registeredSettings: List<ComposeSetting<*>> = emptyList()
 
     @CsbDslMarkers
     inner class CustomContentScreenScope {
@@ -85,7 +92,7 @@ open class CustomScreen internal constructor(
                 settingSimpleName = setting::class.simpleName,
                 settingId = setting.id,
                 currentValue = setting.value
-            ).takeIf { attribute?.contains(ScreenAttribute.Debag) == true }
+            ).takeIf { attribute.contains(ScreenAttribute.Debag) }
             CompositionLocalProvider(LocalDebugData provides debagData) {
                 setting.UI(position = groupItemClip)
             }
@@ -103,36 +110,33 @@ open class CustomScreen internal constructor(
 
 
     class Builder(val id: String) {
-        private val builderSettings = mutableListOf<ComposeSetting<*>>()
+        private val settings = mutableListOf<ComposeSetting<*>>()
         private lateinit var content: @Composable CustomContentScreenScope.() -> Unit
         private var paddingValues = PaddingValues.Zero
-        private var attribute: List<ScreenAttribute>? = null
-        private var title: ScreenTitle? = null
+        private var attribute: List<ScreenAttribute> = emptyList()
         private var modifier: Modifier = Modifier
         private var onCloseScreen: () -> Unit = {}
+        private var topBar: TopScreenBar? = null
 
         fun registerSettings(vararg items: ComposeSetting<*>) = apply {
-            this.builderSettings.addAll(items)
+            this.settings.addAll(items)
         }
-
-        fun setTitle(title: ScreenTitle?) = apply { this.title = title }
+        fun setTopBar(topBar: TopScreenBar?) = apply { this.topBar = topBar }
         fun setModifier(modifier: Modifier) = apply { this.modifier = modifier }
-        fun setOnCloseScreen(onCloseScreen: () -> Unit) = apply{ this.onCloseScreen = onCloseScreen }
+        fun setOnCloseScreen(onCloseScreen: () -> Unit) = apply { this.onCloseScreen = onCloseScreen }
         fun setContent(content: @Composable CustomContentScreenScope.() -> Unit) = apply {
             this.content = content
         }
-        fun setAttribute(screenAttribute: List<ScreenAttribute>?) = apply { this.attribute = screenAttribute }
+        fun setAttribute(screenAttribute: List<ScreenAttribute>) = apply { this.attribute = screenAttribute }
         fun build(): CustomScreen {
-            val instance =
-                CustomScreen(id, title, builderSettings, modifier, paddingValues, content, attribute)
-            return instance
+            return CustomScreen(id, settings, modifier, paddingValues, attribute, onCloseScreen, topBar, content)
         }
     }
 
     @Composable
     internal fun Render() {
         val scope = remember { CustomContentScreenScope() }
-        if (attribute?.contains(ScreenAttribute.Debag) == true) {
+        if (attribute.contains(ScreenAttribute.Debag)) {
             Box(
                 modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
             ) {
@@ -147,11 +151,11 @@ open class CustomScreen internal constructor(
 }
 class ContentConfiguredToken internal constructor()
 @CsbDslMarkers
-open class CustomBuilderScreenScope(id: String): SettingBuilder() {
+open class CustomBuilderScreenScope internal constructor(id: String): SettingBuilder() {
     var modifier: Modifier = Modifier
-    var title: ScreenTitle? = ScreenTitle.setText(id)
     var onCloseScreen: () -> Unit = {}
-    var content: @Composable CustomContentScreenScope.() -> Unit  = { AllSettings() }
+    var topBar: TopScreenBar? = null
+    internal var content: @Composable CustomContentScreenScope.() -> Unit  = { AllSettings() }
         private set
 
     fun setContent(content: @Composable (CustomContentScreenScope.() -> Unit)): ContentConfiguredToken {

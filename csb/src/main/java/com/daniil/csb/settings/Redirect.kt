@@ -59,7 +59,7 @@ class Redirect internal constructor(
     fun changeValue(newValue: Screen) { _value.value = newValue.id }
 
     @CsbDslMarkers
-    class RedirectBuilderScope(): SettingDefaultScope() {
+    class RedirectBuilderScope(): SettingDefaultScope<Redirect>() {
         var redirectToId: String? = null
             private set
         var focus: String? = null

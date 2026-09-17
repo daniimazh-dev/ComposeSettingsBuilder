@@ -77,7 +77,7 @@ class Counter internal constructor(
     }
 
     @CsbDslMarkers
-    class CounterBuilderScope(): SettingDefaultScope() {
+    class CounterBuilderScope(): SettingDefaultScope<Counter>() {
 
         var range: IntRange = 0..10
         var defaultValue = range.first
@@ -150,7 +150,7 @@ private fun CounterImpl(
     onChangeValue: (Boolean) -> Unit
 ) {
     val style = LocalSettingsStyle.current
-    val shape = RoundedCornerShape(style.containerCornerShape)
+    val shape = RoundedCornerShape(style.containerCorner)
     val removeInteraction = remember { MutableInteractionSource() }
     val addInteraction = remember { MutableInteractionSource() }
 

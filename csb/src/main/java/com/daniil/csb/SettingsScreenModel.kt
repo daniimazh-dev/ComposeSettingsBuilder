@@ -69,9 +69,7 @@ class SettingsScreenModel(screen: Screen) : ViewModel() {
         return setting
     }
     fun findGroupById(id: String): GroupSealed {
-        val group = settings.value.find { it.id == id } ?: error("Group $id not found")
+        val group = settings.value.find { it.id == id } ?: error("Group $id not found in screen ${currentScreen.value?.id}")
         return group
     }
-    private var _title = MutableStateFlow(screen.title)
-    val title = _title.asStateFlow()
 }

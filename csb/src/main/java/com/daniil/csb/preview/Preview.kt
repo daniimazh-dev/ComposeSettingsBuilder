@@ -7,10 +7,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,11 +34,10 @@ import com.daniil.csb.CSB
 import com.daniil.csb.R
 import com.daniil.csb.SettingsScreen
 import com.daniil.csb.registerSettingScreens
-import com.daniil.csb.screens.title.ScreenTitle
+import com.daniil.csb.screens.TopScreenBar
 import com.daniil.csb.settings.ContentChoice
 import com.daniil.csb.settings.Select
-import com.daniil.csb.settings.Switch
-import com.daniil.csb.settings.depend.value
+import com.daniil.csb.settings.depend.Depends
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
@@ -68,7 +68,7 @@ private fun Preview() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                paddingValues = PaddingValues(16.dp),
+                contentPadding = PaddingValues(16.dp),
                 style = when (style.id) {
                     "material" -> CSBStyle.Material3()
                     "bobble" -> CSBStyle.Bobble()
@@ -85,21 +85,15 @@ private fun previewInit() = registerSettingScreens {
         flag("disableStored")
     }
     createScreen("MainScreen") {
-        title = ScreenTitle.setText(res(R.string.app_name))
         group("All settings") {
+            groupTitle = null
             createSwitch("Switch") {
                 badge = SettingBadge.point()
                 icon = SettingIcon.fromRes(R.drawable.info_icon)
                 title = "Notification"
                 description = "Enable notification for this app"
-                depends {
-                    subscribe<Switch>("ss") {
-                        visibleIf { it.value }
-                        onChangeValue {  }
-                    }
-                }
+                defaultValue = true
             }
-            createMultiplySelect("Multiply select")
             createTimePicker("Timer picker")
             createDatePicker("Date picker")
             createAction("Action")
@@ -116,9 +110,9 @@ private fun previewInit() = registerSettingScreens {
             createCounter("Counter")
             createCustomSetting("Custom setting") {
                 defaultValue = Unit
-               setWithArrangement {
-                   title = { Text("Custom") }
-               }
+                setWithArrangement {
+                    title = { Text("Custom") }
+                }
             }
             createInfo("Info")
             createRedirect("Redirect") { setRedirect("new") }
@@ -134,9 +128,9 @@ private fun previewInit() = registerSettingScreens {
             crateProgressBar("Progress bar")
 
             createTabBar("Tab bar") {
-                tab("1") { }
-                tab("2") { }
-                tab("3") { }
+                tab("1")
+                tab("2")
+                tab("3")
             }
 
             createCodePreview("Code preview")
@@ -151,10 +145,13 @@ private fun previewInit() = registerSettingScreens {
     createCustomScreen("new") {
         createSwitch("sw") {}
         createUI("ux") {
-            HorizontalDivider()
+            Spacer(modifier = Modifier.height(800.dp))
         }
         setContent {
-            RegisteredSetting("ux")
+            for (i in 0..20) {
+                RegisteredSetting("sw")
+            }
+
         }
     }
 
@@ -176,7 +173,7 @@ private fun previewInit() = registerSettingScreens {
 fun ThemeToggleIcon(
     isDarkTheme: Boolean,
     isActive: Boolean,
-    shape: Shape = LocalSettingsStyle.current.edgeGroupCorner,
+    shape: Shape = LocalSettingsStyle.current.edgeGroupShape,
     size: Dp = 60.dp,
     modifier: Modifier = Modifier
 ) {

@@ -1,6 +1,4 @@
-package com.daniil.csb.settings.depend
-
-import com.daniil.csb.settings.settingcore.ComposeSetting
+package com.daniil.csb.settings.settingcore
 
 class ReadOnlySetting<out T : ComposeSetting<*>> internal constructor(
     val setting: T

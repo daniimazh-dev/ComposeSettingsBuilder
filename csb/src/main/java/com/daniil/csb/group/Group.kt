@@ -27,5 +27,5 @@ class Group(
 @CsbDslMarkers
 open class GroupScope(id: String) : SettingBuilder() {
     open var visible: Boolean = true
-    open var groupTitle: GroupTitle? = GroupTitle.setText(id)
+    open var groupTitle: GroupTitle? = GroupTitle.text(id)
 }

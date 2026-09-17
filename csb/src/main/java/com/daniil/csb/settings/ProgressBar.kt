@@ -52,7 +52,7 @@ class ProgressBar internal constructor(
     }
 
     @CsbDslMarkers
-    class ProgressBarBuilderScope() : SettingDefaultScope() {
+    class ProgressBarBuilderScope() : SettingDefaultScope<ProgressBar>() {
         var defaultValue: Float? = null
         var title: String? = null
         var description: String? = null

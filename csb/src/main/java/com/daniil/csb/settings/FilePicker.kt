@@ -56,7 +56,7 @@ class FilePicker<I, O> internal constructor(
     }
 
     @CsbDslMarkers
-    class FilePickerBuilderScope<I, O> : SettingDefaultScope() {
+    class FilePickerBuilderScope<I, O> : SettingDefaultScope<FilePicker<I, O>>() {
         var defaultValue: O? = null
         var title: String? = null
         var description: String? = null

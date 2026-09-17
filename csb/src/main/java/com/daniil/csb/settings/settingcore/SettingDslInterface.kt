@@ -165,11 +165,10 @@ interface SettingDslInterface {
 
     fun createUI(
         id: String? = null,
-        enabled: Boolean = true,
-        visible: Boolean = true,
+        config: ComposableComponent.ComposableComponentConfigScope.() -> Unit = {},
         content: @Composable ComposableComponent.ComposableComponentScope.() -> Unit
     ): SettingToken<ComposableComponent>
-        = with(ComposableComponent) { create(id, enabled, visible, content) }
+        = with(ComposableComponent) { create(id, config, content) }
     
     fun <T : ComposeSetting<*>> T.register(): SettingToken<T>
 }

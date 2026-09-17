@@ -75,7 +75,7 @@ class TimePicker internal constructor(
     }
 
     @CsbDslMarkers
-    class TimePickerBuilderScope(): SettingDefaultScope() {
+    class TimePickerBuilderScope(): SettingDefaultScope<TimePicker>() {
         var defaultValue = LocalTime.now()
         var title: String? = null
         var description: String? = null
@@ -183,7 +183,7 @@ private fun TimePreview(
     is24Format: Boolean = true,
 ) {
     val style = LocalSettingsStyle.current
-    val shape = RoundedCornerShape(style.containerCornerShape)
+    val shape = RoundedCornerShape(style.containerCorner)
 
     val hour = if (is24Format) {
         time.hour

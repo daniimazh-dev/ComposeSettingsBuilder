@@ -125,7 +125,7 @@ class Select(
     }
 
     @CsbDslMarkers
-    class SelectBuilderScope() : SettingDefaultScope() {
+    class SelectBuilderScope() : SettingDefaultScope<Select>() {
         var options = mutableListOf<Option>()
         var defaultValueId: String? = null
         var title: String? = null
@@ -306,7 +306,7 @@ class Select(
                     if (alertOpen && uiMode == UIMode.Dropdown) {
                         DropdownMenu(
                             expanded = alertOpen,
-                            shape = style.edgeGroupCorner,
+                            shape = style.edgeGroupShape,
                             onDismissRequest = { alertOpen = false },
                             content = {
                                 options.forEach {

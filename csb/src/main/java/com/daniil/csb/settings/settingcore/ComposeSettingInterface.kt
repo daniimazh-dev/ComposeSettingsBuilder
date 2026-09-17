@@ -66,8 +66,8 @@ interface ComposeSettingInterface<T> {
     }
 
     fun saveJson(serializer: KSerializer<T>?): SaveSettingPackage? {
-        if (serializer == null) { return saveLogic() }
         if (!isSaveSetting) return null
+        if (serializer == null) { return this.saveLogic() }
         return SaveSettingPackage.JsonPackage(
             id = id,
             enable = enabled.value,
@@ -95,10 +95,10 @@ interface ComposeSettingInterface<T> {
         position: GroupItemClip? = null,
     )
     /** C - [ComposeSetting], S - BuilderScope of [ComposeSetting] */
-    interface Factory<C : ComposeSetting<*>, out S : SettingDefaultScope> {
+    interface Factory<C : ComposeSetting<*>, out S : SettingDefaultScope<C>> {
         fun SettingDslInterface.create(id: String, scope: S.() -> Unit): SettingToken<C>
     }
-    interface FactoryWithToken<C : ComposeSetting<*>, out S : SettingDefaultScope, T: SettingConfiguredToken> {
+    interface FactoryWithToken<C : ComposeSetting<*>, out S : SettingDefaultScope<C>, T: SettingConfiguredToken> {
         fun SettingDslInterface.create(id: String, scope: S.() -> T): SettingToken<C>
     }
 }

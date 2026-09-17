@@ -24,23 +24,9 @@ fun registerSettingScreens(
     screenBuilderScope: ScreenBuilder.() -> Unit
 ) {
     val data = ScreenBuilder().apply(screenBuilderScope)
-    CSB.navigationModel.setScreensHeap(*data.screenHeap.toTypedArray())
+    CSB.navigationModel.setScreensHeap(data.screenHeap)
     CSB.load()
-    CSB.executeConfigAction()
-
-    CSB.getAllSettings().filterIsInstance<ComposableComponent>()
-        .forEach {
-            it.setGlobalProvider { id ->
-                val setting = CSB.findSettingById(id).getOrNull()
-                if (setting is ComposableComponent) error(
-                    """
-                        Cannot call ComposableComponent (id: "$id") recursively, 
-                        otherwise there will be StackOverflow error
-                    """.trimIndent()
-                )
-                setting
-            }
-        }
-
     CSB.navigationModel.wireDependencies()
+    CSB.navigationModel.setGlobalProviderForComposableComponent()
+    CSB.executeConfigAction()
 }

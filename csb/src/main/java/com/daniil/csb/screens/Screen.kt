@@ -6,47 +6,62 @@ import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.SettingsScreenModel
 import com.daniil.csb.group.AbstractGroup
 import com.daniil.csb.group.AbstractGroupScope
-import com.daniil.csb.group.Group
-import com.daniil.csb.group.GroupSealed
-import com.daniil.csb.screens.title.ScreenTitle
-import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.group.FragmentedScopeBuilder
+import com.daniil.csb.group.Group
 import com.daniil.csb.group.GroupScope
+import com.daniil.csb.group.GroupSealed
 import com.daniil.csb.group.title.GroupTitle
 import com.daniil.csb.isInFlag
+import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.settings.settingcore.SettingBuilder
 import java.util.UUID
 
 open class Screen internal constructor(
     open var id: String,
-    open var title: ScreenTitle?,
-    open var modifier: Modifier,
-    open var paddingValues: PaddingValues,
-    open var attribute: List<ScreenAttribute>? = null,
-    open val settings: List<GroupSealed> = emptyList(),
-    open val onCloseScreen: () -> Unit = {},
 ) {
+    internal constructor(
+        id: String,
+        modifier: Modifier = Modifier,
+        paddingValues: PaddingValues,
+        topBar: TopScreenBar?,
+        attribute: List<ScreenAttribute>,
+        settings: List<GroupSealed>,
+        onCloseScreen: () -> Unit,
+    ): this(id) {
+        this.modifier = modifier
+        this.paddingValues = paddingValues
+        this.topBar = topBar
+        this.attribute = attribute
+        this.settings = settings
+        this.onCloseScreen = onCloseScreen
+    }
+    open var modifier: Modifier = Modifier
+    open var paddingValues: PaddingValues = PaddingValues.Zero
+    open var topBar: TopScreenBar? = TopScreenBar()
+    open var attribute: List<ScreenAttribute> = emptyList()
+    open var settings: List<GroupSealed> = emptyList()
+    open var onCloseScreen: () -> Unit = {}
+
     internal open val settingsScreenModel: SettingsScreenModel by lazy { SettingsScreenModel(this) }
 
     class Builder(val id: String) {
-        private var title: ScreenTitle? = ScreenTitle.setText(id)
         private var modifier: Modifier? = null
         private var paddingValues: PaddingValues? = null
-        private var attribute: List<ScreenAttribute>? = null
+        private var attribute: List<ScreenAttribute> = emptyList()
         private lateinit var settings: List<GroupSealed>
         private var onCloseScreen: () -> Unit = {}
+        private var topBar: TopScreenBar? = null
 
-        fun setTitle(title: ScreenTitle?) = apply { this.title = title }
 
         fun setContent(vararg settings: ComposeSetting<*>) = apply {
             this.settings = listOf(Group(id, settings = settings.toList()))
         }
-
+        fun setTopBar(topBar: TopScreenBar?) = apply { this.topBar = topBar }
         fun setModifier(modifier: Modifier?) = apply { this.modifier = modifier }
         fun setPaddingValues(paddingValues: PaddingValues?) =
             apply { this.paddingValues = paddingValues }
 
-        fun setAttribute(screenAttribute: List<ScreenAttribute>?) =
+        fun setAttribute(screenAttribute: List<ScreenAttribute>) =
             apply { this.attribute = screenAttribute }
 
         fun setOnCloseScreen(onCloseScreen: () -> Unit) =
@@ -56,22 +71,23 @@ open class Screen internal constructor(
 
         fun build() = Screen(
             id,
-            title,
             modifier ?: Modifier,
             paddingValues ?: PaddingValues.Zero,
+            topBar,
             attribute,
-            settings
+            settings,
+            onCloseScreen
         )
     }
 }
 
 @CsbDslMarkers
-open class ScreenBuilderScope(val id: String): SettingBuilder() {
-    var title: ScreenTitle? = ScreenTitle.setText(id)
+open class ScreenBuilderScope internal constructor(id: String): SettingBuilder() {
     var modifier: Modifier? = Modifier
     var paddingValues: PaddingValues? = null
     var onCloseScreen: () -> Unit = {}
-    val groupsHeap: MutableList<GroupSealed> = mutableListOf()
+    var topBar: TopScreenBar? = TopScreenBar(id)
+    internal val groupsHeap: MutableList<GroupSealed> = mutableListOf()
     fun group(
         id: String,
         groupScope: GroupScope.() -> Unit,
@@ -97,7 +113,7 @@ open class ScreenBuilderScope(val id: String): SettingBuilder() {
         val data = AbstractGroupScope(id).apply(abstractGroupScope)
         createNullableGroup()
         if ("allowDisplayAbstractGroup".isInFlag()) {
-            groupsHeap.add(Group(id, GroupTitle.setText(id), true, data.settings))
+            groupsHeap.add(Group(id, GroupTitle.text(id), true, data.settings))
         } else {
             groupsHeap.add(AbstractGroup(id, data.settings))
         }

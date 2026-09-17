@@ -38,7 +38,6 @@ import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.settings.settingcore.ComposeSettingInterface
 import com.daniil.csb.settings.settingcore.GroupItemClip
 import com.daniil.csb.settings.settingcore.SettingDefaultScope
-import com.daniil.csb.settings.settingcore.SettingDslInterface
 import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalCSBTranslator
@@ -80,7 +79,7 @@ class Switch internal constructor(
     }
 
     @CsbDslMarkers
-    class SwitchBuilderScope() : SettingDefaultScope() {
+    class SwitchBuilderScope() : SettingDefaultScope<Switch>() {
         var defaultValue = false
         var title: String? = null
         var description: String? = null
@@ -214,7 +213,7 @@ class Switch internal constructor(
                         )
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(style.containerCornerShape))
+                                .clip(RoundedCornerShape(style.containerCorner))
                                 .background(color = animateColor)
                                 .clickable { if (enabled) changeValue(!value) },
                         ) {

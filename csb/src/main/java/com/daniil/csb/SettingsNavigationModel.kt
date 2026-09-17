@@ -12,6 +12,9 @@ import com.daniil.csb.screens.AbstractScreen
 import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.ScreenController
+import com.daniil.csb.settings.ComposableComponent
+import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.depend.SelfData
 import com.daniil.csb.settings.depend.SubscribeData
 import com.daniil.csb.settings.settingcore.ComposeSetting
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,12 +29,12 @@ class SettingsNavigationModel : ViewModel() {
     val screenHeap = _screenHeap.asStateFlow()
 
     fun setScreensHeap(
-        vararg screen: Screen
+        screen: List<Screen>
     ) {
         _screenHeap.value = screen.toList()
         if (screenStack.value.isEmpty()) { // if restart Activity
             val primary = screenHeap.value.firstOrNull {
-                it.attribute?.contains(ScreenAttribute.Primary) == true ||
+                it.attribute.contains(ScreenAttribute.Primary) ||
                 it.id == CSB.config.primaryScreenId
             }
             if (primary == null) {
@@ -66,6 +69,8 @@ class SettingsNavigationModel : ViewModel() {
         Back,
     }
 
+    fun getAllSettings() = screenHeap.value.flatMap { it.settings.flatMap { it.settings } }
+
     fun findScreenById(id: String): Screen {
         return screenHeap.value.find { it.id == id } ?: error("Screen $id not found")
     }
@@ -82,7 +87,7 @@ class SettingsNavigationModel : ViewModel() {
     }
 
     fun findSettingById(id: String): ComposeSetting<*> {
-        val settingsHeap = screenHeap.value.flatMap { it.settings.flatMap { it.settings } }
+        val settingsHeap = getAllSettings()
         val setting = settingsHeap.find { it.id == id } ?: error("Setting $id not found")
         return setting
     }
@@ -163,38 +168,67 @@ class SettingsNavigationModel : ViewModel() {
         goToScreen(screenStack.value.dropLast(1).last())
     }
 
+    fun setGlobalProviderForComposableComponent() {
+        getAllSettings().filterIsInstance<ComposableComponent>()
+            .forEach {
+                it.setGlobalProvider { id ->
+                    val setting = CSB.findSettingById(id).getOrNull()
+                    if (setting is ComposableComponent) error(
+                        """Cannot call ComposableComponent (id: "$id") recursively, 
+                       otherwise there will be StackOverflow error
+                    """.trimIndent()
+                    )
+                    setting
+                }
+            }
+    }
+
     fun wireDependencies() {
-        val allSettings = screenHeap.value.flatMap { it.settings.flatMap { it.settings } }
+        val allSettings = getAllSettings()
+
+        fun defaultWire(target: ComposeSetting<*>, self: ComposeSetting<*>, dep: Depends) {
+            viewModelScope.launch {
+                target.value.collect { dep.onChangeValue(target) }
+            }
+            viewModelScope.launch {
+                target.enabled.collect { dep.onChangeEnabled(it) }
+            }
+            viewModelScope.launch {
+                target.visible.collect { dep.onChangeVisible(it) }
+            }
+            viewModelScope.launch {
+                combine(target.value, target.enabled, target.visible) { _, _, _ ->
+                    dep.onAnyChange(target)
+                }.collect {}
+            }
+
+            viewModelScope.launch {
+                combine(target.value, target.enabled, target.visible) { _, _, _ ->
+                    dep.visibleIf(target)
+                }.collect { isVisible ->
+                    self.show(isVisible)
+                }
+            }
+            viewModelScope.launch {
+                combine(target.value, target.enabled, target.visible) { _, _, _ ->
+                    dep.enableIf(target)
+                }.collect { isEnabled ->
+                    self.enabled(isEnabled)
+                }
+            }
+        }
+
         allSettings.forEach { setting ->
             setting.depends.forEach { dep ->
-                val target = allSettings.find { it.id == dep.id } ?: return@forEach
-                if (dep is SubscribeData) {
-                    viewModelScope.launch {
-                        target.value.collect { dep.onChangeValue(target) }
+                when (dep)  {
+                    is SubscribeData -> {
+                        val target = findSettingById(dep.id)
+                        defaultWire(target, setting, dep)
                     }
-                    viewModelScope.launch {
-                        target.enabled.collect { dep.onChangeEnabled(it) }
-                    }
-                    viewModelScope.launch {
-                        target.visible.collect { dep.onSettingVisible(it) }
-                    }
-                    
-                    viewModelScope.launch {
-                        combine(target.value, target.enabled, target.visible) { _, _, _ ->
-                            dep.visibleIf(target)
-                        }.collect { isVisible ->
-                            setting.show(isVisible)
-                        }
-                    }
-                    viewModelScope.launch {
-                        combine(target.value, target.enabled, target.visible) { _, _, _ ->
-                            dep.enableIf(target)
-                        }.collect { isEnabled ->
-                            setting.enabled(isEnabled)
-                        }
+                    is SelfData -> {
+                        defaultWire(setting, setting, dep)
                     }
                 }
-
             }
         }
     }

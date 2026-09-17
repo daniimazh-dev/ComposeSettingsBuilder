@@ -77,7 +77,7 @@ class SearchField internal constructor(
     }
 
     @CsbDslMarkers
-    class SearchFieldBuilderScope(): SettingDefaultScope() {
+    class SearchFieldBuilderScope(): SettingDefaultScope<SearchField>() {
         var defaultValue: String? = null
         var title: String? = null
         var onChangeValue: (String) -> Unit = {}

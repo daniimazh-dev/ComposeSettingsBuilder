@@ -61,7 +61,7 @@ class RatingBar internal constructor(
     }
 
     @CsbDslMarkers
-    class RatingBarBuilderScope : SettingDefaultScope() {
+    class RatingBarBuilderScope : SettingDefaultScope<RatingBar>() {
         var stars = 10
         var defaultValue = 0
         var title: String? = null

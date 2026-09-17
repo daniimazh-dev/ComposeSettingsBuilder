@@ -49,13 +49,17 @@ class Custom<T : Any> internal constructor(
     override val description: String? = null
 
     override fun loadLogic(pack: SaveSettingPackage) {
-        val data = Json.decodeFromString(serializer as DeserializationStrategy<T>, (pack as SaveSettingPackage.JsonPackage).value)
-        enabled(pack.enable)
-        changeValue(data)
+        if (serializer != null && pack is SaveSettingPackage.JsonPackage) {
+            val data = Json.decodeFromString(serializer as DeserializationStrategy<T>, pack.value)
+            enabled(pack.enable)
+            changeValue(data)
+        } else {
+            super.loadLogic(pack)
+        }
     }
 
     override fun saveLogic(): SaveSettingPackage? {
-        return saveJson(serializer)
+        return if (serializer != null) saveJson(serializer) else super.saveLogic()
     }
 
     override fun changeValue(newValue: T) {
@@ -64,7 +68,7 @@ class Custom<T : Any> internal constructor(
     }
 
     @CsbDslMarkers
-    class CustomBuilderScope<T>(): SettingDefaultScope() {
+    class CustomBuilderScope<T: Any>(): SettingDefaultScope<Custom<T>>() {
         var defaultValue: T? = null
         internal var content: (@Composable CustomContentScope.() -> Unit)? = null // Nullable for use default UI method
         internal var contentWithArrangement: CustomContentWithArrangementScope? = null
@@ -173,8 +177,8 @@ class Custom<T : Any> internal constructor(
                         isFocused = focusState,
                         groupItemClip = customGrouping ?: position,
                         enabled = enabled,
-                        icon = SettingIcon.custom { inContent.icon?.invoke() },
-                        badge = SettingBadge.custom { inContent.badge?.invoke() },
+                        icon = SettingIcon { inContent.icon?.invoke() },
+                        badge = SettingBadge { inContent.badge?.invoke() },
                         description = inContent.description,
                         action = inContent.action,
                         display = inContent.display,

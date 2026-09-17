@@ -68,7 +68,7 @@ class PasswordField internal constructor(
     }
 
     @CsbDslMarkers
-    class PasswordFieldBuilderScope() : SettingDefaultScope() {
+    class PasswordFieldBuilderScope() : SettingDefaultScope<PasswordField>() {
         var defaultValue: String = ""
         var title: String? = null
         var label: (@Composable () -> Unit)? = null

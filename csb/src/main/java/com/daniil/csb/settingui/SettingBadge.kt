@@ -18,8 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-
-class SettingBadge internal constructor(
+class SettingBadge(
     val content: @Composable () -> Unit
 ) {
     companion object {
@@ -29,7 +28,7 @@ class SettingBadge internal constructor(
                 val translator = LocalCSBTranslator.current
                 Box(
                     modifier = Modifier
-                        .clip(style.edgeGroupCorner)
+                        .clip(style.edgeGroupShape)
                         .background(style.activeColor)
                 ) {
                     CompositionLocalProvider(LocalTextStyle provides style.labelStyle) {
@@ -67,10 +66,6 @@ class SettingBadge internal constructor(
                     )
                 }
             }
-        )
-
-        fun custom(content: @Composable () -> Unit) = SettingBadge(
-            content = content
         )
     }
 }

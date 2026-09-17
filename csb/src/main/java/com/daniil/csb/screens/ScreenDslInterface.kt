@@ -8,7 +8,7 @@ interface ScreenDslInterface {
     ): Screen {
         val data = ScreenBuilderScope(id).apply(scope)
         val screen = Screen.Builder(id)
-            .setTitle(data.title)
+            .setTopBar(data.topBar)
             .setModifier(data.modifier)
             .setPaddingValues(data.paddingValues)
             .setGroupedContent(data.getData())
@@ -25,8 +25,8 @@ interface ScreenDslInterface {
     ): CustomScreen {
         val data = CustomBuilderScreenScope(id)
         data.scope()
-        val screen =
-            CustomScreen.Builder(id).setTitle(data.title)
+        val screen = CustomScreen.Builder(id)
+                .setTopBar(data.topBar)
                 .setModifier(data.modifier)
                 .registerSettings(*data.settings.toTypedArray())
                 .setContent(data.content)

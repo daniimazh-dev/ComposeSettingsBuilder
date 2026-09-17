@@ -107,7 +107,7 @@ class RangeSlider internal constructor(
 
 
     @CsbDslMarkers
-    class RangeSliderBuilderScope() : SettingDefaultScope() {
+    class RangeSliderBuilderScope() : SettingDefaultScope<RangeSlider>() {
         var defaultValue = 0f..1f
         var range: ClosedFloatingPointRange<Float> = 0f..1f
         var steps = 0

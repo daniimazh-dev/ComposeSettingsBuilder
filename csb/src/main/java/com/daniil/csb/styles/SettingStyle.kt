@@ -1,5 +1,6 @@
 package com.daniil.csb.styles
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,13 +17,17 @@ interface SettingStyle {
     var titleStyle: TextStyle
     var labelStyle: TextStyle
     var descriptionStyle: TextStyle
-    var edgeGroupCorner: Shape
-    var containerCornerShape: Dp
+    var edgeGroupShape: Shape
+    var containerCorner: Dp
     var horizontalPadding: Dp
     var verticalPadding: Dp
     var minHeight: Dp
     var itemSpacing: Dp
+    var slotSpacing: Dp
+    var groupSpacing: Dp
     var cardElevation: Dp
+    var topBarContainerColor: Color
+    var topBarHeight: Dp
 
     @Composable
     fun ContainerSlot(
@@ -44,5 +49,27 @@ interface SettingStyle {
         icon: (@Composable () -> Unit)? = null,
         badge: (@Composable () -> Unit)? = null,
         paddingValues: PaddingValues,
+    )
+
+    @Composable
+    fun GroupTitle(
+        text: String
+    )
+    @Composable
+    fun TopScreenBar(
+        text: String,
+        isShowNavigationIcon: Boolean,
+        height: Dp,
+        containerColor: Color,
+        firstVisibleOffset: Float,
+        actions: @Composable () -> Unit,
+        onBack: () -> Unit
+    )
+
+    @Composable
+    fun SettingIcon(
+        @DrawableRes res: Int,
+        tint: Color,
+        contentDescription: String?
     )
 }

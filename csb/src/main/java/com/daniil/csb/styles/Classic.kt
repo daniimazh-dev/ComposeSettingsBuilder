@@ -19,13 +19,16 @@ val CSBStyle.ClassicLight: SettingStyle
         override var titleStyle: TextStyle = TextStyle.Default.copy(fontSize = 16.sp)
         override var labelStyle: TextStyle = TextStyle.Default.copy(fontSize = 11.sp)
         override var descriptionStyle: TextStyle = TextStyle.Default.copy(fontSize = 12.sp, color = Color.Gray)
-        override var edgeGroupCorner: Shape = RoundedCornerShape(6.dp)
-        override var containerCornerShape: Dp = 0.dp
+        override var edgeGroupShape: Shape = RoundedCornerShape(6.dp)
+        override var containerCorner: Dp = 0.dp
         override var horizontalPadding: Dp = 12.dp
         override var verticalPadding: Dp = 10.dp
         override var minHeight: Dp = 52.dp
         override var itemSpacing: Dp = 2.dp
+        override var groupSpacing: Dp = 4.dp
+        override var slotSpacing: Dp = 6.dp
         override var cardElevation: Dp = 0.dp
+        override var topBarContainerColor: Color = Color.White
     }
 
 /** Without material theme */
@@ -38,11 +41,14 @@ val CSBStyle.ClassicDark
         override var titleStyle: TextStyle = TextStyle.Default.copy(fontSize = 16.sp)
         override var labelStyle: TextStyle = TextStyle.Default.copy(fontSize = 11.sp)
         override var descriptionStyle: TextStyle = TextStyle.Default.copy(fontSize = 12.sp, color = Color.Gray)
-        override var edgeGroupCorner: Shape = RoundedCornerShape(6.dp)
-        override var containerCornerShape: Dp = 0.dp
+        override var edgeGroupShape: Shape = RoundedCornerShape(6.dp)
+        override var containerCorner: Dp = 0.dp
         override var horizontalPadding: Dp = 12.dp
         override var verticalPadding: Dp = 10.dp
         override var minHeight: Dp = 52.dp
         override var itemSpacing: Dp = 2.dp
+        override var groupSpacing: Dp = 4.dp
+        override var slotSpacing: Dp = 6.dp
         override var cardElevation: Dp = 0.dp
+        override var topBarContainerColor: Color = Color.Black
     }

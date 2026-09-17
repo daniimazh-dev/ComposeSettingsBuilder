@@ -84,7 +84,7 @@ class TabBar internal constructor(
     }
 
     @CsbDslMarkers
-    class TabBarBuilderScope() : SettingDefaultScope() {
+    class TabBarBuilderScope() : SettingDefaultScope<TabBar>() {
         internal var controller: FragmentController? = null
             private set
         var defaultValue: String? = null

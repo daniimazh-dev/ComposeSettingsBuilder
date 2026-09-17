@@ -54,7 +54,7 @@ class Info internal constructor(
     override fun changeValue(newValue: Unit) {}
 
     @CsbDslMarkers
-    class InfoBuilderScope() : SettingDefaultScope() {
+    class InfoBuilderScope() : SettingDefaultScope<Info>() {
         var title: String? = null
         var description: String? = null
         var infoIcon: InfoIcon = InfoIconDefault.Message

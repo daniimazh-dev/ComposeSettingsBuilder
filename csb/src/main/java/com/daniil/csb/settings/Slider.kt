@@ -89,7 +89,7 @@ class Slider internal constructor(
 
 
     @CsbDslMarkers
-    class SliderBuilderScope() : SettingDefaultScope() {
+    class SliderBuilderScope() : SettingDefaultScope<Slider>() {
         var defaultValue = 0f
         var range: ClosedFloatingPointRange<Float> = 0f..1f
         var steps = 0

@@ -15,6 +15,7 @@ import com.daniil.csb.persistence.CSBStoredData
 import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.group.FragmentController
 import com.daniil.csb.group.GroupController
+import com.daniil.csb.screens.Screen
 import com.daniil.csb.screens.ScreenAttribute
 import com.daniil.csb.screens.ScreenBuilder
 import com.daniil.csb.screens.ScreenController
@@ -255,7 +256,7 @@ object CSB {
     }
 
     fun getAllSettings(): List<ComposeSetting<*>> {
-        return navigationModel.screenHeap.value.flatMap { it.settings.flatMap { it.settings } }
+        return navigationModel.getAllSettings()
     }
 
     inline fun <reified T> getValue(id: String): StateFlow<T> {
@@ -345,6 +346,17 @@ object CSB {
 
     fun screenController(id: String): ScreenController {
         return navigationModel.screenController(id)
+    }
+
+    fun goToScreen(screenId: String) {
+        navigationModel.goToScreen(screenId)
+    }
+    fun goToScreen(screenId: Screen) {
+        navigationModel.goToScreen(screenId)
+    }
+
+    fun goBack() {
+        navigationModel.goBack()
     }
 
 

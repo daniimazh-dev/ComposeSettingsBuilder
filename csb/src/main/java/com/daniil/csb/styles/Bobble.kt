@@ -26,12 +26,15 @@ fun CSBStyle.Bobble(): SettingStyle {
         override var descriptionStyle: TextStyle = MaterialTheme.typography.bodySmall.copy(
             color = MaterialTheme.colorScheme.outline
         )
-        override var edgeGroupCorner: Shape = MaterialTheme.shapes.extraLarge
-        override var containerCornerShape: Dp = 12.dp
+        override var edgeGroupShape: Shape = MaterialTheme.shapes.extraLarge
+        override var containerCorner: Dp = 12.dp
         override var horizontalPadding: Dp = 18.dp
         override var verticalPadding: Dp = 14.dp
         override var minHeight: Dp = 72.dp
         override var itemSpacing: Dp = 6.dp
+        override var groupSpacing: Dp = 8.dp
+        override var slotSpacing: Dp = 8.dp
         override var cardElevation: Dp = 4.dp
+        override var topBarContainerColor: Color = MaterialTheme.colorScheme.background
     }
 }

@@ -1,17 +1,22 @@
 package com.daniil.csb.settings
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.pointer.pointerInput
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.depend.DependsScope
 import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.settings.settingcore.GroupItemClip
 import com.daniil.csb.settings.settingcore.SettingDslInterface
 import com.daniil.csb.settings.settingcore.SettingToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import java.util.UUID
 
 class ComposableComponent internal constructor(
@@ -31,15 +36,17 @@ class ComposableComponent internal constructor(
     override val onChangeValue: (Unit) -> Unit = {}
     override fun changeValue(newValue: Unit) {}
 
-    internal lateinit var globalRegisteredSettingsProvider: (id: String) -> ComposeSetting<*>?
+    internal lateinit var globalRegistered: (id: String) -> ComposeSetting<*>?
 
     internal fun setGlobalProvider(provider: (id: String) -> ComposeSetting<*>?)
-    { globalRegisteredSettingsProvider = provider }
+    { globalRegistered = provider }
 
     @CsbDslMarkers
     inner class ComposableComponentScope {
+        val isEnabled = this@ComposableComponent.enabled
+        internal lateinit var globalRegistered: (id: String) -> ComposeSetting<*>?
         private fun getSetting(id: String): ComposeSetting<*>? {
-            return globalRegisteredSettingsProvider(id)
+            return globalRegistered(id)
         }
         @Composable
         fun RegisteredSetting(
@@ -56,15 +63,25 @@ class ComposableComponent internal constructor(
             setting.UI(position = groupItemClip)
         }
     }
+    @CsbDslMarkers
+    class ComposableComponentConfigScope() {
+        var enabled: Boolean = true
+        var visible: Boolean = true
+        internal var depends = emptyList<Depends>()
+        fun depends(dependsScope: DependsScope<ComposableComponent>.() -> Unit) {
+            val data = DependsScope<ComposableComponent>().apply(dependsScope)
+            depends = data.getDepends()
+        }
+    }
 
     companion object {
         fun SettingDslInterface.create(
             id: String?,
-            enabled: Boolean = true,
-            visible: Boolean = true,
+            config: ComposableComponentConfigScope.() -> Unit,
             content: @Composable ComposableComponentScope.() -> Unit
         ): SettingToken<ComposableComponent> {
-            return ComposableComponent(id, content, emptyList(), enabled, visible).register()
+            val config = ComposableComponentConfigScope().apply(config)
+            return ComposableComponent(id, content, config.depends, config.enabled, config.visible).register()
         }
     }
 
@@ -74,7 +91,21 @@ class ComposableComponent internal constructor(
         position: GroupItemClip?
     ) {
         val enabled by this.enabled.collectAsState()
-        if (enabled) content(ComposableComponentScope())
+        Box(
+            modifier = Modifier
+                .then(
+                    if (enabled) Modifier else Modifier.alpha(0.5f).pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event  = awaitPointerEvent()
+                                event.changes.forEach { it.consume() }
+                            }
+                        }
+                    }
+                )
+        ) {
+            content(ComposableComponentScope())
+        }
     }
 
 }

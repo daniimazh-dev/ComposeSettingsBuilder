@@ -42,7 +42,7 @@ open class LocalSettingsController() {
         id: String,
         scope: LocalScreenBuilderScope.() -> Unit
     ): Screen {
-        val data = LocalScreenBuilderScope(this, id).apply(scope)
+        val data = LocalScreenBuilderScope(this).apply(scope)
         val screen = Screen.Builder(id)
             .setGroupedContent(data.getData())
             .build()

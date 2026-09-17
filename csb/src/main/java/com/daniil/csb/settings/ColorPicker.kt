@@ -149,7 +149,7 @@ class ColorPicker internal constructor(
     }
 
     @CsbDslMarkers
-    class ColorPickerBuilderScope() : SettingDefaultScope() {
+    class ColorPickerBuilderScope() : SettingDefaultScope<ColorPicker>() {
         var defaultValue: Color? = null
         var defaultValueInt: Int? = null
         var onChangeValue: (Color) -> Unit = {}

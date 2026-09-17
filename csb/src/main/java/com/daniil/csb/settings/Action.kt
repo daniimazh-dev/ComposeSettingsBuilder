@@ -53,7 +53,7 @@ class Action internal constructor(
     override val defaultValue: Unit = Unit
 
     @CsbDslMarkers
-    class ActionBuilderScope(): SettingDefaultScope() {
+    class ActionBuilderScope(): SettingDefaultScope<Action>() {
         var requestAlert = false
         var onAction: (result: Boolean) -> Unit = {}
         var alertText: String? = null

@@ -12,24 +12,29 @@ Compose Settings Builder is a powerful, flexible, and type-safe library for crea
 - **Customizable Styling**: Built-in Material3, Bobble, and Classic themes, plus full custom styling support.
 - **Programmatic Control**: Access and modify any setting value or state from code.
 
+
+
 ## Installation
 
 Add the library to your `build.gradle.kts`:
-
 ```kotlin
 dependencies {
     implementation("io.github.daniimazh-dev:csb:1.2.0")
 }
 ```
+## Screenshots
+|Material3 Theme| Bobble Theme |
+|:-|:-|
+| <img width="320" height="720" alt="Basic" src="https://github.com/user-attachments/assets/b4f82766-8fb9-488d-9e64-8b5ca5b24673" /> | <img width="320" height="720" alt="image" src="https://github.com/user-attachments/assets/74470580-d510-4051-afa8-e8f43598315a" /> |
+
 
 ## Getting Started
 
 ### 1. Initialization and Configuration
 
-Initialize CSB in your `Application` or main `Activity`. Use `CSB.config` to set global behavior and flags.
-
+Use `registerSettingScreens` to set sreens and settings
 ```kotlin
-registerSettingScreens {
+fun initSettings = registerSettingScreens {
     CSB.config {
         debugMode = true
         savePatch = "my_app_settings"
@@ -50,6 +55,17 @@ registerSettingScreens {
 
 ```
 
+Initialize CSB in your `Activity`. 
+
+``` kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        initSettings() // Init
+        setContetn {
+             SettingsScreen()
+        }
+}
+```
 ### 2. Displaying the Screen
 
 Simply call `SettingsScreen` in your Composable hierarchy.
@@ -74,7 +90,7 @@ setContent {
 
 - **`group`**: A standard collection of settings with an optional title.
 - **`fragmentedGroup`**: A group that can switch between different "fragments" of settings, usually controlled by a `TabBar`.
-- **`abstractGroup`**: A group used for organization without visual separation.
+- **`abstractGroup`**: A background group used for storing settings that don't need a UI.
 
 ### Example: Fragmented Group
 
@@ -174,7 +190,7 @@ CSB.groupController("general").isShow(false)
 CSB.fragmentController("tabs_group").setFragment("Pro")
 ```
 
-## 🎨 Styling
+## Styling
 
 CSB uses the `SettingStyle` interface to define the look and feel of the settings UI.
 
@@ -208,6 +224,10 @@ val myStyle = object : DefaultSettingStyle() {
 SettingsScreen(style = myStyle)
 ```
 
+| CSB library with custom style | Original pixel settings |
+|:-|:-|
+| <img width="320" height="720" alt="CSB" src="https://github.com/user-attachments/assets/537863f1-a870-44fe-b2e3-a60569367885" /> | <img width="320" height="720" alt="Pixel" src="https://github.com/user-attachments/assets/f7bdd8af-11f7-4569-841c-6c4cc9374bbb" />
+
 ## Setting Types Reference
 
 | Function | Type | Description |
@@ -233,7 +253,7 @@ SettingsScreen(style = myStyle)
 | `createInfo` | `Unit` | Display-only info text. |
 | `createUI` | `Unit` | Custom Composable block. |
 
-## ⚙️ Configuration Flags
+## Configuration Flags
 
 Use `CSB.config { flag("...") }` to tweak library behavior:
 
@@ -243,6 +263,6 @@ Use `CSB.config { flag("...") }` to tweak library behavior:
 - `ignoreSettingNotFoundError`: Prevents crashes if a setting ID is missing.
 - `allowDisplayAbstractScreen`: Renders abstract screens for debugging.
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

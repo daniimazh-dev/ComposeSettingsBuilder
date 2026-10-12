@@ -112,6 +112,7 @@ kotlin {
     compilerOptions {
 //        freeCompilerArgs.add("-Xcontext-parameters")
         jvmTarget = JvmTarget.JVM_11
+        freeCompilerArgs.add("-opt-in=com.daniil.csb.ExperimentalCSBFeathers")
     }
 }
 

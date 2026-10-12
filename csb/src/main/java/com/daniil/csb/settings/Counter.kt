@@ -44,6 +44,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,8 +65,13 @@ class Counter internal constructor(
     override var onChangeValue: (Int) -> Unit = {},
     override var isSaveSetting: Boolean = true,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Int>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Int>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
 
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
@@ -78,35 +84,34 @@ class Counter internal constructor(
 
     @CsbDslMarkers
     class CounterBuilderScope(): SettingDefaultScope<Counter>() {
-
         var range: IntRange = 0..10
         var defaultValue = range.first
         var steps = 1
         var title: String? = null
         var description: String? = null
-
         var onChangeValue: (Int) -> Unit = {}
     }
 
     companion object : ComposeSettingInterface.Factory<Counter, CounterBuilderScope> {
-        override fun SettingDslInterface.create(id: String, scope: CounterBuilderScope.() -> Unit): SettingToken<Counter> {
-            val data = CounterBuilderScope().apply(scope)
-            return with(data) {
+        context(context: SettingDslInterface)
+        override fun create(id: String, scope: CounterBuilderScope.() -> Unit)
+        : SettingToken<Counter> = with(CounterBuilderScope().apply(scope)) {
+            return with(context) {
                 Counter(
-                    id,
-                    defaultValue,
-                    range,
-                    steps,
-                    title ?: id,
-                    description,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    onChangeValue,
-                    isSaveSetting,
-                    customGrouping,
-                    depends
+                    id = id,
+                    defaultValue = defaultValue,
+                    range = range,
+                    steps = steps,
+                    title = title ?: id,
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    onChangeValue = onChangeValue,
+                    isSaveSetting = isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends
                 ).register()
             }
         }
@@ -122,6 +127,7 @@ class Counter internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,

@@ -3,6 +3,7 @@ package com.daniil.csb.settings.depend
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.settings.settingcore.ReadOnlySetting
+import com.daniil.csb.settings.settingcore.asReadOnly
 
 
 @CsbDslMarkers
@@ -49,11 +50,11 @@ class SelfScope<S: ComposeSetting<*>>() {
             },
             visibleIf = { setting ->
                 @Suppress("UNCHECKED_CAST")
-                visibleIf?.invoke(ReadOnlySetting(setting as S)) ?: true
+                visibleIf?.invoke(setting.asReadOnly() as ReadOnlySetting<S>) ?: true
             },
             enableIf = { setting ->
                 @Suppress("UNCHECKED_CAST")
-                enableIf?.invoke(ReadOnlySetting(setting as S)) ?: true
+                enableIf?.invoke(setting.asReadOnly() as ReadOnlySetting<S>) ?: true
             },
         )
     }

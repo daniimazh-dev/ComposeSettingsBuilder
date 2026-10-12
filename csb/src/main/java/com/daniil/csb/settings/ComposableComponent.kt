@@ -16,7 +16,6 @@ import com.daniil.csb.settings.settingcore.SettingDslInterface
 import com.daniil.csb.settings.settingcore.SettingToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import java.util.UUID
 
 class ComposableComponent internal constructor(
@@ -25,7 +24,11 @@ class ComposableComponent internal constructor(
     override val depends: List<Depends> = emptyList(),
     enabled: Boolean = true,
     visible: Boolean = true
-): ComposeSetting<Unit>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+): ComposeSetting<Unit>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     override val id: String = id ?: UUID.randomUUID().toString()
     override val title: String = ""
     override val description: String? = null
@@ -75,13 +78,22 @@ class ComposableComponent internal constructor(
     }
 
     companion object {
-        fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        fun create(
             id: String?,
             config: ComposableComponentConfigScope.() -> Unit,
             content: @Composable ComposableComponentScope.() -> Unit
         ): SettingToken<ComposableComponent> {
             val config = ComposableComponentConfigScope().apply(config)
-            return ComposableComponent(id, content, config.depends, config.enabled, config.visible).register()
+            return with(context) {
+                ComposableComponent(
+                    id= id,
+                    content = content,
+                    depends = config.depends,
+                    enabled = config.enabled,
+                    visible = config.visible
+                ).register()
+            }
         }
     }
 

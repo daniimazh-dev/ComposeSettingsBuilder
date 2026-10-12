@@ -2,8 +2,6 @@ package com.daniil.csb.settings
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -49,6 +46,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -65,7 +63,12 @@ class SearchField internal constructor(
     override var onChangeValue: (String) -> Unit = {},
     val onFocusChange: (Boolean) -> Unit = {},
     override val depends: List<Depends> = emptyList(),
-) : ComposeSetting<String>(independentObject =  true, depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<String>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(this@SearchField.defaultValue)
     override val value = _value.asStateFlow()
     override var isSaveSetting: Boolean = false
@@ -87,11 +90,12 @@ class SearchField internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<SearchField, SearchFieldBuilderScope> {
-        override fun SettingDslInterface.create(id: String, scope: SearchFieldBuilderScope.() -> Unit): SettingToken<SearchField> {
-            val data = SearchFieldBuilderScope().apply(scope)
-            return with(data) {
+        context(context: SettingDslInterface)
+        override fun create(id: String, scope: SearchFieldBuilderScope.() -> Unit)
+        : SettingToken<SearchField> = with(SearchFieldBuilderScope().apply(scope)) {
+            return with(context) {
                 SearchField(
-                    id,
+                    id = id,
                     defaultValue = defaultValue ?: "",
                     title = title ?: id,
                     enabled = enabled,
@@ -101,7 +105,8 @@ class SearchField internal constructor(
                     customGrouping = customGrouping,
                     onChangeValue = onChangeValue,
                     onFocusChange = onFocusChange,
-                    depends = depends
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -137,6 +142,7 @@ class SearchField internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,

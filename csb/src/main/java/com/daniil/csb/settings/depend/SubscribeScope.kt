@@ -3,6 +3,7 @@ package com.daniil.csb.settings.depend
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.settings.settingcore.ReadOnlySetting
+import com.daniil.csb.settings.settingcore.asReadOnly
 
 @CsbDslMarkers
 class SubscribeScope<S: ComposeSetting<*>>() {
@@ -40,21 +41,21 @@ class SubscribeScope<S: ComposeSetting<*>>() {
             id = id,
             visibleIf = { setting ->
                 @Suppress("UNCHECKED_CAST")
-                visibleIf?.invoke(ReadOnlySetting(setting as S)) ?: true
+                visibleIf?.invoke(setting.asReadOnly() as ReadOnlySetting<S>) ?: true
             },
             enableIf = { setting ->
                 @Suppress("UNCHECKED_CAST")
-                enableIf?.invoke(ReadOnlySetting(setting as S)) ?: true
+                enableIf?.invoke(setting.asReadOnly() as ReadOnlySetting<S>) ?: true
             },
             onChangeValue = { setting ->
                 @Suppress("UNCHECKED_CAST")
-                onChangeValue?.invoke(ReadOnlySetting(setting as S))
+                onChangeValue?.invoke(setting.asReadOnly() as ReadOnlySetting<S>)
             },
             onChangeEnabled = onChangeEnabled,
             onChangeVisible = onChangeVisible,
             onAnyChange = { setting ->
                 @Suppress("UNCHECKED_CAST")
-                onAnyChange?.invoke(ReadOnlySetting(setting as S))
+                onAnyChange?.invoke(setting.asReadOnly() as ReadOnlySetting<S>)
             }
         )
     }

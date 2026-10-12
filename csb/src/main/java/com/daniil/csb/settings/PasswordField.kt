@@ -22,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.settings.depend.Depends
@@ -39,6 +38,7 @@ import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -52,13 +52,18 @@ class PasswordField internal constructor(
     visible: Boolean = true,
     val icon: SettingIcon? = null,
     val badge: SettingBadge? = null,
-    override var onChangeValue: (String) -> Unit = {},
+    override val onChangeValue: (String) -> Unit = {},
     val isError: (String) -> Boolean = { false },
     val onFocusChange: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean = false,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<String>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<String>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
@@ -85,29 +90,29 @@ class PasswordField internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<PasswordField, PasswordFieldBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: PasswordFieldBuilderScope.() -> Unit
-        ): SettingToken<PasswordField> {
-            val data = PasswordFieldBuilderScope().apply(scope)
-            return with(data) {
+        ): SettingToken<PasswordField> = with(PasswordFieldBuilderScope().apply(scope)) {
+            return with(context) {
                 PasswordField(
-                    id,
-                    defaultValue,
-                    title ?: id,
-                    description,
-                    label,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    onChangeValue,
-                    isError,
-                    onFocusChange,
-                    @Suppress("DEPRECATION")
-                    isSaveSetting,
-                    customGrouping,
-                    depends
+                    id = id,
+                    defaultValue = defaultValue,
+                    title = title ?: id,
+                    description = description,
+                    label = label,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    onChangeValue = onChangeValue,
+                    isError = isError,
+                    onFocusChange = onFocusChange,
+                    isSaveSetting =  @Suppress("DEPRECATION") isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -127,6 +132,7 @@ class PasswordField internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,

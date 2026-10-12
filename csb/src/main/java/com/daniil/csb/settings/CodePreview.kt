@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.daniil.csb.CsbDslMarkers
+import com.daniil.csb.ExperimentalCSBFeathers
 import com.daniil.csb.R
 import com.daniil.csb.settings.depend.Depends
 import com.daniil.csb.settings.settingcore.ComposeSetting
@@ -53,6 +54,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,8 +76,13 @@ class CodePreview internal constructor(
     var onClicked: () -> Unit = {},
     val keyWords: List<String>,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Unit>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Unit>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(Unit)
     override val value = _value.asStateFlow()
 
@@ -121,14 +128,20 @@ class CodePreview internal constructor(
         var keyWords = emptyList<String>()
         var fontSize = 12.sp
         var onClick: () -> Unit = {}
+        @Deprecated(
+            "The CodePreview setting dose not store any data. Changing the value to true is not necessary",
+            level = DeprecationLevel.WARNING
+        )
+        override var isSaveSetting: Boolean = false
     }
     companion object: ComposeSettingInterface.Factory<CodePreview, CodePreviewBuilderScope> {
-        override fun SettingDslInterface.create(
+        @OptIn(ExperimentalCSBFeathers::class)
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: CodePreviewBuilderScope.() -> Unit
-        ): SettingToken<CodePreview> {
-            val data = CodePreviewBuilderScope().apply(scope)
-            return with(data) {
+        ): SettingToken<CodePreview> = with(CodePreviewBuilderScope().apply(scope)) {
+            return with(context) {
                 CodePreview(
                     id = id,
                     title = title ?: id,
@@ -143,9 +156,10 @@ class CodePreview internal constructor(
                     onClicked = onClick,
                     keyWords = keyWords,
                     customGrouping = customGrouping,
-                    depends = depends
-                )
-            }.register()
+                    depends = depends,
+                    customComposer = composer,
+                ).register()
+            }
         }
 
     }
@@ -163,8 +177,9 @@ class CodePreview internal constructor(
         
         DefaultSettingUI(
             modifier = modifier,
+            composer = customComposer,
             isFocused = focusState,
-            groupItemClip = position,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,
             badge = badge,

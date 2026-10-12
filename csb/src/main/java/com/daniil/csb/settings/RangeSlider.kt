@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.CsbDslMarkers
-import com.daniil.csb.persistence.SaveSettingPackage
 import com.daniil.csb.settings.depend.Depends
 import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.settings.settingcore.ComposeSettingInterface
@@ -32,6 +31,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -52,8 +52,13 @@ class RangeSlider internal constructor(
     override var onChangeValue: (ClosedFloatingPointRange<Float>) -> Unit = {},
     override var isSaveSetting: Boolean = true,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<ClosedFloatingPointRange<Float>>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<ClosedFloatingPointRange<Float>>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
 
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
@@ -120,12 +125,12 @@ class RangeSlider internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<RangeSlider, RangeSliderBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: RangeSliderBuilderScope.() -> Unit
-        ): SettingToken<RangeSlider> {
-            val data = RangeSliderBuilderScope().apply(scope)
-            return with(data) {
+        ): SettingToken<RangeSlider> = with(RangeSliderBuilderScope().apply(scope)) {
+            return with(context) {
                 RangeSlider(
                     id = id,
                     defaultValue = defaultValue,
@@ -142,7 +147,8 @@ class RangeSlider internal constructor(
                     onChangeValue = onChangeValue,
                     isSaveSetting = isSaveSetting,
                     customGrouping = customGrouping,
-                    depends = depends
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -158,6 +164,7 @@ class RangeSlider internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             enabled = enabled,
             groupItemClip = customGrouping ?: position,
             icon = icon,

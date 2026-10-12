@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,6 +53,7 @@ import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -74,8 +74,13 @@ class TextField internal constructor(
     val onFocusChange: (Boolean) -> Unit = {},
     override var isSaveSetting: Boolean,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<String>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<String>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(this@TextField.defaultValue)
     override val value = _value.asStateFlow()
 
@@ -95,26 +100,28 @@ class TextField internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<TextField, TextFieldBuilderScope> {
-        override fun SettingDslInterface.create(id: String, scope: TextFieldBuilderScope.() -> Unit): SettingToken<TextField> {
-            val data = TextFieldBuilderScope().apply(scope)
-            return with(data) {
+        context(context: SettingDslInterface)
+        override fun create(id: String, scope: TextFieldBuilderScope.() -> Unit)
+        : SettingToken<TextField> = with(TextFieldBuilderScope().apply(scope)) {
+            return with(context) {
                 TextField(
-                    id,
-                    defaultValue,
-                    title ?: id,
-                    "Set text",
-                    false,
-                    label,
-                    description,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    onChangeValue,
-                    onFocusChange,
-                    isSaveSetting,
-                    customGrouping,
-                    depends
+                    id = id,
+                    defaultValue = defaultValue,
+                    title = title ?: id,
+                    alertTitle = "Set text",
+                    openAlert = false,
+                    label = label,
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    onChangeValue = onChangeValue,
+                    onFocusChange = onFocusChange,
+                    isSaveSetting = isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer,
                 ).register()
             }
         }
@@ -131,7 +138,7 @@ class TextField internal constructor(
         var text by retain { mutableStateOf(value.value) }
         val focusRequest = remember { FocusRequester() }
         if (isAlertOpen && !openAlert) {
-            LocalSettingsStyle.current.ContainerSlot(
+            (customComposer ?: LocalSettingsStyle.current.composer).ContainerSlot(
                 modifier = modifier.fillMaxWidth(),
                 isFocused = focusState,
                 shape = (position ?: customGrouping ?: groupPosition).clippedShape(),
@@ -185,6 +192,7 @@ class TextField internal constructor(
             DefaultSettingUI(
                 modifier = modifier,
                 isFocused = focusState,
+                composer = customComposer,
                 groupItemClip = customGrouping ?: position,
                 enabled = enabled,
                 icon = icon,

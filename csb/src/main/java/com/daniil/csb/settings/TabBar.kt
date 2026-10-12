@@ -4,7 +4,6 @@ package com.daniil.csb.settings
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,6 +31,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import com.daniil.csb.utils.FancyTabBar
 import com.daniil.csb.utils.FancyTabBarData
 import com.daniil.csb.utils.FancyTabBarDefaults
@@ -44,14 +44,16 @@ class TabBar internal constructor(
     var tabs: List<Tab> = emptyList(),
     enabled: Boolean = true,
     visible: Boolean = true,
-    val icon: com.daniil.csb.settingui.SettingIcon? = null,
-    val badge: SettingBadge? = null,
     val controller: FragmentController? = null,
     override var onChangeValue: (String) -> Unit = {},
     override var isSaveSetting: Boolean = true,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<String>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+) : ComposeSetting<String>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
@@ -90,6 +92,13 @@ class TabBar internal constructor(
         var defaultValue: String? = null
         val tabs = mutableListOf<Tab>()
         var onChangeValue: (String) -> Unit = {}
+        @Deprecated("The setting do not display this option", level = DeprecationLevel.WARNING)
+        override var icon: SettingIcon? = null
+        @Deprecated("The setting do not display this option", level = DeprecationLevel.WARNING)
+        override var badge: SettingBadge? = null
+        @Deprecated("The setting do not display this option", level = DeprecationLevel.WARNING)
+        override var composer: SettingComposer? = null
+
         fun tab(
             id: String, content: @Composable () -> Unit
             = { Default.DefaultTabContent(id) }
@@ -97,7 +106,6 @@ class TabBar internal constructor(
             tabs.add(Tab(id, content))
             return MoreThenZeroTabToken()
         }
-
         fun setController(controller: FragmentController): InitControllerToken {
             this.controller = controller
             return InitControllerToken()
@@ -108,33 +116,29 @@ class TabBar internal constructor(
     class InitControllerToken : TabBarConfiguredToken()
     open class TabBarConfiguredToken() : SettingConfiguredToken()
 
-    companion object :
-        ComposeSettingInterface.FactoryWithToken<TabBar, TabBarBuilderScope, TabBarConfiguredToken> {
-        override fun SettingDslInterface.create(
+    companion object : ComposeSettingInterface.FactoryWithToken<TabBar, TabBarBuilderScope, TabBarConfiguredToken> {
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: TabBarBuilderScope.() -> TabBarConfiguredToken
-        ): SettingToken<TabBar> {
-            val data = TabBarBuilderScope()
-            data.scope()
-            return with(data) {
+        ): SettingToken<TabBar> = with(TabBarBuilderScope().apply { scope() }) {
+            return with(context) {
                 TabBar(
-                    id,
-                    defaultValue ?: controller?.initialValue ?: tabs.firstOrNull()?.id.orEmpty(),
-                    tabs,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    controller,
-                    onChangeValue,
-                    isSaveSetting,
-                    customGrouping,
-                    depends
+                    id = id,
+                    defaultValue = defaultValue ?: controller?.initialValue ?: tabs.firstOrNull()?.id.orEmpty(),
+                    tabs = tabs,
+                    enabled = enabled,
+                    visible = visible,
+                    controller = controller,
+                    onChangeValue = onChangeValue,
+                    isSaveSetting = isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends,
                 ).register()
             }
         }
-
-        fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        fun create(
             id: String,
             controller: FragmentController
         ): SettingToken<TabBar> {
@@ -146,7 +150,16 @@ class TabBar internal constructor(
                     } ?: Default.DefaultTabContent(g.id)
                 }
             }
-            return TabBar(id, controller.initialValue, tabs, true, true, null, null, controller).register()
+            return with(context) {
+                TabBar(
+                    id = id,
+                    defaultValue = controller.initialValue,
+                    tabs = tabs,
+                    enabled = true,
+                    visible = true,
+                    controller = controller
+                ).register()
+            }
         }
     }
 
@@ -163,10 +176,9 @@ class TabBar internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
-            groupItemClip = position,
+            composer = null,
+            groupItemClip = customGrouping ?: position,
             enabled = enabled,
-            icon = icon,
-            badge = badge,
             paddingValues = PaddingValues.Zero,
             minHeight = 0.dp,
             title = {},

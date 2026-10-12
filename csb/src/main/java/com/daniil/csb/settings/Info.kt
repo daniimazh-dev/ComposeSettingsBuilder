@@ -29,6 +29,7 @@ import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -43,8 +44,13 @@ class Info internal constructor(
     var infoIcon: InfoIcon,
     var onClicked: () -> Unit = {},
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Unit>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Unit>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow<Unit>(Unit)
     override val value = _value.asStateFlow()
 
@@ -62,7 +68,7 @@ class Info internal constructor(
 
         @Deprecated(
             "The Info setting dose not store any data. Changing the value to true is not necessary",
-            level = DeprecationLevel.HIDDEN
+            level = DeprecationLevel.WARNING
         )
         override var isSaveSetting: Boolean = false
     }
@@ -89,24 +95,25 @@ class Info internal constructor(
 
 
     companion object : ComposeSettingInterface.Factory<Info, InfoBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: InfoBuilderScope.() -> Unit
-        ): SettingToken<Info> {
-            val data = InfoBuilderScope(); data.scope()
-            return with(data) {
+        ): SettingToken<Info> = with(InfoBuilderScope().apply(scope)) {
+            return with(context) {
                 Info(
-                    id,
-                    title.orEmpty(),
-                    description,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    infoIcon,
-                    onClick,
-                    customGrouping,
-                    depends
+                    id = id,
+                    title = title.orEmpty(),
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    infoIcon = infoIcon,
+                    onClicked = onClick,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -122,16 +129,12 @@ class Info internal constructor(
         val translator = LocalCSBTranslator.current
         val groupPosition = LocalGroupPosition.current
 
-
+        val borderModifier = if (infoIcon.borderLight == Color.Unspecified) Modifier
+        else Modifier.border(2.dp, infoIcon.borderLight, (position ?: groupPosition).clippedShape())
         DefaultSettingUI(
-            modifier = modifier
-                    then (if (infoIcon.borderLight == Color.Unspecified) Modifier
-            else Modifier.border(
-                2.dp,
-                this@Info.infoIcon.borderLight,
-                (position ?: groupPosition).clippedShape()
-            )),
+            modifier = modifier.then(borderModifier),
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             minHeight = style.minHeight / 2,
             enabled = enabled,

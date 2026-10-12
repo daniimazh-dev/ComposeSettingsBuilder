@@ -75,6 +75,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import com.daniil.csb.utils.FancyTabBar
 import com.daniil.csb.utils.FancyTabBarData
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -95,8 +96,13 @@ class ColorPicker internal constructor(
     override var onChangeValue: (Color) -> Unit = {},
     override var isSaveSetting: Boolean = true,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Color>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Color>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     internal constructor(
         id: String,
         defaultValueInt: Int,
@@ -109,20 +115,22 @@ class ColorPicker internal constructor(
         onChangeValue: (Color) -> Unit = {},
         isSaveSetting: Boolean = true,
         customGrouping: GroupItemClip?,
-        depends: List<Depends> = emptyList()
+        depends: List<Depends> = emptyList(),
+        customComposer: SettingComposer?
     ) : this(
-        id,
+        id = id,
         defaultValue = Color(defaultValueInt),
-        title,
-        description,
-        enabled,
-        visible,
-        icon,
-        badge,
-        onChangeValue,
-        isSaveSetting,
-        customGrouping,
-        depends
+        title = title,
+        description = description,
+        enabled = enabled,
+        visible = visible,
+        icon = icon,
+        badge= badge,
+        onChangeValue = onChangeValue,
+        isSaveSetting = isSaveSetting,
+        customGrouping = customGrouping,
+        depends = depends,
+        customComposer = customComposer
     )
 
     private var _value = MutableStateFlow(this@ColorPicker.defaultValue)
@@ -158,44 +166,45 @@ class ColorPicker internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<ColorPicker, ColorPickerBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: ColorPickerBuilderScope.() -> Unit
-        ): SettingToken<ColorPicker> {
-            val data = ColorPickerBuilderScope().apply(scope)
-            return with(data) {
-                val res = if (defaultValueInt != null) {
+        ): SettingToken<ColorPicker> = with(ColorPickerBuilderScope().apply(scope)) {
+            return with(context) {
+                if (defaultValueInt != null) {
                     ColorPicker(
-                        id,
-                        defaultValueInt!!,
-                        title ?: id,
-                        description,
-                        enabled,
-                        visible,
-                        icon,
-                        badge,
-                        onChangeValue,
-                        isSaveSetting,
-                        customGrouping,
-                        depends
+                        id = id,
+                        defaultValueInt = defaultValueInt!!,
+                        title = title ?: id,
+                        description = description,
+                        enabled = enabled,
+                        visible = visible,
+                        icon = icon,
+                        badge = badge,
+                        onChangeValue = onChangeValue,
+                        isSaveSetting = isSaveSetting,
+                        customGrouping = customGrouping,
+                        depends = depends,
+                        customComposer = composer
                     )
                 } else {
                     ColorPicker(
-                        id,
-                        defaultValue ?: Color.Unspecified,
-                        title ?: id,
-                        description,
-                        enabled,
-                        visible,
-                        icon,
-                        badge,
-                        onChangeValue,
-                        isSaveSetting,
-                        customGrouping,
-                        depends
+                        id = id,
+                        defaultValue = defaultValue ?: Color.Unspecified,
+                        title = title ?: id,
+                        description = description,
+                        enabled = enabled,
+                        visible = visible,
+                        icon = icon,
+                        badge = badge,
+                        onChangeValue = onChangeValue,
+                        isSaveSetting = isSaveSetting,
+                        customGrouping = customGrouping,
+                        depends = depends,
+                        customComposer = composer
                     )
-                }
-                res.register()
+                }.register()
             }
         }
     }
@@ -212,6 +221,7 @@ class ColorPicker internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,

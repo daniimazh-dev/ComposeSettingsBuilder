@@ -9,7 +9,7 @@ class SettingIcon(
 ) {
     companion object {
         fun fromRes(@DrawableRes res: Int, tint: Color = Color.Unspecified, contentDescription: String? = null): SettingIcon {
-            return SettingIcon { LocalSettingsStyle.current.SettingIcon(res, tint, contentDescription) }
+            return SettingIcon { LocalSettingsStyle.current.composer.SettingIcon(res, tint, contentDescription) }
         }
     }
 

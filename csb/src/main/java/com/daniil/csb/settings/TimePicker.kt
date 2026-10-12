@@ -38,6 +38,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import com.daniil.csb.utils.LocalTimeSerializer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,8 +57,13 @@ class TimePicker internal constructor(
     override var onChangeValue: (LocalTime) -> Unit = {},
     override var isSaveSetting: Boolean = true,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<LocalTime>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<LocalTime>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
@@ -84,23 +90,25 @@ class TimePicker internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<TimePicker, TimePickerBuilderScope> {
-        override fun SettingDslInterface.create(id: String, scope: TimePickerBuilderScope.() -> Unit): SettingToken<TimePicker> {
-            val data = TimePickerBuilderScope().apply(scope)
-            return with(data) {
+        context(context: SettingDslInterface)
+        override fun create(id: String, scope: TimePickerBuilderScope.() -> Unit)
+        : SettingToken<TimePicker> = with(TimePickerBuilderScope().apply(scope)) {
+            return with(context) {
                 TimePicker(
-                    id,
-                    defaultValue,
-                    title ?: id,
-                    description,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    alertTitle,
-                    onChangeValue,
-                    isSaveSetting,
-                    customGrouping,
-                    depends
+                    id = id,
+                    defaultValue = defaultValue,
+                    title = title ?: id,
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    alertTitle = alertTitle,
+                    onChangeValue = onChangeValue,
+                    isSaveSetting = isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -125,6 +133,7 @@ class TimePicker internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,

@@ -59,6 +59,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
@@ -78,8 +79,13 @@ class Select(
     override var onChangeValue: (Option) -> Unit = {},
     override var isSaveSetting: Boolean,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Select.Option>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Select.Option>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
@@ -140,29 +146,29 @@ class Select(
     }
     class MoreThenZeroOptionToken: SettingConfiguredToken()
     companion object : ComposeSettingInterface.FactoryWithToken<Select, SelectBuilderScope, MoreThenZeroOptionToken> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: SelectBuilderScope.() -> MoreThenZeroOptionToken
-        ): SettingToken<Select> {
-            val data = SelectBuilderScope()
-            data.scope()
-            return with(data) {
+        ): SettingToken<Select> = with(SelectBuilderScope().apply { scope() }) {
+            return with(context) {
                 Select(
-                    id,
-                    options,
+                    id = id,
+                    options = options,
                     defaultValue = options.first { it.id == (defaultValueId ?: options[0].id) },
-                    title ?: id,
-                    alertTitle,
-                    description,
-                    uiMode,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    onChangeValue,
-                    isSaveSetting,
-                    customGrouping,
-                    depends
+                    title = title ?: id,
+                    alertTitle = alertTitle,
+                    description = description,
+                    uiMode = uiMode,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    onChangeValue = onChangeValue,
+                    isSaveSetting = isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -183,6 +189,7 @@ class Select(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,

@@ -41,13 +41,13 @@ class SettingsNavigationModel : ViewModel() {
                 val index = screenHeap.value.indexOfFirst { it !is AbstractScreen }
                 if (index != -1) {
                     val targetScreen = screen[index]
-                    val attribute = targetScreen.attribute ?: listOf()
+                    val attribute = targetScreen.attribute
                     targetScreen.attribute = attribute + listOf(ScreenAttribute.Primary)
                     _screenStack.value.add(targetScreen)
                     _currentScreen.value = targetScreen
                 } else error("Not found primary screen")
             } else {
-                val attribute = primary.attribute ?: listOf()
+                val attribute = primary.attribute
                 primary.attribute = attribute + listOf(ScreenAttribute.Primary)
                 _screenStack.value.add(primary)
                 _currentScreen.value = primary
@@ -142,7 +142,7 @@ class SettingsNavigationModel : ViewModel() {
 
     fun goToScreen(screen: Screen) {
         if (screen is AbstractScreen && !"allowDisplayAbstractScreen".isInFlag()) error("Cannot go to abstract screen")
-        if (screen.attribute?.contains(ScreenAttribute.NonRedirectable) == true) return
+        if (screen.attribute.contains(ScreenAttribute.NonRedirectable)) return
         val indexInStack = screenStack.value.indexOfFirst { it.id == screen.id }
         val isInStack = indexInStack != -1
 
@@ -206,7 +206,7 @@ class SettingsNavigationModel : ViewModel() {
                 combine(target.value, target.enabled, target.visible) { _, _, _ ->
                     dep.visibleIf(target)
                 }.collect { isVisible ->
-                    self.show(isVisible)
+                    self.visible(isVisible)
                 }
             }
             viewModelScope.launch {

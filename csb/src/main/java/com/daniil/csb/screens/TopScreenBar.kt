@@ -66,9 +66,9 @@ class TopScreenBar(
                 }
             }
         } else {
-            style.TopScreenBar(
+            style.composer.TopScreenBar(
                 text = data.text ?: defaultText,
-                isShowNavigationIcon = isShowNavigationIcon,
+                isShowNavigationIcon = data.isNavigateOn == true || (data.isNavigateOn == null && isShowNavigationIcon) ,
                 height = data.height ?: height,
                 containerColor = data.containerColor ?: style.topBarContainerColor,
                 firstVisibleOffset = firstVisibleOffset,
@@ -79,6 +79,7 @@ class TopScreenBar(
     class TopScreenBarConfigScope internal constructor() {
         var height: Dp? = null
         var text: String? = null
+        var isNavigateOn: Boolean? = null
         var onBackClicked: (() -> Unit)? = null
         var containerColor: Color? = null
         var actions: @Composable () -> Unit = {}

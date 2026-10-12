@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -32,6 +31,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -52,8 +52,13 @@ class Slider internal constructor(
     override var onChangeValue: (Float) -> Unit = {},
     override var isSaveSetting: Boolean = true,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Float>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Float>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
 
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
@@ -102,12 +107,12 @@ class Slider internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<Slider, SliderBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: SliderBuilderScope.() -> Unit
-        ): SettingToken<Slider> {
-            val data = SliderBuilderScope().apply(scope)
-            return with(data) {
+        ): SettingToken<Slider> = with(SliderBuilderScope().apply(scope)) {
+            return with(context) {
                 Slider(
                     id = id,
                     defaultValue = defaultValue,
@@ -124,7 +129,8 @@ class Slider internal constructor(
                     onChangeValue = onChangeValue,
                     isSaveSetting = isSaveSetting,
                     customGrouping = customGrouping,
-                    depends = depends
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -140,6 +146,7 @@ class Slider internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             enabled = enabled,
             groupItemClip = customGrouping ?: position,
             icon = icon,

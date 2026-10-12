@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import com.daniil.csb.screens.ScreenBuilder
-import com.daniil.csb.settings.ComposableComponent
 
 class CSBInitializer : ContentProvider() {
     override fun onCreate(): Boolean {

@@ -58,6 +58,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
@@ -78,8 +79,13 @@ class MultiplySelect internal constructor(
     override var onChangeValue: (List<Option>) -> Unit = {},
     override var isSaveSetting: Boolean,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<List<MultiplySelect.Option>>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<List<MultiplySelect.Option>>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(this@MultiplySelect.defaultValue)
     override val value = _value.asStateFlow()
 
@@ -148,28 +154,29 @@ class MultiplySelect internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<MultiplySelect, MultiplySelectBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: MultiplySelectBuilderScope.() -> Unit
-        ): SettingToken<MultiplySelect> {
-            val data = MultiplySelectBuilderScope().apply(scope)
-            return with(data) {
+        ): SettingToken<MultiplySelect> = with(MultiplySelectBuilderScope().apply(scope)) {
+            return with(context) {
                 MultiplySelect(
-                    id,
-                    options,
+                    id = id,
+                    options = options,
                     defaultValue = options.filter { it.id in defaultValue },
-                    title ?: id,
-                    alertTitle,
-                    description,
-                    uiMode,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    onChangeValue,
-                    isSaveSetting,
-                    customGrouping,
-                    depends
+                    title = title ?: id,
+                    alertTitle = alertTitle,
+                    description = description,
+                    uiMode = uiMode,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    onChangeValue = onChangeValue,
+                    isSaveSetting = isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -188,6 +195,7 @@ class MultiplySelect internal constructor(
             modifier = modifier,
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
+            composer = customComposer,
             enabled = enabled,
             icon = icon,
             badge = badge,

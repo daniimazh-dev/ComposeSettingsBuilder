@@ -22,6 +22,7 @@ import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -39,8 +40,13 @@ class Action internal constructor(
     enabled: Boolean = true,
     visible: Boolean = true,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Unit>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null,
+) : ComposeSetting<Unit>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(Unit)
     override val value = _value.asStateFlow()
 
@@ -53,7 +59,7 @@ class Action internal constructor(
     override val defaultValue: Unit = Unit
 
     @CsbDslMarkers
-    class ActionBuilderScope(): SettingDefaultScope<Action>() {
+    class ActionBuilderScope() : SettingDefaultScope<Action>() {
         var requestAlert = false
         var onAction: (result: Boolean) -> Unit = {}
         var alertText: String? = null
@@ -61,31 +67,42 @@ class Action internal constructor(
         var title: String? = null
         var actionIcon: SettingIcon? = null
         var description: String? = null
-        @Deprecated("The Action setting dose not store any data. Changing the value to true is not necessary", level = DeprecationLevel.HIDDEN)
+
+        @Deprecated(
+            "The Action setting dose not store any data. Changing the value to true is not necessary",
+            level = DeprecationLevel.WARNING
+        )
         override var isSaveSetting: Boolean = false
     }
+
     companion object : ComposeSettingInterface.Factory<Action, ActionBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: ActionBuilderScope.() -> Unit
         ): SettingToken<Action> = with(ActionBuilderScope().apply(scope)) {
-            return Action(
-                id,
-                requestAlert,
-                onAction,
-                alertTitle,
-                alertText,
-                icon,
-                badge,
-                actionIcon,
-                title ?: id,
-                description,
-                enabled,
-                visible,
-                customGrouping,
-                depends
-            ).register()
+            return with(context) {
+                Action(
+                    id = id,
+                    requestAlert = requestAlert,
+                    onAction = onAction,
+                    alertTitle = alertTitle,
+                    alertText = alertText,
+                    icon = icon,
+                    badge = badge,
+                    actionIcon = actionIcon,
+                    title = title ?: id,
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
+                ).register()
+            }
         }
+
+
     }
 
     @Composable
@@ -96,6 +113,7 @@ class Action internal constructor(
         val translator = LocalCSBTranslator.current
         DefaultSettingUI(
             modifier = modifier,
+            composer = customComposer,
             isFocused = focusState,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,

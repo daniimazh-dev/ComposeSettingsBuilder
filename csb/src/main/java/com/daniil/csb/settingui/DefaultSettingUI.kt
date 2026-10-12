@@ -1,13 +1,11 @@
 package com.daniil.csb.settingui
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import com.daniil.csb.R
@@ -15,17 +13,20 @@ import com.daniil.csb.settings.settingcore.GroupItemClip
 import com.daniil.csb.settings.settingcore.clippedShape
 import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.Material3
+import com.daniil.csb.styles.SettingComposer
+import com.daniil.csb.styles.SettingStyle
 
 @Composable
 fun DefaultSettingUI(
     modifier: Modifier = Modifier,
+    style: SettingStyle = LocalSettingsStyle.current,
+    composer: SettingComposer?,
     isFocused: Boolean = false,
     groupItemClip: GroupItemClip? = null,
     enabled: Boolean = true,
     paddingValues: PaddingValues =
-        LocalSettingsStyle.current.let {
-            PaddingValues(it.horizontalPadding, it.verticalPadding) },
-    minHeight: Dp = LocalSettingsStyle.current.minHeight,
+        style.let { PaddingValues(it.horizontalPadding, it.verticalPadding) },
+    minHeight: Dp = style.minHeight,
     title: @Composable () -> Unit,
     description: @Composable () -> Unit = {},
     icon: SettingIcon? = null,
@@ -34,8 +35,8 @@ fun DefaultSettingUI(
     onClick: (() -> Unit)?,
     display: @Composable () -> Unit = {}
 ) {
-    val style = LocalSettingsStyle.current
-    style.ContainerSlot(
+    val composer = composer ?: style.composer
+    composer.ContainerSlot(
         modifier = modifier,
         isFocused = isFocused,
         shape = (groupItemClip ?: LocalGroupPosition.current).clippedShape(),
@@ -43,7 +44,7 @@ fun DefaultSettingUI(
         onClick = onClick,
         minHeight = minHeight,
         content = {
-            style.ItemLayoutSlot(
+            composer.ItemLayoutSlot(
                 title = title,
                 description = description,
                 action = action,
@@ -75,6 +76,7 @@ private fun Preview() {
             badge = SettingBadge.icon(R.drawable.star),
             enabled = true,
             groupItemClip = GroupItemClip.Full,
+            composer = null,
             onClick = null
         )
     }

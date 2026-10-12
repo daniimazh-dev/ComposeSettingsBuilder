@@ -25,7 +25,7 @@ class FragmentController() {
         _currentFragmentId.value = key
     }
 
-    fun isShow(state: Boolean) {
+    fun isVisible(state: Boolean) {
         if (state) _fragmentedGroup?.show() else _fragmentedGroup?.hide()
     }
 

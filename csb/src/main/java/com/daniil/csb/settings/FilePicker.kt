@@ -15,7 +15,6 @@ import com.daniil.csb.CsbDslMarkers
 import com.daniil.csb.R
 import com.daniil.csb.settings.depend.Depends
 import com.daniil.csb.settings.settingcore.ComposeSetting
-import com.daniil.csb.settings.settingcore.ComposeSettingInterface
 import com.daniil.csb.settings.settingcore.GroupItemClip
 import com.daniil.csb.settings.settingcore.SettingConfiguredToken
 import com.daniil.csb.settings.settingcore.SettingDefaultScope
@@ -23,9 +22,9 @@ import com.daniil.csb.settings.settingcore.SettingDslInterface
 import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalCSBTranslator
-import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -45,8 +44,13 @@ class FilePicker<I, O> internal constructor(
     val contract: ActivityResultContract<I, O>,
     val input: I,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<O>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<O>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
@@ -72,40 +76,43 @@ class FilePicker<I, O> internal constructor(
 
         @Deprecated(
             "The FilePicker setting does not store any data by default. Changing the value to true is not necessary",
-            level = DeprecationLevel.HIDDEN
+            level = DeprecationLevel.WARNING
         )
         override var isSaveSetting: Boolean = false
     }
     class InitContractToken: SettingConfiguredToken()
     companion object {
-        fun <I, O> SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        fun <I, O> create(
             id: String,
             scope: FilePickerBuilderScope<I, O>.() -> InitContractToken
-        ): SettingToken<FilePicker<I, O>> {
-            val data = FilePickerBuilderScope<I, O>()
-            data.scope()
+        ): SettingToken<FilePicker<I, O>> = with(FilePickerBuilderScope<I, O>().apply { scope() }) {
+            val data = this@with
             val contract = data.contract ?: error("ActivityResultContract must be specified for FilePicker $id")
             @Suppress("UNCHECKED_CAST")
             val input = data.input as I
             @Suppress("UNCHECKED_CAST")
             val defaultValue = data.defaultValue as O
 
-            return FilePicker(
-                id = id,
-                defaultValue = defaultValue,
-                title = data.title ?: id,
-                description = data.description,
-                enabled = data.enabled,
-                visible = data.visible,
-                onChangeValue = data.onChangeValue,
-                actionIcon = data.actionIcon,
-                icon = data.icon,
-                badge = data.badge,
-                contract = contract,
-                input = input,
-                customGrouping = data.customGrouping,
-                depends = data.depends
-            ).register()
+            return with(context) {
+                FilePicker(
+                    id = id,
+                    defaultValue = defaultValue,
+                    title = data.title ?: id,
+                    description = data.description,
+                    enabled = data.enabled,
+                    visible = data.visible,
+                    onChangeValue = data.onChangeValue,
+                    actionIcon = data.actionIcon,
+                    icon = data.icon,
+                    badge = data.badge,
+                    contract = contract,
+                    input = input,
+                    customGrouping = data.customGrouping,
+                    depends = data.depends,
+                    customComposer = composer
+                ).register()
+            }
         }
     }
 
@@ -131,6 +138,7 @@ class FilePicker<I, O> internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             icon = icon,
             badge = badge,
             groupItemClip = customGrouping ?: position,

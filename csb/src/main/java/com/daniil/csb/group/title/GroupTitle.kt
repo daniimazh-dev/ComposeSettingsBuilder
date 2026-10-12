@@ -10,7 +10,7 @@ open class GroupTitle(
     companion object {
         fun text(text: String): GroupTitle {
             val content: @Composable GroupTitleContentScope.() -> Unit = {
-                LocalSettingsStyle.current.GroupTitle(LocalCSBTranslator.current.translate(text))
+                LocalSettingsStyle.current.composer.GroupTitle(LocalCSBTranslator.current.translate(text))
             }
             return GroupTitle(content)
         }

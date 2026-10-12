@@ -41,6 +41,7 @@ import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -59,8 +60,13 @@ class ContentChoice(
     visible: Boolean = true,
     override var isSaveSetting: Boolean,
     override val customGrouping: GroupItemClip?,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<String>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<String>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private val _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
@@ -93,35 +99,34 @@ class ContentChoice(
         }
     }
 
-    class MoreThenZeroToken internal constructor(): SettingConfiguredToken()
-    companion object :
-        ComposeSettingInterface.FactoryWithToken<ContentChoice, ChoiceContentBuilderScope, MoreThenZeroToken> {
-        override fun SettingDslInterface.create(
+    class MoreThenZeroToken internal constructor() : SettingConfiguredToken()
+    companion object : ComposeSettingInterface.FactoryWithToken<ContentChoice, ChoiceContentBuilderScope, MoreThenZeroToken> {
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: ChoiceContentBuilderScope.() -> MoreThenZeroToken
-        ): SettingToken<ContentChoice> {
-            val data = ChoiceContentBuilderScope()
-            data.scope()
-            return with(data) {
+        ): SettingToken<ContentChoice> = with(ChoiceContentBuilderScope().apply { scope() }) {
+            return with(context) {
                 ContentChoice(
-                    id,
-                    title ?: id,
-                    description,
-                    contents,
-                    onChangeValue,
-                    defaultValueId
-                        ?: contents.first().id,
-                    minContentHeight,
-                    uiMode,
-                    gridCells,
-                    girdHeight,
-                    enabled,
-                    visible,
-                    isSaveSetting,
-                    customGrouping,
-                    depends
+                    id = id,
+                    title = title ?: id,
+                    description = description,
+                    contents = contents,
+                    onChangeValue = onChangeValue,
+                    defaultValue = defaultValueId ?: contents.first().id,
+                    contentSize = minContentHeight,
+                    uiMode = uiMode,
+                    gridCells = gridCells,
+                    girdHeight = girdHeight,
+                    enabled = enabled,
+                    visible = visible,
+                    isSaveSetting = isSaveSetting,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
+
         }
     }
 
@@ -146,6 +151,7 @@ class ContentChoice(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focused,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enable,
             title = { if (!title.isBlank()) Text(text = translator.translate(title)) },

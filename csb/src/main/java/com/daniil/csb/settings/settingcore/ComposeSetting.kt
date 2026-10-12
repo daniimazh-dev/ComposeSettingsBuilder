@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 abstract class ComposeSetting<T>(
-    val independentObject: Boolean = false,
     override val depends: List<Depends> = emptyList(),
     initialEnabled: Boolean = true,
     initialVisible: Boolean = true
@@ -18,7 +17,7 @@ abstract class ComposeSetting<T>(
 
     override val focusState = MutableStateFlow(false)
 
-    override fun show(state: Boolean) {
+    override fun visible(state: Boolean) {
         _visible.value = state
     }
 

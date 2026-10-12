@@ -20,6 +20,7 @@ import com.daniil.csb.settingui.LocalGroupPosition
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.DeserializationStrategy
@@ -37,12 +38,17 @@ class Custom<T : Any> internal constructor(
     val onClick: () -> Unit,
     val content: (@Composable CustomContentScope.() -> Unit)?,
     val contentMode: ContentMode = ContentMode.WithContainer,
-    val contentWithArrangement: CustomContentWithArrangementScope?,
+    val contentWithComposer: CustomContentWithComposerScope?,
     override val onChangeValue: (T) -> Unit,
     val serializer: KSerializer<T>? = null,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<T>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<T>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(this@Custom.defaultValue)
     override val value = _value.asStateFlow()
     override val title: String = ""
@@ -71,7 +77,7 @@ class Custom<T : Any> internal constructor(
     class CustomBuilderScope<T: Any>(): SettingDefaultScope<Custom<T>>() {
         var defaultValue: T? = null
         internal var content: (@Composable CustomContentScope.() -> Unit)? = null // Nullable for use default UI method
-        internal var contentWithArrangement: CustomContentWithArrangementScope? = null
+        internal var contentWithComposer: CustomContentWithComposerScope? = null
         var onChangeValue: (T) -> Unit = {}
         var onClick: () -> Unit = {}
         var serializer: KSerializer<T>? = null
@@ -95,16 +101,16 @@ class Custom<T : Any> internal constructor(
             this.content = content
             return SetContentToken()
         }
-        fun setWithArrangement(
-            contentWithArrangement: CustomContentWithArrangementScope.() -> Unit
+        fun setWithComposer(
+            contentWithArrangement: CustomContentWithComposerScope.() -> Unit
         ): SetContentToken {
-            contentMode = ContentMode.WithArrangement
-            val data = CustomContentWithArrangementScope().apply {
+            contentMode = ContentMode.WithComposer
+            val data = CustomContentWithComposerScope().apply {
                 badge = { this@CustomBuilderScope.badge?.content() }
                 icon =  { this@CustomBuilderScope.icon?.content() }
                 contentWithArrangement()
             }
-            this.contentWithArrangement = data
+            this.contentWithComposer = data
             return SetContentToken()
         }
         fun useEmptyContent(): SetContentToken {
@@ -117,12 +123,12 @@ class Custom<T : Any> internal constructor(
     enum class ContentMode {
         Nothing,
         WithContainer,
-        WithArrangement
+        WithComposer
     }
 
     open class CustomContentScope internal constructor()
 
-    class CustomContentWithArrangementScope: CustomContentScope() {
+    class CustomContentWithComposerScope: CustomContentScope() {
         var modifier = Modifier
         var title: @Composable () -> Unit = {}
         var icon: (@Composable () -> Unit)? = null
@@ -134,21 +140,36 @@ class Custom<T : Any> internal constructor(
 
     class SetContentToken: SettingConfiguredToken()
     companion object  {
-        fun <T : Any> SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        fun <T : Any> create(
             id: String,
             scope: CustomBuilderScope<T>.() -> SetContentToken
-        ): SettingToken<Custom<T>> {
-            val data = CustomBuilderScope<T>().apply { scope() }
-            with(data) {
-                defaultValue ?: error("Default value must be not null in custom setting $id")
-                return Custom(id, defaultValue!!, enabled, visible, icon, badge, isSaveSetting,onClick, content, contentMode, contentWithArrangement, onChangeValue, serializer, customGrouping, depends).register()
+        ): SettingToken<Custom<T>> = with(CustomBuilderScope<T>().apply { scope() }) {
+            with(context) {
+                return Custom(
+                    id = id,
+                    defaultValue = defaultValue ?: error("Default value must be not null in custom setting $id"),
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    isSaveSetting = isSaveSetting,
+                    onClick = onClick,
+                    content = content,
+                    contentMode = contentMode,
+                    contentWithComposer = contentWithComposer,
+                    onChangeValue = onChangeValue,
+                    serializer = serializer,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer,
+                ).register()
             }
         }
     }
 
     @Composable
     override fun UI(modifier: Modifier, position: GroupItemClip?) {
-
         val focusState by this.focusState.collectAsState()
         val enabled by this.enabled.collectAsState()
         when (contentMode) {
@@ -157,7 +178,7 @@ class Custom<T : Any> internal constructor(
             }
             ContentMode.WithContainer -> {
                 if (content != null) {
-                    LocalSettingsStyle.current.ContainerSlot(
+                    (customComposer ?: LocalSettingsStyle.current.composer).ContainerSlot(
                         modifier = modifier.fillMaxWidth(),
                         isFocused = focusState,
                         shape = (position ?: customGrouping ?: LocalGroupPosition.current).clippedShape(),
@@ -168,11 +189,12 @@ class Custom<T : Any> internal constructor(
                     )
                 }
             }
-            ContentMode.WithArrangement -> {
-                if (contentWithArrangement != null) {
-                    val inContent = contentWithArrangement
+            ContentMode.WithComposer -> {
+                if (contentWithComposer != null) {
+                    val inContent = contentWithComposer
                     DefaultSettingUI(
                         title = inContent.title,
+                        composer = customComposer,
                         modifier = inContent.modifier,
                         isFocused = focusState,
                         groupItemClip = customGrouping ?: position,

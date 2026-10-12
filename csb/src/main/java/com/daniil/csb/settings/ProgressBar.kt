@@ -22,6 +22,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -38,8 +39,13 @@ class ProgressBar internal constructor(
     val badge: SettingBadge? = null,
     override var onChangeValue: (Float?) -> Unit = {},
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Float?>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Float?>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
 
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
@@ -60,31 +66,31 @@ class ProgressBar internal constructor(
 
         @Deprecated(
             "The Progress setting dose not store any data. Changing the value to true is not necessary",
-            level = DeprecationLevel.HIDDEN
+            level = DeprecationLevel.WARNING
         )
         override var isSaveSetting: Boolean = false
     }
 
     companion object : ComposeSettingInterface.Factory<ProgressBar, ProgressBarBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: ProgressBarBuilderScope.() -> Unit
-        )
-                : SettingToken<ProgressBar> {
-            val data = ProgressBarBuilderScope().apply(scope)
-            return with(data) {
+        ): SettingToken<ProgressBar> = with(ProgressBarBuilderScope().apply(scope)) {
+            return with(context) {
                 ProgressBar(
-                    id,
-                    defaultValue,
-                    title ?: id,
-                    description,
-                    enabled,
-                    visible,
-                    icon,
-                    badge,
-                    onChangeValue,
-                    customGrouping,
-                    depends
+                    id = id,
+                    defaultValue = defaultValue,
+                    title = title ?: id,
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    onChangeValue = onChangeValue,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -101,6 +107,7 @@ class ProgressBar internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             enabled = enabled,
             groupItemClip = customGrouping ?: position,
             icon = icon,

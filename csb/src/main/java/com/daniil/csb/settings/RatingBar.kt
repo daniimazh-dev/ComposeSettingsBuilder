@@ -29,9 +29,9 @@ import com.daniil.csb.settings.settingcore.SettingDslInterface
 import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalCSBTranslator
-import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -50,8 +50,13 @@ class RatingBar internal constructor(
     override var isSaveSetting: Boolean = true,
     override val onChangeValue: (Int) -> Unit,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Int>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Int>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private val _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
@@ -72,12 +77,12 @@ class RatingBar internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<RatingBar, RatingBarBuilderScope> {
-        override fun SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: RatingBarBuilderScope.() -> Unit
-        ): SettingToken<RatingBar> {
-            val data = RatingBarBuilderScope().apply(scope)
-            return with(data) {
+        ): SettingToken<RatingBar> = with(RatingBarBuilderScope().apply(scope)) {
+            return with(context) {
                 RatingBar(
                     id = id,
                     title = title ?: id,
@@ -93,7 +98,8 @@ class RatingBar internal constructor(
                     ratingItem = ratingItem,
                     onChangeValue = onChangeValue,
                     customGrouping = customGrouping,
-                    depends = depends
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -114,6 +120,7 @@ class RatingBar internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             enabled = enabled,
             groupItemClip = customGrouping ?: position,
             icon = icon,

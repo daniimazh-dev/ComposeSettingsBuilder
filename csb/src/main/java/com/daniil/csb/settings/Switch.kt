@@ -38,12 +38,14 @@ import com.daniil.csb.settings.settingcore.ComposeSetting
 import com.daniil.csb.settings.settingcore.ComposeSettingInterface
 import com.daniil.csb.settings.settingcore.GroupItemClip
 import com.daniil.csb.settings.settingcore.SettingDefaultScope
+import com.daniil.csb.settings.settingcore.SettingDslInterface
 import com.daniil.csb.settings.settingcore.SettingToken
 import com.daniil.csb.settingui.DefaultSettingUI
 import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -60,8 +62,13 @@ class Switch internal constructor(
     override val customGrouping: GroupItemClip? = null,
     val icon: SettingIcon? = null,
     val badge: SettingBadge? = null,
-    override val depends: List<Depends> = emptyList()
-) : ComposeSetting<Boolean>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<Boolean>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     private var _value = MutableStateFlow(defaultValue)
     override val value = _value.asStateFlow()
 
@@ -88,12 +95,12 @@ class Switch internal constructor(
     }
 
     companion object : ComposeSettingInterface.Factory<Switch, SwitchBuilderScope> {
-        override fun com.daniil.csb.settings.settingcore.SettingDslInterface.create(
+        context(context: SettingDslInterface)
+        override fun create(
             id: String,
             scope: SwitchBuilderScope.() -> Unit
-        ): SettingToken<Switch> {
-            val data = SwitchBuilderScope().apply(scope)
-            return with(data) {
+        ): SettingToken<Switch> = with(SwitchBuilderScope().apply(scope)) {
+            return with(context) {
                 Switch(
                     id,
                     defaultValue = defaultValue,
@@ -107,7 +114,8 @@ class Switch internal constructor(
                     customGrouping = customGrouping,
                     icon = icon,
                     badge = badge,
-                    depends = depends
+                    depends = depends,
+                    customComposer = composer
                 ).register()
             }
         }
@@ -127,6 +135,7 @@ class Switch internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,

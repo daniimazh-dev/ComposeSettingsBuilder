@@ -31,16 +31,31 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.daniil.csb.CSB
-import com.daniil.csb.R
 import com.daniil.csb.SettingsScreen
 import com.daniil.csb.registerSettingScreens
-import com.daniil.csb.screens.TopScreenBar
+import com.daniil.csb.settings.Action
+import com.daniil.csb.settings.CodePreview
+import com.daniil.csb.settings.ColorPicker
 import com.daniil.csb.settings.ContentChoice
+import com.daniil.csb.settings.Counter
+import com.daniil.csb.settings.Custom
+import com.daniil.csb.settings.DatePicker
+import com.daniil.csb.settings.FilePicker
+import com.daniil.csb.settings.Info
+import com.daniil.csb.settings.MultiplySelect
+import com.daniil.csb.settings.PasswordField
+import com.daniil.csb.settings.ProgressBar
+import com.daniil.csb.settings.RangeSlider
+import com.daniil.csb.settings.RatingBar
+import com.daniil.csb.settings.Redirect
+import com.daniil.csb.settings.SearchField
 import com.daniil.csb.settings.Select
-import com.daniil.csb.settings.depend.Depends
+import com.daniil.csb.settings.Slider
+import com.daniil.csb.settings.Switch
+import com.daniil.csb.settings.TabBar
+import com.daniil.csb.settings.TextField
+import com.daniil.csb.settings.TimePicker
 import com.daniil.csb.settingui.LocalSettingsStyle
-import com.daniil.csb.settingui.SettingBadge
-import com.daniil.csb.settingui.SettingIcon
 import com.daniil.csb.styles.Bobble
 import com.daniil.csb.styles.CSBStyle
 import com.daniil.csb.styles.ClassicDark
@@ -51,10 +66,8 @@ import com.daniil.csb.styles.Material3
 @SuppressLint("RememberReturnType")
 @Preview(showBackground = true)
 @Composable
-private fun Preview() {
-    remember {
-        previewInit()
-    }
+private fun ComplexScreenshotPreview() {
+    remember { previewInit() }
     val style = CSB.getValue<Select.Option>("theme_select").collectAsState().value
     val isDarkTheme = CSB.getValue<Boolean>("dark_mode").collectAsState().value
     val colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()
@@ -80,61 +93,60 @@ private fun Preview() {
     }
 }
 
+
+
 private fun previewInit() = registerSettingScreens {
     CSB.config {
         flag("disableStored")
     }
-    createScreen("MainScreen") {
+    createScreen("Main Screen") {
         group("All settings") {
             groupTitle = null
-            createSwitch("Switch") {
-                badge = SettingBadge.point()
-                icon = SettingIcon.fromRes(R.drawable.info_icon)
-                title = "Notification"
-                description = "Enable notification for this app"
+            Switch.create("Switch") {
+                title = "Switch"
                 defaultValue = true
             }
-            createTimePicker("Timer picker")
-            createDatePicker("Date picker")
-            createAction("Action")
-            createColorPicker("Color picker")
 
-            createContentChoice("Content choice") {
+            TimePicker.create("Timer picker") { }
+            DatePicker.create("Date picker") { }
+            Action.create("Action") { }
+            ColorPicker.create("Color picker") { }
+            MultiplySelect.create("Multiply select") { }
+            ContentChoice.create("Content choice") {
                 uiMode = ContentChoice.UIMode.Row
                 onChangeValue = { CSB.setValue<Boolean>("dark_mode", it == "1") }
                 defaultValueId = "1"
-                option("0") { ThemeToggleIcon(isDarkTheme = false, it)  }
-                option("1") { ThemeToggleIcon(isDarkTheme = true, it)  }
+                option("0") { ThemeToggleIcon(isDarkTheme = false, it) }
+                option("1") { ThemeToggleIcon(isDarkTheme = true, it) }
             }
-
-            createCounter("Counter")
-            createCustomSetting("Custom setting") {
+            Counter.create("Counter") { }
+            Custom.create("Custom setting") {
                 defaultValue = Unit
-                setWithArrangement {
+                setWithComposer {
                     title = { Text("Custom") }
                 }
             }
-            createInfo("Info")
-            createRedirect("Redirect") { setRedirect("new") }
-            createSelect("Select") {
+            Info.create("Info") { }
+            Redirect.create("Redirect") { setRedirect("new") }
+            Select.create("Select") {
                 option("1", "First")
             }
-            createSlider("Slider")
-            createRangeSlider("Range slider")
-            createTextField("Text field")
-            createPasswordField("Password field")
-            createSearchField("Search field")
-            createRatingBar("Rating bar")
-            crateProgressBar("Progress bar")
+            Slider.create("Slider") { }
+            RangeSlider.create("Range slider") { }
+            TextField.create("Text field") { }
+            PasswordField.create("Password field") { }
+            SearchField.create("Search field") { }
+            RatingBar.create("Rating bar") { }
+            ProgressBar.create("Progress bar") { }
 
-            createTabBar("Tab bar") {
+            TabBar.create("Tab bar") {
                 tab("1")
                 tab("2")
                 tab("3")
             }
 
-            createCodePreview("Code preview")
-            createFilePicker("File picker") {
+            CodePreview.create("Code preview") { }
+            FilePicker.create("File picker") {
                 setContract(ActivityResultContracts.GetContent())
             }
         }
@@ -143,7 +155,7 @@ private fun previewInit() = registerSettingScreens {
         }
     }
     createCustomScreen("new") {
-        createSwitch("sw") {}
+        Switch.create("sw") { }
         createUI("ux") {
             Spacer(modifier = Modifier.height(800.dp))
         }
@@ -156,15 +168,16 @@ private fun previewInit() = registerSettingScreens {
     }
 
     createAbstractScreen("Abstract") {
-        createSelect("theme_select") {
-            defaultValueId = "material"
+        Select.create("theme_select") {
+            defaultValueId = "bobble"
             option("material", "Material")
             option("bobble", "Bobble")
             option("classic", "classic")
         }
-        createSwitch("dark_mode") { defaultValue = true }
+        Switch.create("dark_mode") { defaultValue = true }
     }
 }
+
 
 
 

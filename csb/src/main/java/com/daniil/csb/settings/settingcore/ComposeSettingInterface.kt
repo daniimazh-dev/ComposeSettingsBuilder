@@ -23,7 +23,7 @@ interface ComposeSettingInterface<T> {
     val depends: List<Depends>
     val visible: StateFlow<Boolean>
 
-    fun show(state: Boolean)
+    fun visible(state: Boolean)
 
     fun enabled(state: Boolean)
 
@@ -96,9 +96,11 @@ interface ComposeSettingInterface<T> {
     )
     /** C - [ComposeSetting], S - BuilderScope of [ComposeSetting] */
     interface Factory<C : ComposeSetting<*>, out S : SettingDefaultScope<C>> {
-        fun SettingDslInterface.create(id: String, scope: S.() -> Unit): SettingToken<C>
+        context(context: SettingDslInterface)
+        fun create(id: String, scope: S.() -> Unit): SettingToken<C>
     }
     interface FactoryWithToken<C : ComposeSetting<*>, out S : SettingDefaultScope<C>, T: SettingConfiguredToken> {
-        fun SettingDslInterface.create(id: String, scope: S.() -> T): SettingToken<C>
+        context(context: SettingDslInterface)
+        fun create(id: String, scope: S.() -> T): SettingToken<C>
     }
 }

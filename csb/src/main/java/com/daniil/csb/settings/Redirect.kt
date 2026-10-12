@@ -27,6 +27,7 @@ import com.daniil.csb.settingui.LocalCSBTranslator
 import com.daniil.csb.settingui.LocalSettingsStyle
 import com.daniil.csb.settingui.SettingBadge
 import com.daniil.csb.settingui.SettingIcon
+import com.daniil.csb.styles.SettingComposer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -44,8 +45,13 @@ class Redirect internal constructor(
     val onRedirect: (Screen) -> Unit = {},
     val navigationModel: SettingsNavigationModel = CSB.navigationModel,
     override val customGrouping: GroupItemClip? = null,
-    override val depends: List<Depends> = emptyList()
-): ComposeSetting<String>(depends = depends, initialEnabled = enabled, initialVisible = visible) {
+    override val depends: List<Depends> = emptyList(),
+    val customComposer: SettingComposer? = null
+) : ComposeSetting<String>(
+    depends = depends,
+    initialEnabled = enabled,
+    initialVisible = visible
+) {
     override val defaultValue: String = redirectToId
 
     private val _value = MutableStateFlow(defaultValue)
@@ -55,11 +61,16 @@ class Redirect internal constructor(
         get() = { onRedirect(navigationModel.findScreenById(value.value)) }
     override var isSaveSetting: Boolean = false
 
-    override fun changeValue(newValue: String) { _value.value = newValue }
-    fun changeValue(newValue: Screen) { _value.value = newValue.id }
+    override fun changeValue(newValue: String) {
+        _value.value = newValue
+    }
+
+    fun changeValue(newValue: Screen) {
+        _value.value = newValue.id
+    }
 
     @CsbDslMarkers
-    class RedirectBuilderScope(): SettingDefaultScope<Redirect>() {
+    class RedirectBuilderScope() : SettingDefaultScope<Redirect>() {
         var redirectToId: String? = null
             private set
         var focus: String? = null
@@ -68,30 +79,54 @@ class Redirect internal constructor(
         var navigationModel: SettingsNavigationModel = CSB.navigationModel
         var title: String? = null
         var description: String? = null
-        @Deprecated("The Redirect setting dose not store any data. Changing the value to true is not necessary", level = DeprecationLevel.HIDDEN)
+
+        @Deprecated(
+            "The Redirect setting dose not store any data. Changing the value to true is not necessary",
+            level = DeprecationLevel.WARNING
+        )
         override var isSaveSetting: Boolean = false
         fun setRedirect(redirectToId: String): InitRedirectToken {
             this.redirectToId = redirectToId
             return InitRedirectToken()
         }
+
         fun setRedirect(redirectToScreen: Screen): InitRedirectToken {
             this.redirectToId = redirectToScreen.id
             return InitRedirectToken()
         }
+
         fun setEmptyRedirect(): InitRedirectToken {
             redirectToId = ""
             return InitRedirectToken()
         }
     }
-    class InitRedirectToken: SettingConfiguredToken()
 
-    companion object : ComposeSettingInterface.FactoryWithToken<Redirect, RedirectBuilderScope, InitRedirectToken> {
-        override fun SettingDslInterface.create(id: String, scope: RedirectBuilderScope.() -> InitRedirectToken): SettingToken<Redirect> {
-            val data = RedirectBuilderScope()
-            data.scope()
-            return with(data) {
-                Redirect(id, redirectToId!!, focus, showArrow, title ?: id, description, enabled, visible, icon, badge, onRedirect, navigationModel, customGrouping, depends)
-            }.register()
+    class InitRedirectToken : SettingConfiguredToken()
+
+    companion object :
+        ComposeSettingInterface.FactoryWithToken<Redirect, RedirectBuilderScope, InitRedirectToken> {
+        context(context: SettingDslInterface)
+        override fun create(id: String, scope: RedirectBuilderScope.() -> InitRedirectToken)
+                : SettingToken<Redirect> = with(RedirectBuilderScope().apply { scope() }) {
+            return with(context) {
+                Redirect(
+                    id = id,
+                    redirectToId = redirectToId!!,
+                    focus = focus,
+                    showArrow = showArrow,
+                    title = title ?: id,
+                    description = description,
+                    enabled = enabled,
+                    visible = visible,
+                    icon = icon,
+                    badge = badge,
+                    onRedirect = onRedirect,
+                    navigationModel = navigationModel,
+                    customGrouping = customGrouping,
+                    depends = depends,
+                    customComposer = composer
+                ).register()
+            }
         }
     }
 
@@ -114,17 +149,19 @@ class Redirect internal constructor(
         DefaultSettingUI(
             modifier = modifier,
             isFocused = focusState,
+            composer = customComposer,
             groupItemClip = customGrouping ?: position,
             enabled = enabled,
             icon = icon,
             badge = badge,
-            title = { if(!title.isBlank()) Text(translator.translate(title)) },
+            title = { if (!title.isBlank()) Text(translator.translate(title)) },
             description = { description?.let { Text(translator.translate(it)) } },
             action = {
                 if (showArrow) {
                     FilledIconButton(
                         enabled = enabled,
-                        colors = IconButtonDefaults.iconButtonColors().copy(containerColor = style.containerColor),
+                        colors = IconButtonDefaults.iconButtonColors()
+                            .copy(containerColor = style.containerColor),
                         onClick = { execute() }
                     ) {
                         Icon(

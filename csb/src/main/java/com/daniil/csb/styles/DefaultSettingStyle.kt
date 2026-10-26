@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.daniil.csb.R
+import com.daniil.csb.settingui.LocalSettingsStyle
 
 open class DefaultSettingStyle : SettingStyle {
     override var backgroundColor: Color = Color.Transparent
@@ -59,7 +60,15 @@ open class DefaultSettingStyle : SettingStyle {
     override var topBarContainerColor: Color = Color.Transparent
     override var topBarHeight: Dp = 52.dp
 
-    override val composer = object : Composer {
+    override val composer: Composer = DefaultComposer(this)
+
+    open class DefaultComposer(
+        protected open val style: SettingStyle? = null
+    ) : Composer {
+
+        @Composable
+        protected open fun currentStyle(): SettingStyle = style ?: LocalSettingsStyle.current
+
         @Composable
         override fun ContainerSlot(
             modifier: Modifier,
@@ -70,11 +79,12 @@ open class DefaultSettingStyle : SettingStyle {
             onClick: (() -> Unit)?,
             content: @Composable (() -> Unit)
         ) {
+            val currentStyle = currentStyle()
             Box(
                 modifier = Modifier
-                    .shadow(elevation = cardElevation, shape = shape, clip = false)
+                    .shadow(elevation = currentStyle.cardElevation, shape = shape, clip = false)
                     .clip(shape)
-                    .background(if (isFocused) focusColor else backgroundColor)
+                    .background(if (isFocused) currentStyle.focusColor else currentStyle.backgroundColor)
                     .heightIn(minHeight)
                     .then(
                         if (enabled) modifier
@@ -97,6 +107,7 @@ open class DefaultSettingStyle : SettingStyle {
             badge: (@Composable () -> Unit)?,
             paddingValues: PaddingValues
         ) {
+            val currentStyle = currentStyle()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,26 +124,26 @@ open class DefaultSettingStyle : SettingStyle {
                     ) {
                         icon?.let {
                             icon()
-                            Spacer(modifier = Modifier.width(slotSpacing))
+                            Spacer(modifier = Modifier.width(currentStyle.slotSpacing))
                         }
                         Column() {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                CompositionLocalProvider(LocalTextStyle provides titleStyle) {
+                                CompositionLocalProvider(LocalTextStyle provides currentStyle.titleStyle) {
                                     title()
                                 }
                                 badge?.let {
-                                    Spacer(modifier = Modifier.width(slotSpacing))
+                                    Spacer(modifier = Modifier.width(currentStyle.slotSpacing))
                                     badge()
                                 }
                             }
-                            CompositionLocalProvider(LocalTextStyle provides descriptionStyle) {
+                            CompositionLocalProvider(LocalTextStyle provides currentStyle.descriptionStyle) {
                                 description()
                             }
                         }
                     }
-                    Box(modifier = Modifier.padding(start = slotSpacing)) {
+                    Box(modifier = Modifier.padding(start = currentStyle.slotSpacing)) {
                         action()
                     }
                 }
@@ -142,18 +153,19 @@ open class DefaultSettingStyle : SettingStyle {
 
         @Composable
         override fun GroupTitle(text: String) {
+            val currentStyle = currentStyle()
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = horizontalPadding),
+                    .padding(horizontal = currentStyle.horizontalPadding),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = text,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = activeColor,
-                    style = titleStyle
+                    color = currentStyle.activeColor,
+                    style = currentStyle.titleStyle
                 )
             }
         }

@@ -54,12 +54,12 @@ private fun ContentDrawScope.drawWithLayer(block: ContentDrawScope.() -> Unit) {
 }
 
 
-data class FancyTabBarData(
+internal data class FancyTabBarData(
     val id: String,
     val titleContent: @Composable () -> Unit,
 )
 
-object FancyTabBarDefaults {
+internal object FancyTabBarDefaults {
     @Composable
     fun colors(): FancyTabBarColor {
         return FancyTabBarColor(
@@ -71,7 +71,7 @@ object FancyTabBarDefaults {
     }
 }
 
-data class FancyTabBarColor(
+internal data class FancyTabBarColor(
     val bgColor: Color,
     val indicatorColor: Color,
     val textColor: Color,
@@ -79,7 +79,7 @@ data class FancyTabBarColor(
 )
 
 @Composable
-fun FancyTabBar(
+internal fun FancyTabBar(
     modifier: Modifier = Modifier,
     selectedIndex: Int,
     entries: List<FancyTabBarData>,

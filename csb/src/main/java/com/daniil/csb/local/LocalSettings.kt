@@ -56,7 +56,7 @@ fun LocalSettings(
                 }
 
                 for (group in screen.settings) {
-                    if (group.visible.collectAsState().value) continue
+                    if (!group.visible.collectAsState().value) continue
                     Spacer(modifier = Modifier.height(style.groupSpacing))
                     when (group) {
                         is FragmentedGroup -> {
@@ -88,7 +88,7 @@ fun LocalSettings(
                                     .padding(group.paddingValues),
                                 targetState = fragment
                             ) { fr ->
-                                if (fr.visible.collectAsState().value) return@AnimatedContent
+                                if (!fr.visible.collectAsState().value) return@AnimatedContent
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(style.itemSpacing)
                                 ) {

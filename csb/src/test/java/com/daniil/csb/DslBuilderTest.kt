@@ -1,6 +1,6 @@
 package com.daniil.csb
 
-import com.daniil.csb.screens.title.ScreenTitle
+import com.daniil.csb.screens.TopScreenBar
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,10 +11,10 @@ class DslBuilderTest {
     fun `test registerSettingScreens populates screenHeap`() {
         registerSettingScreens {
             createScreen("Main") {
-                title = ScreenTitle.setText("Main Screen")
+                topBar = TopScreenBar.text("Main Screen")
             }
             createScreen("Settings") {
-                title = ScreenTitle.setText("Settings Screen")
+                topBar = TopScreenBar.text("Settings Screen")
             }
         }
 
